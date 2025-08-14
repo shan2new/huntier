@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import type { ApplicationListItem, Company } from '@/lib/api'
 import { 
-  apiWithToken, createCompany, searchCompanies, getApplication, 
+  apiWithToken, createCompany, getApplication, 
   patchApplication, listConversations, listInterviews 
 } from '@/lib/api'
 import {
@@ -125,14 +125,9 @@ export function ApplicationModal({
       
       try {
         const token = await getToken()
-        const existingCompanies = await searchCompanies<Array<Company>>(token!, url)
-        
-        if (existingCompanies.length > 0) {
-          setCompany(existingCompanies[0])
-        } else {
-          const newCompany = await createCompany<Company>(token!, url)
-          setCompany(newCompany)
-        }
+        // Always call upsert endpoint to fetch metadata first and lazily refresh logo/name
+        const upserted = await createCompany<Company>(token!, url)
+        setCompany(upserted)
       } catch (err) {
         setError('Failed to fetch company information')
         console.error('Company fetch error:', err)
@@ -179,9 +174,10 @@ export function ApplicationModal({
         const application = await apiWithToken<ApplicationListItem>('/v1/applications', token!, {
           method: 'POST',
           body: JSON.stringify({
-            company: { company_id: company!.id },
+            // Send website_url so backend can parse metadata before DB access
+            company: { website_url: normalizeUrl(url) },
             role,
-            job_url: url,
+            job_url: normalizeUrl(url),
             platform_id: null,
             source
           })

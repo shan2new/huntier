@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react'
-import { Outlet, Link, useNavigate, useLocation } from '@tanstack/react-router'
+import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'framer-motion'
-import { Search, BarChart3, Kanban, Globe, Users, User, Command } from 'lucide-react'
+import { BarChart3, Command, Globe, Kanban, Search, User, Users } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -19,6 +19,18 @@ export function Layout() {
     }
   }, [isSignedIn, isLoaded, navigate])
 
+  // Do not place hooks after conditional returns; attach global hotkey listener unconditionally
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -30,17 +42,6 @@ export function Layout() {
   if (!isSignedIn) {
     return null
   }
-  
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
-        e.preventDefault()
-        searchRef.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
 
   const navItems = [
     { to: '/applications', label: 'Applications', icon: BarChart3 },

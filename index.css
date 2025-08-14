@@ -110,6 +110,19 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes shimmer {
+  0%, 90%, 100% {
+    background-position: calc(-100% - var(--shimmer-width)) 0;
+  }
+  30%, 60% {
+    background-position: calc(100% + var(--shimmer-width)) 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 8s infinite;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

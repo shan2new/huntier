@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Outlet, Link, useNavigate, useLocation } from '@tanstack/react-router'
-import { UserButton } from '@clerk/clerk-react'
+import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'framer-motion'
 import { Search, BarChart3, Kanban, Globe, Users, User, Command } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -8,9 +8,28 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 export function Layout() {
+  const { isSignedIn, isLoaded } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate({ to: '/' })
+    }
+  }, [isSignedIn, isLoaded, navigate])
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  if (!isSignedIn) {
+    return null
+  }
   
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -84,9 +103,6 @@ export function Layout() {
                 <div className="flex flex-col">
                   <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors leading-none">
                     Huntier
-                  </span>
-                  <span className="text-xs text-muted-foreground leading-none">
-                    Modern Tier Job hunting
                   </span>
                 </div>
               </Link>

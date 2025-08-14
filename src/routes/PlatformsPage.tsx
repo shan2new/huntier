@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { apiWithToken } from '../lib/api'
 import { motion } from 'framer-motion'
-import { Globe, TrendingUp, Award, XCircle, Clock, BarChart3, ExternalLink } from 'lucide-react'
+import { Globe, TrendingUp, Award, XCircle, Clock, BarChart3 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -48,7 +48,7 @@ export function PlatformsPage() {
 
   const totalApplications = rows.reduce((sum, row) => sum + row.totals, 0)
   const totalOffers = rows.reduce((sum, row) => sum + row.offers, 0)
-  const totalRejects = rows.reduce((sum, row) => sum + row.rejects, 0)
+
   const totalInProgress = rows.reduce((sum, row) => sum + row.in_progress, 0)
 
   const getSuccessRate = (offers: number, totals: number) => {

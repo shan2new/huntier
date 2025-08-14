@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { apiWithToken } from '../lib/api'
 import type { ApplicationListItem } from '../lib/api'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ExternalLink, Building2, Calendar, Activity, TrendingUp, Target, Clock, Award, ChevronRight, Plus } from 'lucide-react'
+import { ExternalLink, Building2, Calendar, Activity, Target, Clock, Award, ChevronRight, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -64,7 +64,7 @@ export function ApplicationsPage() {
 
   const stats = useMemo(() => {
     const total = apps.length
-    const active = apps.filter(app => app.status === 'active').length
+    const active = apps.filter(app => app.stage === 'applied_self' || app.stage === 'applied_referral' || app.stage === 'recruiter_outreach').length
     const interviewing = apps.filter(app => app.milestone === 'interviewing').length
     const offers = apps.filter(app => app.stage === 'offer').length
     return { total, active, interviewing, offers }

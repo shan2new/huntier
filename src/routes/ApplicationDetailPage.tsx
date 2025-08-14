@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useAuth } from '@clerk/clerk-react'
-import { apiWithToken, getApplication, listConversations, addConversation, listInterviews, scheduleInterview, patchApplication } from '../lib/api'
+import { getApplication, listConversations, addConversation, listInterviews, scheduleInterview, patchApplication } from '../lib/api'
 import { CompensationEditor } from './components/CompensationEditor'
 import { QASnapshotEditor } from './components/QASnapshotEditor'
 import { ConversationFeed } from './components/ConversationFeed'
 import { InterviewsTimeline } from './components/InterviewsTimeline'
-import type { ApplicationListItem } from '../lib/api'
+
 
 export function ApplicationDetailPage() {
   const { id } = useParams({ from: '/applications/$id' })

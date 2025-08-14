@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { CalendarIcon, ChevronDown, Clock, MapPin, Video, Phone, X } from 'lucide-react'
+import { CalendarIcon, Clock, MapPin, Video, Phone } from 'lucide-react'
 
 const typeOptions = [
   { value: 'phone_screen', label: 'Phone Screen', icon: Phone },

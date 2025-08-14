@@ -224,7 +224,7 @@ export function BoardPage() {
                         transition={{ delay: index * 0.02 }}
                         className="cursor-grab active:cursor-grabbing"
                         draggable
-                        onDragStart={(e) => onDragStart(e, app.id)}
+                        onDragStart={(e) => onDragStart(e as any, app.id)}
                         onDragEnd={onDragEnd}
                       >
                         <Card className="bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-soft transition-all duration-200">

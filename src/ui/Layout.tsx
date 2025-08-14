@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { Outlet, Link, useNavigate, useLocation } from '@tanstack/react-router'
 import { UserButton } from '@clerk/clerk-react'
 import { motion } from 'framer-motion'
-import { Search, Sparkles, BarChart3, Kanban, Globe, Users, User, Command } from 'lucide-react'
+import { Search, BarChart3, Kanban, Globe, Users, User, Command } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -123,7 +123,7 @@ export function Layout() {
                     className="pl-8 pr-10 w-64 h-8 text-sm bg-background/50 border-border/50 focus:bg-background focus:border-primary/50 transition-all duration-200"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        navigate(`/applications?search=${encodeURIComponent(e.currentTarget.value)}`)
+                        navigate({ to: '/applications', search: { search: e.currentTarget.value } })
                       }
                     }}
                   />

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { apiWithToken } from '../lib/api'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { 
   User, 
   Calendar, 
@@ -12,7 +12,7 @@ import {
   Clock, 
   Target,
   TrendingUp,
-  Award,
+
   Save,
   Edit3,
   CheckCircle,
@@ -94,8 +94,8 @@ export function ProfilePage() {
           apiWithToken('/v1/profile', token!),
           apiWithToken('/v1/recruiter-qa', token!)
         ])
-        setProfile(p)
-        setQa(q)
+        setProfile(p as any)
+        setQa(q as any)
       } finally {
         setLoading(false)
       }

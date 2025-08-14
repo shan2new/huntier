@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Mail, MessageSquare, Phone, Video, Send, X } from 'lucide-react'
+import { Mail, MessageSquare, Phone, Video, Send } from 'lucide-react'
 
 const mediumOptions = [
   { value: 'email', label: 'Email', icon: Mail },

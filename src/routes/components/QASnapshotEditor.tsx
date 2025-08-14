@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { MessageSquare, Save } from 'lucide-react'
+import { Save } from 'lucide-react'
 
 const fieldLabels = {
   current_ctc_text: 'Current CTC',

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { 
-  AlertCircle, Building2, Check, ExternalLink, Loader2, Plus, Pencil, 
-  Trash2, X, Calendar, DollarSign, MessageSquare, Clock, Award, Target,
+  AlertCircle, Building2, Check, ExternalLink, Plus, Pencil, 
+  Trash2, Calendar, DollarSign, MessageSquare, Clock, Award, Target,
   Save
 } from 'lucide-react'
 import type { ApplicationListItem, Company } from '@/lib/api'

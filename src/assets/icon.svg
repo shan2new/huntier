@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:oklch(50% 0.15 250);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:oklch(70% 0.15 250);stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tierIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:oklch(70% 0.15 250);stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:oklch(50% 0.15 250);stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle for better icon definition -->
+  <circle cx="24" cy="24" r="22" fill="url(#iconGradient)" opacity="0.1"/>
+  
+  <!-- H symbol with tier elements for icon -->
+  <g fill="url(#iconGradient)">
+    <!-- Main H structure -->
+    <rect x="12" y="12" width="4" height="24" rx="2"/>
+    <rect x="32" y="12" width="4" height="24" rx="2"/>
+    <rect x="12" y="22" width="24" height="4" rx="2"/>
+    
+    <!-- Tier steps ascending - simplified for icon -->
+    <rect x="38" y="32" width="6" height="2" rx="1" fill="url(#tierIconGradient)"/>
+    <rect x="40" y="28" width="6" height="2" rx="1" fill="url(#tierIconGradient)"/>
+    <rect x="42" y="24" width="4" height="2" rx="1" fill="url(#iconGradient)"/>
+  </g>
+</svg>
+</svg>

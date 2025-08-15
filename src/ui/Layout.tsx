@@ -1,17 +1,20 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'framer-motion'
 import { BarChart3, Command, Globe, Kanban, Search, User, Users } from 'lucide-react'
+import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { getProfile } from '@/lib/api'
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const searchRef = useRef<HTMLInputElement>(null)
+  const [, setTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -30,6 +33,23 @@ export function Layout() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  // Load theme from profile
+  useEffect(() => {
+    ;(async () => {
+      try {
+        if (!isLoaded || !isSignedIn) return
+        const token = await (useAuth() as any).getToken?.()
+        if (!token) return
+        const profile = await getProfile<UserProfile>(token)
+        const t = (profile.theme as 'light' | 'dark' | undefined) || 'light'
+        setTheme(t)
+        document.documentElement.classList.toggle('dark', t === 'dark')
+      } catch {}
+    })()
+  }, [isLoaded, isSignedIn])
+
+  // theme toggling is now handled on Profile page
 
   if (!isLoaded) {
     return (
@@ -75,12 +95,12 @@ export function Layout() {
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
                     <defs>
                       <linearGradient id="layoutIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor:'#3B82F6', stopOpacity:1}} />
-                        <stop offset="100%" style={{stopColor:'#1D4ED8', stopOpacity:1}} />
+                        <stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254)', stopOpacity:1}} />
+                        <stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254)', stopOpacity:1}} />
                       </linearGradient>
                       <linearGradient id="layoutTierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor:'#60A5FA', stopOpacity:0.8}} />
-                        <stop offset="100%" style={{stopColor:'#3B82F6', stopOpacity:0.6}} />
+                        <stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
+                        <stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
                       </linearGradient>
                     </defs>
                     
@@ -102,7 +122,7 @@ export function Layout() {
                   </svg>
                 </motion.div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg tracking-tight group-hover:text-primary transition-colors leading-none">
+                  <span className="font-bold text-heading-24 tracking-tight group-hover:text-primary transition-colors leading-none">
                     Huntier
                   </span>
                 </div>
@@ -137,7 +157,7 @@ export function Layout() {
                   <Input
                     ref={searchRef}
                     placeholder="Search applications..."
-                    className="pl-8 pr-10 w-64 h-8 text-sm bg-background/50 border-border/50 focus:bg-background focus:border-primary/50 transition-all duration-200"
+                    className="pl-8 pr-10 w-64 h-8 text-sm bg-background/50 border-zinc-200/50 dark:border-zinc-800/50 focus:bg-background focus:border-primary/50 transition-all duration-200"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         navigate({ to: '/applications', search: { search: e.currentTarget.value } })

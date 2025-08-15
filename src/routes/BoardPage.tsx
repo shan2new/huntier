@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowRight, Building2, Calendar, Clock, GripVertical, MoveRight, Target, Trophy } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import { apiWithToken, transitionStage } from '../lib/api'
 import type { ApplicationListItem } from '../lib/api'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Building2, Calendar, Trophy, Target, GripVertical, Clock, ArrowRight, MoveRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatDateIndian } from '@/lib/utils'
@@ -13,37 +13,37 @@ const COLUMNS = [
     key: 'exploration', 
     title: 'Exploration', 
     icon: Target,
-    gradient: 'from-blue-500 to-indigo-600',
-    bgGradient: 'gradient-exploration',
+    gradient: 'primary',
+    bgGradient: 'bg-secondary text-secondary-foreground',
     stages: ['recruiter_outreach','applied_self','applied_referral','recruiter_discussion','pending_shortlist','interview_shortlist'] 
   },
   { 
     key: 'interviewing', 
     title: 'Interviewing', 
     icon: Calendar,
-    gradient: 'from-amber-500 to-orange-600',
-    bgGradient: 'gradient-interviewing',
+    gradient: 'primary',
+    bgGradient: 'bg-secondary text-secondary-foreground',
     stages: ['interview_scheduled','interview_rescheduled','interview_completed','interview_passed','interview_rejected'] 
   },
   { 
     key: 'post_interview', 
     title: 'Post-Interview', 
     icon: Trophy,
-    gradient: 'from-emerald-500 to-green-600',
-    bgGradient: 'gradient-post-interview',
+    gradient: 'primary',
+    bgGradient: 'bg-secondary text-secondary-foreground',
     stages: ['offer','rejected','on_hold','withdrawn','accepted'] 
   },
 ]
 
 const sourceConfig = {
-  applied_self: { icon: '🎯', label: 'Self Applied', color: 'bg-blue-100 text-blue-800' },
-  applied_referral: { icon: '🤝', label: 'Referral', color: 'bg-purple-100 text-purple-800' },
-  recruiter_outreach: { icon: '📞', label: 'Recruiter', color: 'bg-green-100 text-green-800' },
+  applied_self: { icon: 'self', label: 'Self Applied' },
+  applied_referral: { icon: 'ref', label: 'Referral' },
+  recruiter_outreach: { icon: 'rec', label: 'Recruiter' },
 }
 
 export function BoardPage() {
   const { getToken } = useAuth()
-  const [apps, setApps] = useState<ApplicationListItem[]>([])
+  const [apps, setApps] = useState<Array<ApplicationListItem>>([])
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,7 +53,7 @@ export function BoardPage() {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<ApplicationListItem[]>('/v1/applications', token!)
+        const data = await apiWithToken<Array<ApplicationListItem>>('/v1/applications', token!)
         setApps(data)
       } finally {
         setLoading(false)
@@ -119,7 +119,7 @@ export function BoardPage() {
         <motion.h1 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+          className="text-heading-32 tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
         >
           Application Board
         </motion.h1>
@@ -138,15 +138,15 @@ export function BoardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex items-center justify-between p-4 glass rounded-xl shadow-soft"
+        className="flex items-center justify-between p-4 rounded-xl border border-border bg-card"
       >
         <div className="flex items-center space-x-6">
           {COLUMNS.map((col, index) => {
             const count = apps.filter(app => app.milestone === col.key).length
             return (
               <div key={col.key} className="flex items-center space-x-2.5">
-                <div className={cn("p-1.5 rounded-lg bg-gradient-to-br", col.gradient)}>
-                  <col.icon className="h-3.5 w-3.5 text-white" />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <col.icon className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs font-medium">{col.title}</p>
@@ -180,14 +180,14 @@ export function BoardPage() {
             >
               <Card className={cn(
                 "h-fit min-h-[450px] transition-all duration-300",
-                isDropTarget ? "ring-2 ring-primary ring-offset-2 shadow-soft-lg" : "shadow-soft",
-                "glass"
+                isDropTarget ? "ring-2 ring-primary ring-offset-2" : "",
+                "border border-border bg-card"
               )}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
-                      <div className={cn("p-1.5 rounded-lg bg-gradient-to-br", col.gradient)}>
-                        <col.icon className="h-4 w-4 text-white" />
+                      <div className="p-1.5 rounded-lg bg-primary/10">
+                        <col.icon className="h-4 w-4 text-primary" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-base">{col.title}</h3>
@@ -196,7 +196,7 @@ export function BoardPage() {
                         </p>
                       </div>
                     </div>
-                    <Badge className={cn("text-xs font-medium", col.bgGradient)}>
+                    <Badge className="text-xs font-medium" variant="secondary">
                       {columnApps.length}
                     </Badge>
                   </CardTitle>
@@ -227,16 +227,14 @@ export function BoardPage() {
                         onDragStart={(e) => onDragStart(e as any, app.id)}
                         onDragEnd={onDragEnd}
                       >
-                        <Card className="bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/30 hover:shadow-soft transition-all duration-200">
+                        <Card className="bg-card/80 border border-border hover:border-primary/40 transition-all duration-200">
                           <CardContent className="p-3">
                             <div className="space-y-2.5">
                               {/* Header */}
                               <div className="flex items-start justify-between">
                                 <div className="flex items-center space-x-2 flex-1">
-                                  <div className="flex-shrink-0">
-                                    <span className="text-lg">
-                                      {sourceConfig[app.source as keyof typeof sourceConfig]?.icon}
-                                    </span>
+                                  <div className="flex-shrink-0 text-xs text-muted-foreground">
+                                    {sourceConfig[app.source as keyof typeof sourceConfig].label}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <h4 className="font-semibold text-sm truncate">{app.role}</h4>
@@ -250,13 +248,8 @@ export function BoardPage() {
                               
                               {/* Badges */}
                               <div className="flex flex-wrap gap-1.5">
-                                <Badge 
-                                  className={cn(
-                                    "text-xs font-medium px-1.5 py-0.5",
-                                    sourceConfig[app.source as keyof typeof sourceConfig]?.color
-                                  )}
-                                >
-                                  {sourceConfig[app.source as keyof typeof sourceConfig]?.label}
+                                <Badge className="text-xs font-medium px-1.5 py-0.5 bg-secondary text-secondary-foreground">
+                                  {sourceConfig[app.source as keyof typeof sourceConfig].label}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs px-1.5 py-0.5">
                                   {app.stage.replace('_', ' ')}
@@ -264,7 +257,7 @@ export function BoardPage() {
                               </div>
 
                               {/* Footer */}
-                              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/30">
+                              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/50">
                                 <div className="flex items-center space-x-1">
                                   <Clock className="h-2.5 w-2.5" />
                                   <span>{formatDateIndian(app.last_activity_at)}</span>
@@ -287,7 +280,7 @@ export function BoardPage() {
                         "flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed transition-all duration-300",
                         isDropTarget 
                           ? "border-primary bg-primary/5" 
-                          : "border-border/50 bg-muted/20"
+                          : "border-zinc-200/50 dark:border-zinc-800/50 bg-muted/20"
                       )}
                     >
                       <div className={cn("p-3 rounded-full mb-3 bg-gradient-to-br", col.gradient, "opacity-50")}>

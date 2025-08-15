@@ -1,3 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" fill="none">
+  <defs>
+    <linearGradient id="brand" x1="24" y1="24" x2="168" y2="168" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#16a34a"/>
+      <stop offset="1" stop-color="#0ea5a5"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="44" fill="#0B0B0C"/>
+  <circle cx="96" cy="96" r="64" stroke="url(#brand)" stroke-width="10" fill="none"/>
+  <g transform="translate(96 96) rotate(45)">
+    <rect x="-32" y="-32" width="64" height="64" rx="16" fill="url(#brand)"/>
+  </g>
+  <circle cx="96" cy="96" r="8" fill="#fff" fill-opacity="0.95"/>
+</svg>
+
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" fill="none">
   <defs>
     <linearGradient id="logo192Gradient" x1="0%" y1="0%" x2="100%" y2="100%">

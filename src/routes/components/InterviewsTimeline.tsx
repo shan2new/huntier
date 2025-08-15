@@ -70,11 +70,7 @@ export function InterviewsTimeline({
     <div className="space-y-6">
       {/* Add New Interview Button */}
       <div className="flex justify-end">
-        <Button 
-          onClick={handleCreate}
-          size="sm"
-          className="h-8"
-        >
+        <Button onClick={handleCreate} size="sm">
           <Plus className="h-4 w-4 mr-1.5" />
           Schedule Interview
         </Button>
@@ -83,7 +79,7 @@ export function InterviewsTimeline({
       {/* Interviews Timeline */}
       <div className="space-y-3">
         {items.length === 0 ? (
-          <Card className="glass border-border/20">
+          <Card className="border border-border">
             <CardContent className="p-12 text-center">
               <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No interviews scheduled</p>
@@ -97,7 +93,7 @@ export function InterviewsTimeline({
             const scheduledDate = new Date(interview.scheduled_at)
             
             return (
-              <Card key={interview.id} className="glass border-border/20 shadow-soft group">
+              <Card key={interview.id} className="border border-border group">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">

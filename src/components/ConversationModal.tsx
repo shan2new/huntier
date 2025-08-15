@@ -91,7 +91,7 @@ export function ConversationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg glass shadow-soft-lg border-border/20">
+      <DialogContent className="max-w-lg glass shadow-soft-lg border-zinc-200/20 dark:border-zinc-800/30">
         <motion.div 
           className="space-y-6"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -121,10 +121,10 @@ export function ConversationModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Medium</Label>
                 <Select value={medium} onValueChange={setMedium}>
-                  <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
                     <SelectValue placeholder="Select medium" />
                   </SelectTrigger>
-                                  <SelectContent className="bg-background border-border/50">
+                                  <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
                   {mediumOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -137,10 +137,10 @@ export function ConversationModal({
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Direction</Label>
                 <Select value={direction} onValueChange={setDirection}>
-                  <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
                     <SelectValue placeholder="Select direction" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border-border/50">
+                  <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
                     {directionOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -158,7 +158,7 @@ export function ConversationModal({
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Email subject line"
-                  className="bg-background/50 border-border/50"
+                  className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50"
                 />
               </div>
             )}
@@ -175,14 +175,14 @@ export function ConversationModal({
                     ? 'Email content or summary...' 
                     : 'Conversation notes or summary...'
                 }
-                className="bg-background/50 border-border/50 min-h-[120px] resize-none"
+                className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50 min-h-[120px] resize-none"
                 rows={6}
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border/10">
+          <div className="flex items-center justify-between pt-4 border-t border-zinc-200/10 dark:border-zinc-800/30">
             <div>
               {mode === 'edit' && onDelete && (
                 <Button

@@ -68,6 +68,11 @@ export async function scheduleInterview<T>(
   return apiWithToken(`/v1/applications/${appId}/interviews`, token, { method: 'POST', body: JSON.stringify(body) })
 }
 
+// Platforms
+export async function listPlatforms<T>(token: string): Promise<T> {
+  return apiWithToken(`/v1/platforms`, token)
+}
+
 // Companies
 export async function searchCompanies<T>(token: string, search?: string): Promise<T> {
   const query = search ? `?search=${encodeURIComponent(search)}` : ''
@@ -79,6 +84,15 @@ export async function createCompany<T>(token: string, website_url: string): Prom
     method: 'POST', 
     body: JSON.stringify({ website_url }) 
   })
+}
+
+// Profile (theme)
+export type UserProfile = { notice_period_days?: number | null; earliest_join_date?: string | null; theme?: 'light' | 'dark' | null }
+export async function getProfile<T = UserProfile>(token: string): Promise<T> {
+  return apiWithToken(`/v1/profile`, token)
+}
+export async function updateProfile<T = UserProfile>(token: string, body: Partial<UserProfile>): Promise<T> {
+  return apiWithToken(`/v1/profile`, token, { method: 'PATCH', body: JSON.stringify(body) })
 }
 
 

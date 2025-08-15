@@ -1,3 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <style>
+    :root { --brand-1: #16a34a; --brand-2: #10b981; --ring: #1f2937; }
+    @media (prefers-color-scheme: dark) {
+      :root { --brand-1: #16a34a; --brand-2: #0ea5a5; --ring: #e5e7eb; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="var(--brand-1)"/>
+      <stop offset="1" stop-color="var(--brand-2)"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Abstract compass/target mark (no characters) -->
+  <circle cx="32" cy="32" r="22" stroke="var(--ring)" stroke-opacity=".18" stroke-width="2" fill="none"/>
+  <circle cx="32" cy="32" r="16" stroke="url(#g)" stroke-width="6" stroke-linecap="round" filter="url(#s)"/>
+  <g transform="translate(32 32) rotate(45)">
+    <rect x="-8" y="-8" width="16" height="16" rx="4" fill="url(#g)" opacity="0.9"/>
+  </g>
+  <circle cx="32" cy="32" r="3.5" fill="white" fill-opacity="0.9"/>
+</svg>
+
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <defs>
     <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">

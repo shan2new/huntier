@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Globe, TrendingUp, Award, XCircle, Clock, BarChart3 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+// no cn needed
 
 type PlatformRow = {
   platform_id: string
@@ -15,17 +15,17 @@ type PlatformRow = {
   in_progress: number
 }
 
-const platformIcons: { [key: string]: string } = {
-  'LinkedIn': '💼',
-  'Instahyre': '🚀',
-  'Naukri': '📋',
-  'AngelList': '👼',
-  'Wellfound': '🌟',
-  'Indeed': '🔍',
-  'TopHire': '🎯',
-  'Cutshort': '✂️',
-  'Uplers': '⬆️',
-  'Other': '🌐'
+const platformIcons: { [key: string]: React.FC<{ className?: string }> } = {
+  LinkedIn: Globe,
+  Instahyre: TrendingUp,
+  Naukri: BarChart3,
+  AngelList: Award,
+  Wellfound: Award,
+  Indeed: Globe,
+  TopHire: TrendingUp,
+  Cutshort: Globe,
+  Uplers: TrendingUp,
+  Other: Globe,
 }
 
 export function PlatformsPage() {
@@ -140,7 +140,7 @@ export function PlatformsPage() {
             transition={{ delay: index * 0.05 }}
             whileHover={{ scale: 1.02 }}
           >
-            <Card className="glass shadow-soft hover:shadow-soft-lg transition-all duration-300">
+            <Card className="border border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
@@ -148,8 +148,8 @@ export function PlatformsPage() {
                     <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.description}</p>
                   </div>
-                  <div className={cn("p-3 rounded-xl bg-gradient-to-br shadow-soft", stat.gradient)}>
-                    <stat.icon className="h-6 w-6 text-white" />
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <stat.icon className="h-6 w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -164,12 +164,12 @@ export function PlatformsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className="glass shadow-soft-lg">
-          <CardHeader className="border-b border-border/50">
+        <Card className="border border-border">
+          <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
-                  <Globe className="h-5 w-5 text-white" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Globe className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-xl">Platform Performance</h3>
@@ -189,7 +189,7 @@ export function PlatformsPage() {
                 className="text-center py-16"
               >
                 <div className="mb-6">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center mb-4">
+                  <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary/10">
                     <Globe className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">No platform data yet</h3>
@@ -213,13 +213,16 @@ export function PlatformsPage() {
                       transition={{ delay: index * 0.05 }}
                       whileHover={{ scale: 1.01 }}
                     >
-                      <Card className="bg-card/50 hover:bg-card border border-border/50 hover:border-primary/20 transition-all duration-200">
+                      <Card className="bg-card/50 hover:bg-card border border-border transition-all duration-200">
                         <CardContent className="p-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
                               <div className="flex-shrink-0">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl">
-                                  {platformIcons[platform.platform_id] || platformIcons['Other']}
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                  {(() => {
+                                    const Icon = platformIcons[platform.platform_id] || platformIcons['Other']
+                                    return <Icon className="h-6 w-6 text-primary" />
+                                  })()}
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
@@ -258,14 +261,7 @@ export function PlatformsPage() {
                               </div>
 
                               <div className="flex flex-col space-y-1">
-                                <Badge 
-                                  className={cn(
-                                    "text-xs font-medium",
-                                    successRate >= 20 ? "bg-emerald-100 text-emerald-800" :
-                                    successRate >= 10 ? "bg-amber-100 text-amber-800" :
-                                    "bg-red-100 text-red-800"
-                                  )}
-                                >
+                                <Badge className="text-xs font-medium bg-secondary text-secondary-foreground">
                                   {successRate}% success
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">

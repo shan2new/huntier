@@ -33,12 +33,12 @@ const channelIcons: { [key: string]: React.ComponentType<{ className?: string }>
 }
 
 const channelColors: { [key: string]: string } = {
-  'email': 'bg-blue-100 text-blue-800',
-  'phone': 'bg-green-100 text-green-800',
-  'linkedin': 'bg-blue-100 text-blue-800',
-  'whatsapp': 'bg-emerald-100 text-emerald-800',
-  'telegram': 'bg-sky-100 text-sky-800',
-  'default': 'bg-gray-100 text-gray-800'
+  email: 'bg-secondary text-secondary-foreground',
+  phone: 'bg-secondary text-secondary-foreground',
+  linkedin: 'bg-secondary text-secondary-foreground',
+  whatsapp: 'bg-secondary text-secondary-foreground',
+  telegram: 'bg-secondary text-secondary-foreground',
+  default: 'bg-secondary text-secondary-foreground',
 }
 
 export function ReferrersPage() {
@@ -137,7 +137,7 @@ export function ReferrersPage() {
             transition={{ delay: index * 0.05 }}
             whileHover={{ scale: 1.02 }}
           >
-            <Card className="glass shadow-soft hover:shadow-soft-lg transition-all duration-300">
+            <Card className="border border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
@@ -145,8 +145,8 @@ export function ReferrersPage() {
                     <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.description}</p>
                   </div>
-                  <div className={cn("p-3 rounded-xl bg-gradient-to-br shadow-soft", stat.gradient)}>
-                    <stat.icon className="h-6 w-6 text-white" />
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <stat.icon className="h-6 w-6 text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -161,12 +161,12 @@ export function ReferrersPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className="glass shadow-soft-lg">
-          <CardHeader className="border-b border-border/50">
+        <Card className="border border-border">
+          <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600">
-                  <Users className="h-5 w-5 text-white" />
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-xl">Your Network</h3>
@@ -186,7 +186,7 @@ export function ReferrersPage() {
                 className="text-center py-16"
               >
                 <div className="mb-6">
-                  <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center mb-4">
+                  <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary/10">
                     <Users className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">No referrers yet</h3>
@@ -205,12 +205,12 @@ export function ReferrersPage() {
                     transition={{ delay: index * 0.05 }}
                     whileHover={{ scale: 1.01 }}
                   >
-                    <Card className="bg-card/50 hover:bg-card border border-border/50 hover:border-primary/20 transition-all duration-200">
+                    <Card className="bg-card/50 hover:bg-card border border-border transition-all duration-200">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="flex-shrink-0">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                                 <User className="h-6 w-6 text-primary" />
                               </div>
                             </div>

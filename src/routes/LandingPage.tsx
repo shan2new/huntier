@@ -80,12 +80,12 @@ export function LandingPage() {
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
 							<defs>
 								<linearGradient id="heroIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" style={{stopColor:'#3B82F6', stopOpacity:1}} />
-									<stop offset="100%" style={{stopColor:'#1D4ED8', stopOpacity:1}} />
+									<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254)', stopOpacity:1}} />
+									<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254)', stopOpacity:1}} />
 								</linearGradient>
 								<linearGradient id="heroTierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" style={{stopColor:'#60A5FA', stopOpacity:0.8}} />
-									<stop offset="100%" style={{stopColor:'#3B82F6', stopOpacity:0.6}} />
+									<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
+									<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
 								</linearGradient>
 							</defs>
 							
@@ -129,7 +129,7 @@ export function LandingPage() {
 					<div className="space-y-12">
 						<BlurFade delay={0.3} duration={0.6}>
 							<motion.div 
-								className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 text-primary text-sm font-medium shadow-soft"
+								className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-border text-primary text-sm font-medium"
 								whileHover={{ scale: 1.05, y: -2 }}
 								transition={{ duration: 0.2 }}
 							>
@@ -150,12 +150,12 @@ export function LandingPage() {
 						<BlurFade delay={0.5} duration={0.8}>
 							<div className="space-y-8">
 								<motion.h1 
-									className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight"
+									className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
 									whileHover={{ scale: 1.02 }}
 									transition={{ duration: 0.3 }}
 								>
 									<motion.span 
-										className="block bg-gradient-to-b from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent"
+										className="block text-foreground"
 										initial={{ opacity: 0, y: 20 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.6, duration: 0.6 }}
@@ -163,7 +163,7 @@ export function LandingPage() {
 										Job hunting is
 									</motion.span>
 									<motion.span 
-										className="block bg-gradient-to-r from-red-500 via-red-400 to-orange-400 bg-clip-text text-transparent"
+										className="block text-foreground"
 										initial={{ opacity: 0, y: 20 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.8, duration: 0.6 }}
@@ -171,7 +171,7 @@ export function LandingPage() {
 										exhausting.
 									</motion.span>
 									<motion.span 
-										className="block bg-gradient-to-r from-primary via-blue-500 to-cyan-400 bg-clip-text text-transparent mt-2"
+										className="block text-primary mt-2"
 										initial={{ opacity: 0, y: 20 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 1.0, duration: 0.6 }}
@@ -261,13 +261,9 @@ export function LandingPage() {
 										whileHover={{ scale: 1.02, y: -4 }}
 										whileTap={{ scale: 0.98 }}
 										transition={{ duration: 0.2 }}
-										className="relative group"
+										className="relative"
 									>
-										{/* Enhanced glow effect */}
-										<div className="absolute -inset-1 bg-gradient-to-r from-primary via-blue-500 to-cyan-400 opacity-20 group-hover:opacity-50 rounded-3xl blur-lg transition-all duration-500"></div>
-										<div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-primary/80 to-primary opacity-30 group-hover:opacity-60 rounded-2xl blur transition-all duration-300"></div>
-										
-										<Button size="lg" className="relative h-18 px-10 text-xl font-bold bg-gradient-to-r from-primary via-blue-600 to-primary hover:from-blue-600 hover:via-primary hover:to-blue-600 shadow-soft-lg hover:shadow-soft-lg border-0 rounded-2xl overflow-hidden">
+										<Button className="relative px-6 text-button-14">
 											{/* Animated background */}
 											<motion.div
 												className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
@@ -275,9 +271,9 @@ export function LandingPage() {
 												whileHover={{ x: '100%' }}
 												transition={{ duration: 0.6 }}
 											/>
-											<span className="relative flex items-center gap-4">
+											<span className="relative flex items-center gap-3">
 												<span className="flex flex-col items-start">
-													<span className="text-lg leading-none">Start your PEACEFUL HUNT</span>
+													<span className="leading-none">Start your PEACEFUL HUNT</span>
 												</span>
 												<motion.svg 
 													className="w-6 h-6"
@@ -310,7 +306,7 @@ export function LandingPage() {
 								].map((item, index) => (
 									<motion.div
 										key={item.text}
-										className="flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-accent/20 to-accent/10 border border-border/20 min-w-[140px] justify-center"
+										className="flex items-center gap-3 px-6 py-3 rounded-full border border-border min-w-[140px] justify-center"
 										initial={{ opacity: 0, y: 10 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 2.0 + index * 0.1, duration: 0.4 }}
@@ -335,7 +331,7 @@ export function LandingPage() {
 										transition={{ delay: 1.3, duration: 0.6 }}
 									>
 										<motion.h2 
-											className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
+											className="text-heading-32 md:text-heading-40 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
 											whileHover={{ scale: 1.02 }}
 											transition={{ duration: 0.3 }}
 										>
@@ -394,7 +390,7 @@ export function LandingPage() {
 									].map((item, index) => (
 										<BlurFade key={item.title} delay={1.5 + index * 0.15} duration={0.6}>
 											<motion.div 
-												className={`group relative h-full flex flex-col p-6 rounded-2xl bg-gradient-to-br ${item.gradient} backdrop-blur border border-border/20 hover:border-primary/30 transition-all duration-300 overflow-hidden`}
+												className={`group relative h-full flex flex-col p-6 rounded-2xl bg-gradient-to-br ${item.gradient} backdrop-blur border border-zinc-200/20 dark:border-zinc-800/30 hover:border-primary/30 transition-all duration-300 overflow-hidden`}
 												whileHover={{ scale: 1.02, y: -4 }}
 												transition={{ duration: 0.3, ease: "easeOut" }}
 											>
@@ -461,7 +457,7 @@ export function LandingPage() {
 			</main>
 
 			<BlurFade delay={2.2} duration={0.8}>
-				<footer className="relative w-full mt-32 border-t border-border/10 bg-gradient-to-b from-background/50 to-background/80 backdrop-blur-xl">
+				<footer className="relative w-full mt-32 border-t border-zinc-200/10 dark:border-zinc-800/30 bg-gradient-to-b from-background/50 to-background/80 backdrop-blur-xl">
 					{/* Subtle gradient overlay */}
 					<div className="absolute inset-0 bg-gradient-to-r from-primary/[0.02] via-transparent to-primary/[0.02]"></div>
 					
@@ -477,8 +473,8 @@ export function LandingPage() {
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
 										<defs>
 											<linearGradient id="footerIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-												<stop offset="0%" style={{stopColor:'#3B82F6', stopOpacity:0.8}} />
-												<stop offset="100%" style={{stopColor:'#1D4ED8', stopOpacity:0.6}} />
+												<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
+												<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
 											</linearGradient>
 										</defs>
 										<circle cx="24" cy="24" r="22" fill="url(#footerIconGradient)" opacity="0.1"/>
@@ -511,7 +507,7 @@ export function LandingPage() {
 								{/* Sign in CTA */}
 								<SignInButton mode="modal">
 									<motion.button 
-										className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-accent/30 to-accent/20 hover:from-accent/40 hover:to-accent/30 border border-border/30 text-sm font-medium text-foreground hover:text-foreground transition-all duration-200"
+										className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-accent/30 to-accent/20 hover:from-accent/40 hover:to-accent/30 border border-zinc-200/30 dark:border-zinc-800/30 text-sm font-medium text-foreground hover:text-foreground transition-all duration-200"
 										whileHover={{ scale: 1.02, y: -2 }}
 										transition={{ duration: 0.2 }}
 									>
@@ -531,7 +527,7 @@ export function LandingPage() {
 							</div>
 							
 							{/* Bottom section */}
-							<div className="w-full pt-8 border-t border-border/10">
+							<div className="w-full pt-8 border-t border-zinc-200/10 dark:border-zinc-800/30">
 								<div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground/60">
 									<div className="flex items-center gap-6">
 										<span>© 2025 Huntier</span>

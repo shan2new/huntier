@@ -99,7 +99,7 @@ export function InterviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md glass shadow-soft-lg border-border/20">
+      <DialogContent className="max-w-md glass shadow-soft-lg border-zinc-200/20 dark:border-zinc-800/30">
         <motion.div 
           className="space-y-6"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -128,10 +128,10 @@ export function InterviewModal({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Interview Type</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="bg-background/50 border-border/50">
+                <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
                   <SelectValue placeholder="Select interview type" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-border/50">
+                <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
                   {typeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -149,7 +149,7 @@ export function InterviewModal({
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-between font-normal bg-background/50 border-border/50",
+                        "w-full justify-between font-normal bg-background/50 border-zinc-200/50 dark:border-zinc-800/50",
                         !selectedDate && "text-muted-foreground"
                       )}
                     >
@@ -178,7 +178,7 @@ export function InterviewModal({
                   type="time"
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-background/50 border-border/50"
+                  className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50"
                 />
               </div>
             </div>
@@ -186,10 +186,10 @@ export function InterviewModal({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Mode</Label>
               <Select value={interviewMode} onValueChange={setInterviewMode}>
-                <SelectTrigger className="bg-background/50 border-border/50">
+                <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
                   <SelectValue placeholder="Select mode" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-border/50">
+                <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
                   {modeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -201,7 +201,7 @@ export function InterviewModal({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-border/10">
+          <div className="flex items-center justify-between pt-4 border-t border-zinc-200/10 dark:border-zinc-800/30">
             <div>
               {mode === 'edit' && onDelete && (
                 <Button

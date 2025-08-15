@@ -84,6 +84,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [editMode, setEditMode] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
 
   useEffect(() => {
     ;(async () => {
@@ -118,6 +119,17 @@ export function ProfilePage() {
     }
   }
 
+  async function toggleTheme() {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    document.documentElement.classList.toggle('dark', next === 'dark')
+    // Persist to profile
+    try {
+      const token = await getToken()
+      await fetch('/v1/profile', { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: next }) })
+    } catch {}
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
@@ -143,7 +155,7 @@ export function ProfilePage() {
           animate={{ opacity: 1, x: 0 }}
           className="space-y-1"
         >
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <h1 className="text-heading-32 tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Profile
           </h1>
           <p className="text-muted-foreground">Manage your professional profile and recruiter responses</p>
@@ -155,6 +167,9 @@ export function ProfilePage() {
           transition={{ delay: 0.2 }}
           className="flex items-center space-x-3"
         >
+          <Button variant="outline" size="sm" onClick={toggleTheme} className="h-8">
+            {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+          </Button>
           {saveSuccess && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
@@ -169,7 +184,7 @@ export function ProfilePage() {
           <Button
             variant="outline"
             onClick={() => setEditMode(!editMode)}
-            className="space-x-2"
+            className="space-x-2 text-button-14 h-9 px-4"
           >
             <Edit3 className="h-4 w-4" />
             <span>{editMode ? 'Cancel' : 'Edit'}</span>
@@ -178,7 +193,7 @@ export function ProfilePage() {
           <Button
             onClick={save}
             disabled={saving || !editMode}
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 space-x-2"
+            className="space-x-2 text-button-14 h-9 px-4"
           >
             {saving ? (
               <motion.div
@@ -203,11 +218,11 @@ export function ProfilePage() {
           className="space-y-4"
         >
           {/* User Card */}
-          <Card className="glass shadow-soft">
+          <Card className="border border-border">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center space-x-2 text-base">
-                <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
-                  <User className="h-3.5 w-3.5 text-white" />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <User className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <span>User Information</span>
               </CardTitle>
@@ -217,7 +232,7 @@ export function ProfilePage() {
                 <img
                   src={user?.imageUrl}
                   alt={user?.fullName || 'User'}
-                  className="w-12 h-12 rounded-full border-2 border-border/50"
+                  className="w-12 h-12 rounded-full border-2 border-border"
                 />
                 <div>
                   <h3 className="font-semibold">{user?.fullName}</h3>
@@ -228,11 +243,11 @@ export function ProfilePage() {
           </Card>
 
           {/* Basic Profile */}
-          <Card className="glass shadow-soft">
+          <Card className="border border-border">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center space-x-2 text-base">
-                <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
-                  <Settings className="h-3.5 w-3.5 text-white" />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Settings className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <span>Profile Settings</span>
               </CardTitle>
@@ -279,12 +294,12 @@ export function ProfilePage() {
           transition={{ delay: 0.2 }}
           className="lg:col-span-2 min-w-0"
         >
-          <Card className="glass shadow-soft-lg min-w-0 overflow-hidden hide-scrollbar">
-            <CardHeader className="border-b border-border/50">
+          <Card className="border border-border min-w-0 overflow-hidden hide-scrollbar">
+            <CardHeader className="border-b border-border">
               <CardTitle className="flex items-center justify-between min-w-0">
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex-shrink-0">
-                    <MessageSquare className="h-5 w-5 text-white" />
+                  <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                    <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-xl truncate">Recruiter Q&A</h3>
@@ -304,12 +319,12 @@ export function ProfilePage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="space-y-3 p-4 rounded-lg bg-background/30 border border-border/30 min-w-0"
+                    className="space-y-3 p-4 rounded-lg bg-background/30 border border-border/50 min-w-0"
                   >
                     <div className="flex items-start justify-between min-w-0">
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex-shrink-0">
-                          <field.icon className="h-4 w-4 text-white" />
+                        <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                          <field.icon className="h-4 w-4 text-primary" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <label className="font-medium text-sm block truncate">{field.label}</label>
@@ -331,7 +346,7 @@ export function ProfilePage() {
                       disabled={!editMode}
                       rows={3}
                       className={cn(
-                        "w-full min-w-0 max-w-full px-3 py-3 bg-background/50 border border-border/50 rounded-lg text-sm resize-none transition-all duration-200",
+                        "w-full min-w-0 max-w-full px-3 py-3 bg-background/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-sm resize-none transition-all duration-200",
                         "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
                         "overflow-hidden box-border break-words",
                         !editMode && "opacity-70"

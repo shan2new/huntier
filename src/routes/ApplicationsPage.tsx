@@ -1,48 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Target, UserPlus } from 'lucide-react'
 import { apiWithToken } from '../lib/api'
 import type { ApplicationListItem } from '../lib/api'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ExternalLink, Building2, Calendar, Activity, Target, Clock, Award, ChevronRight, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ApplicationModal } from '@/components/ApplicationModal'
-import { cn, formatDateIndian } from '@/lib/utils'
+import { formatDateIndian } from '@/lib/utils'
 
 const milestoneConfig = {
-  exploration: {
-    label: 'Exploration',
-    color: 'from-blue-500 to-indigo-600',
-    bgColor: 'gradient-exploration',
-    textColor: 'text-blue-700',
-    icon: Target,
-  },
-  interviewing: {
-    label: 'Interviewing', 
-    color: 'from-amber-500 to-orange-600',
-    bgColor: 'gradient-interviewing',
-    textColor: 'text-amber-700',
-    icon: Calendar,
-  },
-  post_interview: {
-    label: 'Post Interview',
-    color: 'from-emerald-500 to-green-600', 
-    bgColor: 'gradient-post-interview',
-    textColor: 'text-emerald-700',
-    icon: Award,
-  },
+  exploration: { label: 'Exploration', icon: Target },
+  interviewing: { label: 'Interviewing', icon: Calendar },
+  post_interview: { label: 'Post Interview', icon: Award },
 }
 
 const sourceConfig = {
-  applied_self: { icon: '🎯', label: 'Self Applied', color: 'bg-blue-100 text-blue-800' },
-  applied_referral: { icon: '🤝', label: 'Referral', color: 'bg-purple-100 text-purple-800' },
-  recruiter_outreach: { icon: '📞', label: 'Recruiter', color: 'bg-green-100 text-green-800' },
+  applied_self: { icon: UserPlus, label: 'Self Applied' },
+  applied_referral: { icon: Handshake, label: 'Referral' },
+  recruiter_outreach: { icon: Phone, label: 'Recruiter' },
 }
 
 export function ApplicationsPage() {
   const { getToken } = useAuth()
-  const [apps, setApps] = useState<ApplicationListItem[]>([])
+  const [apps, setApps] = useState<Array<ApplicationListItem>>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'view' | 'edit'>('create')
@@ -54,7 +36,7 @@ export function ApplicationsPage() {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<ApplicationListItem[]>(`/v1/applications?search=${encodeURIComponent(search)}`, token!)
+        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications?search=${encodeURIComponent(search)}`, token!)
         setApps(data)
       } finally {
         setLoading(false)
@@ -74,7 +56,7 @@ export function ApplicationsPage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className="space-y-8"
     >
       {/* Header */}
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
@@ -83,25 +65,22 @@ export function ApplicationsPage() {
           animate={{ opacity: 1, x: 0 }}
           className="space-y-1"
         >
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Applications
-          </h1>
-          <p className="text-muted-foreground">Track and manage your job applications with style</p>
+          <h1 className="text-2xl text-foreground tracking-tight">Applications</h1>
+          <p className="text-sm text-muted-foreground">Track and manage your job applications</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Button 
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-soft hover:shadow-soft-lg transition-all duration-200"
+          <Button
+            size="sm"
             onClick={() => {
               setModalMode('create')
               setSelectedAppId(undefined)
               setModalOpen(true)
             }}
           >
-            <Plus className="h-4 w-4 mr-2" />
             Add Application
           </Button>
         </motion.div>
@@ -109,7 +88,7 @@ export function ApplicationsPage() {
 
       {/* Enhanced Stats Cards */}
       <motion.div 
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -119,7 +98,6 @@ export function ApplicationsPage() {
             label: 'Total Applications', 
             value: stats.total, 
             icon: Building2, 
-            gradient: 'from-blue-500 to-indigo-600',
             change: '+12%',
             description: 'Applications this month'
           },
@@ -127,7 +105,6 @@ export function ApplicationsPage() {
             label: 'Active Pipeline', 
             value: stats.active, 
             icon: Activity, 
-            gradient: 'from-emerald-500 to-green-600',
             change: '+8%',
             description: 'Currently in progress'
           },
@@ -135,7 +112,6 @@ export function ApplicationsPage() {
             label: 'Interviewing', 
             value: stats.interviewing, 
             icon: Calendar, 
-            gradient: 'from-amber-500 to-orange-600',
             change: '+23%',
             description: 'Interview scheduled'
           },
@@ -143,7 +119,6 @@ export function ApplicationsPage() {
             label: 'Offers Received', 
             value: stats.offers, 
             icon: Award, 
-            gradient: 'from-purple-500 to-pink-600',
             change: '+15%',
             description: 'Success rate improving'
           },
@@ -155,24 +130,21 @@ export function ApplicationsPage() {
             transition={{ delay: index * 0.05 }}
             whileHover={{ scale: 1.02 }}
           >
-            <Card className="relative overflow-hidden glass shadow-soft hover:shadow-soft-lg transition-all duration-200 hide-scrollbar">
-              <CardContent className="p-4">
+            <Card className="relative overflow-hidden border border-border bg-card transition-all duration-200">
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
                     <div className="flex items-baseline space-x-1.5">
                       <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
-                      <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">
-                        {stat.change}
-                      </span>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">{stat.change}</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{stat.description}</p>
                   </div>
-                  <div className={cn("p-2 rounded-lg bg-gradient-to-br shadow-soft", stat.gradient)}>
-                    <stat.icon className="h-5 w-5 text-white" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <stat.icon className="h-5 w-5 text-primary" />
                   </div>
                 </div>
-                <div className={cn("absolute bottom-0 left-0 h-0.5 bg-gradient-to-r", stat.gradient)} style={{ width: '100%' }} />
               </CardContent>
             </Card>
           </motion.div>
@@ -185,8 +157,8 @@ export function ApplicationsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className="glass shadow-soft-lg">
-          <CardHeader className="border-b border-border/50 pb-3">
+        <Card>
+          <CardHeader className="border-b border-border">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">Your Applications</CardTitle>
               <Badge variant="outline" className="text-xs">
@@ -194,18 +166,18 @@ export function ApplicationsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent"
+                  className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin"
                 />
               </div>
             ) : (
               <AnimatePresence>
-                <div className="space-y-3">
+                <div className="divide-y divide-border">
                   {apps.map((app, index) => (
                     <motion.div
                       key={app.id}
@@ -213,29 +185,29 @@ export function ApplicationsPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ delay: index * 0.02 }}
-                      whileHover={{ scale: 1.01 }}
                       className="group"
                     >
-                      <Card 
-                        className="cursor-pointer transition-all duration-300 hover:shadow-soft border border-border/50 hover:border-primary/20 bg-card/50 hover:bg-card"
+                      <div 
+                        className="cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
                         onClick={() => {
                           setModalMode('view')
                           setSelectedAppId(app.id)
                           setModalOpen(true)
                         }}
                       >
-                        <CardContent className="p-4">
+                        <div>
                           <div className="flex items-start justify-between">
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center space-x-2.5">
                                 <div className="flex-shrink-0">
-                                  <span className="text-xl">
-                                    {sourceConfig[app.source as keyof typeof sourceConfig]?.icon}
-                                  </span>
+                                  {(() => {
+                                    const Icon = sourceConfig[app.source as keyof typeof sourceConfig]?.icon || UserPlus
+                                    return <Icon className="h-4 w-4 text-muted-foreground" />
+                                  })()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center space-x-2">
-                                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors truncate">
+                                    <h3 className="font-medium text-base text-foreground group-hover:text-primary transition-colors truncate">
                                       {app.role}
                                     </h3>
                                     <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
@@ -246,7 +218,7 @@ export function ApplicationsPage() {
                                         <img
                                           src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
                                           alt={app.company.name}
-                                          className="h-4 w-4 rounded-sm border border-border/50 object-cover"
+                                          className="h-4 w-4 rounded-sm border border-border object-cover"
                                         />
                                       ) : (
                                         <Building2 className="h-3 w-3" />
@@ -265,21 +237,10 @@ export function ApplicationsPage() {
                             
                             <div className="flex items-center space-x-2.5 shrink-0">
                               <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                                <Badge 
-                                  className={cn(
-                                    "text-xs font-medium px-2 py-0.5",
-                                    sourceConfig[app.source as keyof typeof sourceConfig]?.color
-                                  )}
-                                >
+                                <Badge className="text-xs font-medium px-2 py-0.5 bg-secondary text-secondary-foreground">
                                   {sourceConfig[app.source as keyof typeof sourceConfig]?.label}
                                 </Badge>
-                                <Badge 
-                                  className={cn(
-                                    "text-xs font-medium px-2 py-0.5",
-                                    milestoneConfig[app.milestone as keyof typeof milestoneConfig]?.textColor,
-                                    milestoneConfig[app.milestone as keyof typeof milestoneConfig]?.bgColor
-                                  )}
-                                >
+                                <Badge className="text-xs font-medium px-2 py-0.5" variant="outline">
                                   {milestoneConfig[app.milestone as keyof typeof milestoneConfig]?.label}
                                 </Badge>
                                 {/* Only show stage if it's not redundant with source */}
@@ -294,8 +255,8 @@ export function ApplicationsPage() {
                               </div>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
@@ -309,7 +270,7 @@ export function ApplicationsPage() {
                 className="text-center py-12"
               >
                 <div className="mb-4">
-                  <div className="mx-auto w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center mb-3">
+                  <div className="mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-primary/10">
                     <Building2 className="h-6 w-6 text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold mb-1">No applications yet</h3>

@@ -97,7 +97,7 @@ export function ConversationFeed({
       {/* Conversations List */}
       <div className="space-y-4">
         {sortedItems.length === 0 ? (
-          <Card className="glass border-border/20">
+          <Card className="border border-border">
             <CardContent className="p-12 text-center">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">No conversations yet</p>
@@ -112,7 +112,7 @@ export function ConversationFeed({
             const createdDate = conversation.created_at ? new Date(conversation.created_at) : new Date()
             
             return (
-              <Card key={conversation.id} className="glass border-border/20 shadow-soft group">
+              <Card key={conversation.id} className="border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">

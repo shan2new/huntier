@@ -6,7 +6,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <img src="/logo192.svg?v=2" alt="logo" className="w-8 h-8" />
+          <img src="/logo192.svg?v=4" alt="Huntier logo" className="w-8 h-8" />
           <div className="flex flex-col">
             <span className="text-lg font-bold text-foreground">Huntier</span>
             <span className="text-xs text-muted-foreground font-medium -mt-1">Job hunting, simplified</span>

@@ -13,18 +13,18 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.svg?v=2",
+      "src": "logo192.svg?v=4",
       "type": "image/svg+xml",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.svg?v=2",
+      "src": "logo512.svg?v=4",
       "type": "image/svg+xml",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#3B82F6",
+  "theme_color": "#06b6d4",
   "background_color": "#ffffff"
 }

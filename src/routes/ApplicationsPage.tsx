@@ -27,7 +27,7 @@ export function ApplicationsPage() {
   const [apps, setApps] = useState<Array<ApplicationListItem>>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'view' | 'edit'>('create')
+  const [modalMode, setModalMode] = useState<'create' | 'view'>('create')
   const [selectedAppId, setSelectedAppId] = useState<string | undefined>()
   const search = new URLSearchParams(globalThis.location.search).get('search') || ''
 
@@ -59,7 +59,7 @@ export function ApplicationsPage() {
       className="space-y-8"
     >
       {/* Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+      <div className="flex space-y-4 flex-row items-center justify-between">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -81,7 +81,7 @@ export function ApplicationsPage() {
               setModalOpen(true)
             }}
           >
-            Add Application
+            Add
           </Button>
         </motion.div>
       </div>
@@ -160,7 +160,12 @@ export function ApplicationsPage() {
         <Card>
           <CardHeader className="border-b border-border">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Your Applications</CardTitle>
+              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <span>Applications</span>
+                </CardTitle>
               <Badge variant="outline" className="text-xs">
                 {apps.length} {apps.length === 1 ? 'application' : 'applications'}
               </Badge>
@@ -196,8 +201,8 @@ export function ApplicationsPage() {
                         }}
                       >
                         <div>
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 space-y-2">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div className="flex-1 space-y-2 min-w-0">
                               <div className="flex items-center space-x-2.5">
                                 <div className="flex-shrink-0">
                                   {(() => {
@@ -206,13 +211,13 @@ export function ApplicationsPage() {
                                   })()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center space-x-2">
+                                  <div className="flex items-center space-x-2 min-w-0">
                                     <h3 className="font-medium text-base text-foreground group-hover:text-primary transition-colors truncate">
                                       {app.role}
                                     </h3>
                                     <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                                   </div>
-                                  <div className="flex items-center space-x-3 mt-0.5 text-xs text-muted-foreground">
+                                  <div className="flex items-center space-x-3 mt-0.5 text-xs text-muted-foreground min-w-0">
                                     <span className="flex items-center space-x-1">
                                       {app.company?.logo_blob_base64 ? (
                                         <img
@@ -223,7 +228,7 @@ export function ApplicationsPage() {
                                       ) : (
                                         <Building2 className="h-3 w-3" />
                                       )}
-                                      <span>{app.company?.name ?? `Company ${app.company_id.slice(0, 8)}...`}</span>
+                                      <span className="truncate max-w-[12rem] sm:max-w-none">{app.company?.name ?? `Company ${app.company_id.slice(0, 8)}...`}</span>
                                     </span>
                                     <span>•</span>
                                     <span className="flex items-center space-x-1">
@@ -234,8 +239,8 @@ export function ApplicationsPage() {
                                 </div>
                               </div>
                             </div>
-                            
-                            <div className="flex items-center space-x-2.5 shrink-0">
+
+                            <div className="flex items-center space-x-2.5 sm:self-start sm:justify-end">
                               <div className="flex items-center space-x-1.5 whitespace-nowrap">
                                 <Badge className="text-xs font-medium px-2 py-0.5 bg-secondary text-secondary-foreground">
                                   {sourceConfig[app.source as keyof typeof sourceConfig]?.label}

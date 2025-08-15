@@ -86,6 +86,11 @@ export async function createCompany<T>(token: string, website_url: string): Prom
   })
 }
 
+// Single company by id
+export async function getCompanyById<T>(token: string, id: string): Promise<T> {
+  return apiWithToken(`/v1/companies/${id}`, token)
+}
+
 // Profile (theme)
 export type UserProfile = { notice_period_days?: number | null; earliest_join_date?: string | null; theme?: 'light' | 'dark' | null }
 export async function getProfile<T = UserProfile>(token: string): Promise<T> {

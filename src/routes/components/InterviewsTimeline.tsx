@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { InterviewModal } from '@/components/InterviewModal'
-import { Calendar, Video, Users, CheckCircle, Plus, Edit, MapPin, Phone, Clock } from 'lucide-react'
+import { Calendar, Video, Users, CheckCircle, Edit, MapPin, Phone, Clock } from 'lucide-react'
 
 const typeIcons = {
   phone_screen: Phone,
@@ -70,10 +70,7 @@ export function InterviewsTimeline({
     <div className="space-y-6">
       {/* Add New Interview Button */}
       <div className="flex justify-end">
-        <Button onClick={handleCreate} size="sm">
-          <Plus className="h-4 w-4 mr-1.5" />
-          Schedule Interview
-        </Button>
+        <Button onClick={handleCreate} size="sm">Schedule Interview</Button>
       </div>
 
       {/* Interviews Timeline */}

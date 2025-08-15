@@ -14,7 +14,7 @@ import {
   TrendingUp,
 
   Save,
-  Edit3,
+
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
@@ -167,44 +167,43 @@ export function ProfilePage() {
           transition={{ delay: 0.2 }}
           className="flex items-center space-x-3"
         >
-          <Button variant="outline" size="sm" onClick={toggleTheme} className="h-8">
+          <Button variant="outline" size="sm" onClick={toggleTheme}>
             {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
           </Button>
           {saveSuccess && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2 text-emerald-600"
+              className="flex items-center"
             >
-              <CheckCircle className="h-4 w-4" />
               <span className="text-sm font-medium">Saved successfully!</span>
             </motion.div>
           )}
           
           <Button
             variant="outline"
+            size="sm"
             onClick={() => setEditMode(!editMode)}
-            className="space-x-2 text-button-14 h-9 px-4"
+
           >
-            <Edit3 className="h-4 w-4" />
             <span>{editMode ? 'Cancel' : 'Edit'}</span>
           </Button>
           
           <Button
+            size="sm"
             onClick={save}
             disabled={saving || !editMode}
-            className="space-x-2 text-button-14 h-9 px-4"
           >
             {saving ? (
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="h-4 w-4 rounded-full border-2 border-white border-t-transparent"
+                className="h-2 w-2 rounded-full border-2 border-white border-t-transparent"
               />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="h-2 w-2" />
             )}
-            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            <span>{saving ? 'Saving...' : 'Save'}</span>
           </Button>
         </motion.div>
       </div>

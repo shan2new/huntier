@@ -87,40 +87,13 @@ export function Layout() {
               className="flex items-center space-x-2.5"
             >
               <Link to="/applications" className="flex items-center space-x-2.5 group">
-                <motion.div
+                <motion.img
                   whileHover={{ scale: 1.05, rotate: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  className="relative flex h-8 w-8 items-center justify-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
-                    <defs>
-                      <linearGradient id="layoutIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254)', stopOpacity:1}} />
-                        <stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254)', stopOpacity:1}} />
-                      </linearGradient>
-                      <linearGradient id="layoutTierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
-                        <stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
-                      </linearGradient>
-                    </defs>
-                    
-                    {/* Background circle for better icon definition */}
-                    <circle cx="24" cy="24" r="22" fill="url(#layoutIconGradient)" opacity="0.1"/>
-                    
-                    {/* H symbol with tier elements for icon */}
-                    <g fill="url(#layoutIconGradient)">
-                      {/* Main H structure */}
-                      <rect x="12" y="12" width="4" height="24" rx="2"/>
-                      <rect x="32" y="12" width="4" height="24" rx="2"/>
-                      <rect x="12" y="22" width="24" height="4" rx="2"/>
-                      
-                      {/* Tier steps ascending - simplified for icon */}
-                      <rect x="38" y="32" width="6" height="2" rx="1" fill="url(#layoutTierGradient)"/>
-                      <rect x="40" y="28" width="6" height="2" rx="1" fill="url(#layoutTierGradient)"/>
-                      <rect x="42" y="24" width="4" height="2" rx="1" fill="url(#layoutIconGradient)"/>
-                    </g>
-                  </svg>
-                </motion.div>
+                  src="/logo192.svg?v=4"
+                  alt="Huntier logo"
+                  className="h-8 w-8"
+                />
                 <div className="flex flex-col">
                   <span className="font-bold text-heading-24 tracking-tight group-hover:text-primary transition-colors leading-none">
                     Huntier

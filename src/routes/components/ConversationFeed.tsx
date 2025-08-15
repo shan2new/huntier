@@ -9,7 +9,6 @@ import {
   Mail, 
   Phone, 
   Video,
-  Plus, 
   Edit,
   ArrowUp,
   ArrowDown
@@ -87,10 +86,8 @@ export function ConversationFeed({
         <Button 
           onClick={handleCreate}
           size="sm"
-          className="h-8"
         >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Add Conversation
+          Add
         </Button>
       </div>
 

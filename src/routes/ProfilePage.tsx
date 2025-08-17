@@ -419,25 +419,6 @@ export function ProfilePage() {
                   </motion.div>
                 ))}
               </div>
-
-              {!editMode && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mt-6 p-4 bg-blue-50 border border-primary/20 rounded-lg"
-                >
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-primary mb-1">Pro Tip</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Having pre-written responses helps you quickly reply to recruiters and maintain consistency across conversations.
-                        Click "Edit" to update your responses.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
             </CardContent>
           </Card>
         </motion.div>

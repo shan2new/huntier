@@ -96,63 +96,6 @@ export function ApplicationsPage() {
           transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
           className="flex items-center gap-2"
         >
-          <Select
-            value={platformId || 'all'}
-            onValueChange={(val) => {
-              const next = val === 'all' ? '' : val
-              setPlatformId(next)
-              const qs = new URLSearchParams(globalThis.location.search)
-              if (next) qs.set('platform_id', next)
-              else qs.delete('platform_id')
-              if (search) qs.set('search', search)
-              else qs.delete('search')
-              const query = qs.toString()
-              window.history.replaceState(null, '', query ? `?${query}` : globalThis.location.pathname)
-            }}
-          >
-            <SelectTrigger size="sm">
-              <SelectValue placeholder="All platforms">
-                {platformId ? (
-                  <span className="flex items-center gap-2">
-                    {(() => {
-                      const sel = platforms.find((pl) => pl.id === platformId)
-                      return sel?.logo_blob_base64 ? (
-                        <img
-                          src={sel.logo_blob_base64.startsWith('data:') ? sel.logo_blob_base64 : `data:image/png;base64,${sel.logo_blob_base64}`}
-                          alt={sel.name}
-                          className="h-4 w-4 rounded-sm border border-border object-cover"
-                        />
-                      ) : (
-                        <Building2 className="h-3 w-3" />
-                      )
-                    })()}
-                    <span className="truncate max-w-[10rem]">{platforms.find((pl) => pl.id === platformId)?.name ?? 'Platform'}</span>
-                  </span>
-                ) : (
-                  'All platforms'
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All platforms</SelectItem>
-              {platforms.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  <span className="flex items-center gap-2">
-                    {p.logo_blob_base64 ? (
-                      <img
-                        src={p.logo_blob_base64.startsWith('data:') ? p.logo_blob_base64 : `data:image/png;base64,${p.logo_blob_base64}`}
-                        alt={p.name}
-                        className="h-4 w-4 rounded-sm border border-border object-cover"
-                      />
-                    ) : (
-                      <Building2 className="h-3 w-3" />
-                    )}
-                    <span>{p.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Button
             size="sm"
             onClick={() => {
@@ -208,7 +151,7 @@ export function ApplicationsPage() {
             transition={{ duration: 0.3, delay: 0.3 + (index * 0.1), ease: "easeOut" }}
             whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           >
-            <Card className="relative overflow-hidden border border-border bg-card transition-all duration-200">
+            <Card className="relative overflow-hidden border border-border shadow-xs bg-card transition-all duration-200">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
@@ -236,15 +179,15 @@ export function ApplicationsPage() {
         transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
         <Card>
-          <CardHeader className="border-b border-border py-2">
+          <CardHeader className="border-b border-border py-2 bg-accent/40">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <div className="rounded-lg bg-primary/10">
-                  <ClipboardList className="h-5 w-5 text-primary" />
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <div className="rounded-lg bg-primary/10">
+                  <ClipboardList className="h-4 w-4 text-primary" />
                 </div>
-                <span>Applications</span>
+                <span className="light:text-zinc-800">Applications</span>
                 </CardTitle>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs text-zinc-800 bg-zinc-100">
                 {apps.length} {apps.length === 1 ? 'application' : 'applications'}
               </Badge>
             </div>

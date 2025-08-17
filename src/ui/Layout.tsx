@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
-import { BarChart3, Command, Globe, Kanban, Search, User, Users } from 'lucide-react'
+import { BarChart3, Kanban, Search, User } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -26,9 +26,10 @@ export function Layout() {
   // Do not place hooks after conditional returns; attach global hotkey listener unconditionally
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey) && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault()
-        searchRef.current?.focus()
+        // Show coming soon message since search is disabled
+        alert('Global search coming soon!')
       }
     }
     window.addEventListener('keydown', onKey)
@@ -67,13 +68,11 @@ export function Layout() {
   const navItems = [
     { to: '/applications', label: 'Applications', icon: BarChart3 },
     { to: '/board', label: 'Board', icon: Kanban },
-    { to: '/platforms', label: 'Platforms', icon: Globe },
-    { to: '/referrers', label: 'Referrers', icon: Users },
     { to: '/profile', label: 'Profile', icon: User },
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-accent/20">
       <motion.header 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -127,21 +126,16 @@ export function Layout() {
                 className="relative hidden md:block"
               >
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
                   <Input
                     ref={searchRef}
-                    placeholder="Search applications..."
-                    className="pl-8 pr-10 w-64 h-8 text-sm bg-background/50 border-zinc-200/50 dark:border-zinc-800/50 focus:bg-background focus:border-primary/50 transition-all duration-200"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        navigate({ to: '/applications', search: { search: e.currentTarget.value } })
-                      }
-                    }}
+                    placeholder="Search..."
+                    disabled
+                    className="pl-8 pr-24 w-64 h-8 text-sm bg-background/30 border-zinc-200/30 dark:border-zinc-800/30 cursor-not-allowed opacity-60"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                    <Command className="h-2.5 w-2.5 text-muted-foreground" />
-                    <Badge variant="outline" className="text-xs px-1 py-0 h-4 text-[10px]">
-                      /
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5 text-[10px] bg-muted/50 text-muted-foreground border-0">
+                      Coming Soon
                     </Badge>
                   </div>
                 </div>

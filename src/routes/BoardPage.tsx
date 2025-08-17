@@ -115,26 +115,6 @@ export function BoardPage() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-6"
     >
-      {/* Header */}
-      <div className="space-y-1">
-        <motion.h1 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="text-heading-32 tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
-        >
-          Application Board
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
-          className="text-muted-foreground"
-        >
-          Drag and drop to move applications through your pipeline
-        </motion.p>
-      </div>
-
       {/* Pipeline Stats */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -183,7 +163,7 @@ export function BoardPage() {
               <Card className={cn(
                 "h-fit min-h-[450px] transition-all duration-300",
                 isDropTarget ? "ring-2 ring-primary ring-offset-2" : "",
-                "border border-border bg-card"
+                "bg-accent/40"
               )}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between">
@@ -286,7 +266,7 @@ export function BoardPage() {
                       )}
                     >
                       <div className={cn("p-3 rounded-full mb-3 bg-gradient-to-br", col.gradient, "opacity-50")}>
-                        <col.icon className="h-6 w-6 text-white" />
+                        <col.icon className="h-6 w-6 text-foreground" />
                       </div>
                       <h4 className="font-medium mb-1 text-sm">No applications here</h4>
                       <p className="text-xs text-muted-foreground mb-2">

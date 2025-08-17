@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { AlertCircle, Building2 } from 'lucide-react'
 import type { ApplicationListItem, Company } from '@/lib/api'
 import { apiWithToken, getApplication, getCompanyById } from '@/lib/api'

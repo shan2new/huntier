@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { BarChart3, Command, Globe, Kanban, Search, User, Users } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { getProfile } from '@/lib/api'
+import logo512 from '/logo512.svg'
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -90,7 +91,7 @@ export function Layout() {
                 <motion.img
                   whileHover={{ scale: 1.05, rotate: 3 }}
                   whileTap={{ scale: 0.95 }}
-                  src="/logo192.svg?v=4"
+                  src={logo512}
                   alt="Huntier logo"
                   className="h-8 w-8"
                 />

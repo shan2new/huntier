@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, Building2, Calendar, Clock, GripVertical, MoveRight, Target, Trophy } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import { apiWithToken, transitionStage } from '../lib/api'

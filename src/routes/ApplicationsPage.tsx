@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { Activity, Award, Building2, Calendar, ChevronRight, ClipboardList, Clock, ExternalLink, Handshake, Phone, Target, UserPlus } from 'lucide-react'
 import { apiWithToken, listPlatforms } from '../lib/api'
 import type { ApplicationListItem, Platform } from '../lib/api'

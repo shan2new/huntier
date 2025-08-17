@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { motion } from 'framer-motion'
 import { Award, BarChart3, Clock, Globe, TrendingUp, XCircle } from 'lucide-react'
 import { apiWithToken } from '../lib/api'
+import { MotionEffect } from '@/components/animate-ui/effects/motion-effect'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // no cn needed
@@ -62,47 +62,29 @@ export function PlatformsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent"
-        />
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
-    >
+    <MotionEffect fade slide={{ direction: 'up', offset: 20 }} className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <motion.h1 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
-        >
-          Platform Analytics
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-lg text-muted-foreground"
-        >
-          Track your success across different job platforms and optimize your strategy
-        </motion.p>
+        <MotionEffect fade slide={{ direction: 'left', offset: 20 }}>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Platform Analytics
+          </h1>
+        </MotionEffect>
+        <MotionEffect fade slide={{ direction: 'left', offset: 20 }} delay={0.1}>
+          <p className="text-lg text-muted-foreground">
+            Track your success across different job platforms and optimize your strategy
+          </p>
+        </MotionEffect>
       </div>
 
       {/* Overview Stats */}
-      <motion.div 
-        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
+      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.1} className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
           { 
             label: 'Total Applications', 
@@ -133,12 +115,11 @@ export function PlatformsPage() {
             description: 'Successful outcomes'
           },
         ].map((stat, index) => (
-          <motion.div
+          <MotionEffect
             key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.02 }}
+            fade 
+            slide={{ direction: 'up', offset: 20 }}
+            delay={index * 0.05}
           >
             <Card className="border border-border bg-card">
               <CardContent className="p-6">
@@ -154,16 +135,12 @@ export function PlatformsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </MotionEffect>
         ))}
-      </motion.div>
+      </MotionEffect>
 
       {/* Platform Breakdown */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.2}>
         <Card className="border border-border">
           <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center justify-between">
@@ -183,11 +160,7 @@ export function PlatformsPage() {
           </CardHeader>
           <CardContent className="p-6">
             {rows.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-16"
-              >
+              <MotionEffect fade className="text-center py-16">
                 <div className="mb-6">
                   <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-primary/10">
                     <Globe className="h-8 w-8 text-primary" />
@@ -197,7 +170,7 @@ export function PlatformsPage() {
                     Start applying through different platforms to see analytics and performance metrics here.
                   </p>
                 </div>
-              </motion.div>
+              </MotionEffect>
             ) : (
               <div className="space-y-4">
                 {rows.map((platform, index) => {
@@ -206,12 +179,11 @@ export function PlatformsPage() {
                   const platformName = platform.platform_id.slice(0, 8) + '...'
                   
                   return (
-                    <motion.div
+                    <MotionEffect
                       key={platform.platform_id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.01 }}
+                      fade
+                      slide={{ direction: 'left', offset: 20 }}
+                      delay={index * 0.05}
                     >
                       <Card className="bg-card/50 hover:bg-card border border-border transition-all duration-200">
                         <CardContent className="p-6">
@@ -272,15 +244,15 @@ export function PlatformsPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </MotionEffect>
                   )
                 })}
               </div>
             )}
           </CardContent>
         </Card>
-      </motion.div>
-    </motion.div>
+      </MotionEffect>
+    </MotionEffect>
   )
 }
 

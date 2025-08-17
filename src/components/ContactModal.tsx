@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { MotionEffect } from '@/components/animate-ui/effects/motion-effect'
 import { User, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -124,12 +124,7 @@ export function ContactModal({
 
           {/* Content */}
           <div className="p-6 space-y-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="space-y-6"
-            >
+            <MotionEffect fade className="space-y-6">
               {/* Avatar and Name Section */}
               <div className="flex items-start gap-4">
                 {/* Avatar */}
@@ -202,17 +197,14 @@ export function ContactModal({
 
               {/* Error Message */}
               {error && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="flex items-center space-x-2 text-destructive text-sm"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  <span>{error}</span>
-                </motion.div>
+                <MotionEffect fade>
+                  <div className="flex items-center space-x-2 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
+                  </div>
+                </MotionEffect>
               )}
-            </motion.div>
+            </MotionEffect>
           </div>
 
           {/* Footer */}

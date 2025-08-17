@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { motion, useMotionValue, useSpring } from 'motion/react'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'

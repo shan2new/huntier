@@ -142,7 +142,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
                 )}
                 <span className={`truncate ${value ? 'text-foreground' : 'text-muted-foreground'}`}>{triggerLabel}</span>
               </div>
-              {value ? (
+              {value && (
                 <X
                   className="h-4 w-4 text-muted-foreground"
                   onClick={(e) => {
@@ -151,8 +151,6 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
                     onChange(null)
                   }}
                 />
-              ) : (
-                <span className="text-xs text-muted-foreground">⌘K</span>
               )}
             </Button>
           )}

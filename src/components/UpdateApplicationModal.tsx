@@ -344,7 +344,7 @@ export function UpdateApplicationModal({
                                     onValueChange={(v) => setSelectedPlatformId(v || null)}
                                   >
                                     <SelectTrigger className="bg-background/50 border-border">
-                                      <SelectValue placeholder="Select platform (optional)" />
+                                      <SelectValue placeholder="Select platform" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>

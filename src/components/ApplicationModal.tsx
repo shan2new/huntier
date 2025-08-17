@@ -456,7 +456,7 @@ export function ApplicationModal({
                           input={
                             <Select value={selectedPlatformId ?? ''} onValueChange={(v) => setSelectedPlatformId(v || null)}>
                               <SelectTrigger className="bg-background/50 border-border">
-                                <SelectValue placeholder="Select platform (optional)" />
+                                <SelectValue placeholder="Select platform" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
@@ -657,7 +657,7 @@ export function ApplicationModal({
                                     }}
                                   >
                                     <SelectTrigger className="bg-background/50 border-border">
-                                      <SelectValue placeholder="Select platform (optional)" />
+                                      <SelectValue placeholder="Select platform" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectGroup>

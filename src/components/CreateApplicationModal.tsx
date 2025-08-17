@@ -298,7 +298,7 @@ export function CreateApplicationModal({
                     <CompanySearchCombobox
                       value={company}
                       onChange={(c) => setCompany(c)}
-                      placeholder="Search companies by name"
+                      placeholder="Search"
                     />
                   </motion.div>
                 </div>
@@ -443,7 +443,7 @@ export function CreateApplicationModal({
                         <PlatformCombobox
                           value={selectedPlatform}
                           onChange={setSelectedPlatform}
-                          placeholder="Select platform (optional)"
+                          placeholder="Select platform"
                         />
                       </div>
 

@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Linkedin, Mail, MessageCircle, MessageSquare, Phone, Send } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Mail, MessageSquare, Phone, Video, Send } from 'lucide-react'
 
 const mediumOptions = [
   { value: 'email', label: 'Email', icon: Mail },
-  { value: 'call', label: 'Phone Call', icon: Phone },
-  { value: 'message', label: 'Message', icon: MessageSquare },
-  { value: 'video', label: 'Video Call', icon: Video },
+  { value: 'linkedin', label: 'LinkedIn', icon: Linkedin },
+  { value: 'phone', label: 'Phone', icon: Phone },
+  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { value: 'other', label: 'Other', icon: MessageSquare },
 ]
 
 const directionOptions = [
@@ -39,8 +40,12 @@ export function ConversationModal({
 }: ConversationModalProps) {
   const [medium, setMedium] = useState(conversation?.medium || 'email')
   const [direction, setDirection] = useState(conversation?.direction || 'outbound')
-  const [subject, setSubject] = useState(conversation?.subject || '')
   const [text, setText] = useState(conversation?.text || '')
+  const [occurredAt, setOccurredAt] = useState(
+    conversation?.occurred_at
+      ? new Date(conversation.occurred_at).toISOString().slice(0, 16)
+      : new Date().toISOString().slice(0, 16)
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSave = async () => {
@@ -52,16 +57,16 @@ export function ConversationModal({
         ...(mode === 'edit' && { id: conversation.id }),
         medium,
         direction,
-        subject: subject || null,
-        text: text.trim()
+        text: text.trim(),
+        occurred_at: new Date(occurredAt).toISOString(),
       })
 
       onOpenChange(false)
       
       // Reset form if creating new
       if (mode === 'create') {
-        setSubject('')
         setText('')
+        setOccurredAt(new Date().toISOString().slice(0, 16))
       }
     } catch (error) {
       console.error('Error saving conversation:', error)
@@ -151,17 +156,15 @@ export function ConversationModal({
               </div>
             </div>
 
-            {medium === 'email' && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Subject</Label>
-                <Input
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Email subject line"
-                  className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50"
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Date & time</Label>
+              <Input
+                type="datetime-local"
+                value={occurredAt}
+                onChange={(e) => setOccurredAt(e.target.value)}
+                className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50"
+              />
+            </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">

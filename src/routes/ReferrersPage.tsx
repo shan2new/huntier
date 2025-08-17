@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { apiWithToken } from '../lib/api'
 import { motion } from 'framer-motion'
-import { Users, User, Building2, Mail, Phone, MessageSquare, LinkedinIcon, Network } from 'lucide-react'
+import { Building2, LinkedinIcon, Mail, MessageSquare, Network, Phone, User, Users } from 'lucide-react'
+import { apiWithToken } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -17,10 +17,10 @@ type ReferrerRow = {
     id: string; 
     name: string 
   } | null; 
-  channels: { 
+  channels: Array<{ 
     medium: string; 
     channel_value: string 
-  }[] 
+  }> 
 }
 
 const channelIcons: { [key: string]: React.ComponentType<{ className?: string }> } = {
@@ -43,7 +43,7 @@ const channelColors: { [key: string]: string } = {
 
 export function ReferrersPage() {
   const { getToken } = useAuth()
-  const [rows, setRows] = useState<ReferrerRow[]>([])
+  const [rows, setRows] = useState<Array<ReferrerRow>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function ReferrersPage() {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<ReferrerRow[]>('/v1/referrers', token!)
+        const data = await apiWithToken<Array<ReferrerRow>>('/v1/referrers', token!)
         setRows(data)
       } finally {
         setLoading(false)

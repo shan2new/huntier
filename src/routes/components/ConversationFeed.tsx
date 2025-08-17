@@ -1,25 +1,27 @@
 import { useState } from 'react'
+import { 
+  ArrowDown, 
+  ArrowUp, 
+  Edit, 
+  Linkedin,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Phone,
+} from 'lucide-react'
 import { formatDateIndian } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ConversationModal } from '@/components/ConversationModal'
-import { 
-  MessageSquare, 
-  Mail, 
-  Phone, 
-  Video,
-  Edit,
-  ArrowUp,
-  ArrowDown
-} from 'lucide-react'
 
 const mediumIcons = {
   email: Mail,
-  call: Phone,
-  message: MessageSquare,
-  video: Video,
-}
+  linkedin: Linkedin,
+  phone: Phone,
+  whatsapp: MessageCircle,
+  other: MessageSquare,
+} as const
 
 const directionIcons = {
   outbound: ArrowUp,
@@ -32,7 +34,7 @@ const directionColors = {
 }
 
 interface ConversationFeedProps {
-  items: any[]
+  items: Array<any>
   onAdd: (body: any) => Promise<void>
   onUpdate?: (id: string, body: any) => Promise<void>
   onDelete?: (id: string) => Promise<void>
@@ -63,7 +65,9 @@ export function ConversationFeed({
   const handleSave = async (data: any) => {
     if (modalMode === 'create') {
       await onAdd(data)
-    } else if (modalMode === 'edit' && selectedConversation && onUpdate) {
+      return
+    }
+    if (selectedConversation && onUpdate) {
       await onUpdate(selectedConversation.id, data)
     }
   }
@@ -74,10 +78,9 @@ export function ConversationFeed({
     }
   }
 
-  // Sort conversations by created_at descending (newest first)
-  const sortedItems = [...items].sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )
+  // Sort conversations by occurred_at (fallback created_at) descending
+  const getSortTs = (c: any) => new Date(c.occurred_at || c.created_at || 0).getTime()
+  const sortedItems = [...items].sort((a, b) => getSortTs(b) - getSortTs(a))
 
   return (
     <div className="space-y-6">
@@ -103,10 +106,20 @@ export function ConversationFeed({
           </Card>
         ) : (
           sortedItems.map((conversation) => {
-            const MediumIcon = mediumIcons[conversation.medium as keyof typeof mediumIcons] || MessageSquare
-            const DirectionIcon = directionIcons[conversation.direction as keyof typeof directionIcons] || ArrowUp
-            const directionColor = directionColors[conversation.direction as keyof typeof directionColors] || directionColors.outbound
-            const createdDate = conversation.created_at ? new Date(conversation.created_at) : new Date()
+            const mediumKey = String(conversation.medium)
+            const directionKey = String(conversation.direction)
+            const MediumIcon = (mediumKey in mediumIcons
+              ? mediumIcons[mediumKey as keyof typeof mediumIcons]
+              : MessageSquare)
+            const DirectionIcon = (directionKey in directionIcons
+              ? directionIcons[directionKey as keyof typeof directionIcons]
+              : ArrowUp)
+            const directionColor = (directionKey in directionColors
+              ? directionColors[directionKey as keyof typeof directionColors]
+              : directionColors.outbound)
+            const createdDate = conversation.occurred_at
+              ? new Date(conversation.occurred_at)
+              : (conversation.created_at ? new Date(conversation.created_at) : new Date())
             
             return (
               <Card key={conversation.id} className="border border-border">
@@ -134,24 +147,18 @@ export function ConversationFeed({
                       <span className="text-xs text-muted-foreground">
                         {!isNaN(createdDate.getTime()) ? formatDateIndian(createdDate) : 'Invalid Date'}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(conversation)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      {onUpdate && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(conversation)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-
-                  {conversation.subject && (
-                    <div className="mb-2">
-                      <h4 className="text-sm font-medium text-foreground">
-                        {conversation.subject}
-                      </h4>
-                    </div>
-                  )}
 
                   <div className="prose prose-sm max-w-none text-muted-foreground">
                     <p className="text-sm leading-relaxed line-clamp-3">

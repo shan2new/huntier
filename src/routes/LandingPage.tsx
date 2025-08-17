@@ -62,8 +62,8 @@ export function LandingPage() {
 			/>
 			
 			<motion.header 
-				initial={{ opacity: 0, y: -20 }}
-				animate={{ opacity: 1, y: 0 }}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
 				transition={{ duration: 0.6, ease: "easeOut" }}
 				className="relative z-50 w-full max-w-7xl mx-auto px-6 py-8 flex items-center justify-between"
 			>

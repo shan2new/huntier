@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { formatDateIndian } from '@/lib/utils'
 import { format } from 'date-fns'
+import { Calendar, CheckCircle, Clock, Edit, MapPin, Phone, Users, Video } from 'lucide-react'
+import { formatDateIndian } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { InterviewModal } from '@/components/InterviewModal'
-import { Calendar, Video, Users, CheckCircle, Edit, MapPin, Phone, Clock } from 'lucide-react'
 
 const typeIcons = {
   phone_screen: Phone,
@@ -24,7 +24,7 @@ const typeIcons = {
 }
 
 interface InterviewsTimelineProps {
-  items: any[]
+  items: Array<any>
   onSchedule: (body: any) => Promise<void>
   onUpdate?: (id: string, body: any) => Promise<void>
   onDelete?: (id: string) => Promise<void>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { CalendarIcon, Clock, MapPin, Phone, Video } from 'lucide-react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,9 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { CalendarIcon, Clock, MapPin, Video, Phone } from 'lucide-react'
 
 const typeOptions = [
   { value: 'phone_screen', label: 'Phone Screen', icon: Phone },

@@ -1,4 +1,15 @@
-export type Company = { id: string; name: string; website_url: string; logo_blob_base64?: string | null }
+export type Company = {
+  id: string
+  name: string
+  website_url: string
+  logo_blob_base64?: string | null
+  // Optional enriched fields
+  founded_year?: string | null
+  hq?: { city?: string; country?: string } | null
+  industries?: Array<string> | null
+  domain?: string | null
+  description?: string | null
+}
 export type Platform = { id: string; name: string; url: string; logo_blob_base64?: string | null }
 export type ApplicationListItem = {
   id: string
@@ -7,6 +18,7 @@ export type ApplicationListItem = {
   role: string
   job_url: string
   platform_id: string | null
+  platform?: Platform | null
   source: string
   stage: string
   milestone: string
@@ -22,7 +34,21 @@ export async function apiWithToken<T>(path: string, token: string, init?: Reques
     ...(init || {}),
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}), Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error(`${res.status}`)
+  if (!res.ok) {
+    let message = `${res.status}`
+    try {
+      const text = await res.text()
+      try {
+        const data = JSON.parse(text)
+        message = (data && (data.message || data.error)) || text || message
+      } catch {
+        message = text || message
+      }
+    } catch {}
+    const err: any = new Error(message)
+    err.status = res.status
+    throw err
+  }
   return res.json()
 }
 
@@ -68,6 +94,22 @@ export async function scheduleInterview<T>(
   return apiWithToken(`/v1/applications/${appId}/interviews`, token, { method: 'POST', body: JSON.stringify(body) })
 }
 
+// Application Contacts
+export type ApplicationContactAddBody = {
+  contact_id?: string
+  contact?: { name: string; title?: string | null; channels?: Array<{ medium: string; channel_value: string }> }
+  role: 'recruiter' | 'referrer' | 'hiring_manager' | 'interviewer' | 'other'
+  is_primary?: boolean
+}
+
+export async function listApplicationContacts<T>(token: string, appId: string): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/contacts`, token)
+}
+
+export async function addApplicationContact<T>(token: string, appId: string, body: ApplicationContactAddBody): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/contacts`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
 // Platforms
 export async function listPlatforms<T>(token: string): Promise<T> {
   return apiWithToken(`/v1/platforms`, token)
@@ -83,6 +125,14 @@ export async function createCompany<T>(token: string, website_url: string): Prom
   return apiWithToken(`/v1/companies`, token, { 
     method: 'POST', 
     body: JSON.stringify({ website_url }) 
+  })
+}
+
+// New: POST /v1/companies/search - search by company name (AI-assisted)
+export async function searchCompaniesByName<T>(token: string, query: string): Promise<T> {
+  return apiWithToken(`/v1/companies/search`, token, {
+    method: 'POST',
+    body: JSON.stringify({ query }),
   })
 }
 

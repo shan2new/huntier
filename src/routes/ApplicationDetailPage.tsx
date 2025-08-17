@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useAuth } from '@clerk/clerk-react'
-import { getApplication, listConversations, addConversation, listInterviews, scheduleInterview, patchApplication } from '../lib/api'
+import { addConversation, getApplication, listConversations, listInterviews, patchApplication, scheduleInterview } from '../lib/api'
 import { CompensationEditor } from './components/CompensationEditor'
 import { QASnapshotEditor } from './components/QASnapshotEditor'
 import { ConversationFeed } from './components/ConversationFeed'
@@ -12,8 +12,8 @@ export function ApplicationDetailPage() {
   const { id } = useParams({ from: '/applications/$id' })
   const { getToken } = useAuth()
   const [app, setApp] = useState<any | null>(null)
-  const [convs, setConvs] = useState<any[]>([])
-  const [rounds, setRounds] = useState<any[]>([])
+  const [convs, setConvs] = useState<Array<any>>([])
+  const [rounds, setRounds] = useState<Array<any>>([])
 
   useEffect(() => {
     if (!id) return
@@ -22,8 +22,8 @@ export function ApplicationDetailPage() {
       const data = await getApplication<any>(token!, id)
       setApp(data)
       const [c, r] = await Promise.all([
-        listConversations<any[]>(token!, id),
-        listInterviews<any[]>(token!, id),
+        listConversations<Array<any>>(token!, id),
+        listInterviews<Array<any>>(token!, id),
       ])
       setConvs(c)
       setRounds(r)
@@ -43,14 +43,14 @@ export function ApplicationDetailPage() {
       <div className="grid md:grid-cols-2 gap-4">
         <CompensationEditor app={app} onSave={async (payload: any) => {
           const token = await getToken();
-          const saved = await patchApplication<any>(token!, id!, { compensation: payload })
+          const saved = await patchApplication<any>(token!, id, { compensation: payload })
           setApp(saved)
         }} />
         <section className="border rounded-lg p-4">
           <h2 className="font-medium mb-2">Recruiter Q&A</h2>
           <QASnapshotEditor app={app} onSave={async (payload: any) => {
             const token = await getToken();
-            const saved = await patchApplication<any>(token!, id!, { qa_snapshot: payload })
+            const saved = await patchApplication<any>(token!, id, { qa_snapshot: payload })
             setApp(saved)
           }} />
         </section>
@@ -59,7 +59,7 @@ export function ApplicationDetailPage() {
         <h2 className="font-medium mb-2">Conversation Feed</h2>
         <ConversationFeed items={convs} onAdd={async (body: any) => {
           const token = await getToken();
-          const saved = await addConversation<any>(token!, id!, body)
+          const saved = await addConversation<any>(token!, id, body)
           setConvs((prev) => [saved, ...prev])
         }} />
       </section>
@@ -67,7 +67,7 @@ export function ApplicationDetailPage() {
         <h2 className="font-medium mb-2">Interviews</h2>
         <InterviewsTimeline items={rounds} onSchedule={async (body: any) => {
           const token = await getToken();
-          const saved = await scheduleInterview<any>(token!, id!, body)
+          const saved = await scheduleInterview<any>(token!, id, body)
           setRounds((prev) => [...prev, saved])
         }} />
       </section>

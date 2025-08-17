@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { apiWithToken } from '../lib/api'
 import { motion } from 'framer-motion'
-import { Globe, TrendingUp, Award, XCircle, Clock, BarChart3 } from 'lucide-react'
+import { Award, BarChart3, Clock, Globe, TrendingUp, XCircle } from 'lucide-react'
+import { apiWithToken } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // no cn needed
@@ -15,7 +15,7 @@ type PlatformRow = {
   in_progress: number
 }
 
-const platformIcons: { [key: string]: React.FC<{ className?: string }> } = {
+const platformIcons: Partial<Record<string, React.ComponentType<{ className?: string }>>> = {
   LinkedIn: Globe,
   Instahyre: TrendingUp,
   Naukri: BarChart3,
@@ -30,7 +30,7 @@ const platformIcons: { [key: string]: React.FC<{ className?: string }> } = {
 
 export function PlatformsPage() {
   const { getToken } = useAuth()
-  const [rows, setRows] = useState<PlatformRow[]>([])
+  const [rows, setRows] = useState<Array<PlatformRow>>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function PlatformsPage() {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<PlatformRow[]>('/v1/analytics/platforms', token!)
+        const data = await apiWithToken<Array<PlatformRow>>('/v1/analytics/platforms', token!)
         setRows(data)
       } finally {
         setLoading(false)
@@ -220,9 +220,9 @@ export function PlatformsPage() {
                               <div className="flex-shrink-0">
                                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                                   {(() => {
-                                    const Icon = platformIcons[platform.platform_id] || platformIcons['Other']
-                                    return <Icon className="h-6 w-6 text-primary" />
-                                  })()}
+                                  const Icon = platformIcons[platform.platform_id] ?? Globe
+                                  return <Icon className="h-6 w-6 text-primary" />
+                                })()}
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">

@@ -11,7 +11,7 @@ interface Particle {
 
 export function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
+  const particlesRef = useRef<Array<Particle>>([]);
   // requestAnimationFrame handle; initialize as undefined to satisfy strict mode
   const animationRef = useRef<number | undefined>(undefined);
 

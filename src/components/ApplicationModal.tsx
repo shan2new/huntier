@@ -2,35 +2,32 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  Activity,
   AlertCircle,
   Award,
+  BarChart3,
+  Briefcase,
   Building2,
   Calendar,
-  Check,
   Clock,
+  DollarSign,
   ExternalLink,
+  Info,
   MessageSquare,
   Plus,
   Target,
-  Briefcase,
-  BarChart3,
-  DollarSign,
-  Activity,
-  Info,
-  Loader2,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import {
   apiWithToken,
-  createCompany,
   getApplication,
+  getCompanyById,
   listConversations,
   listInterviews,
   listPlatforms,
   patchApplication,
-  getCompanyById,
 } from '@/lib/api'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -51,6 +48,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
 
 interface ApplicationModalProps {
   open: boolean
@@ -125,14 +124,17 @@ export function ApplicationModal({
   const [role, setRole] = useState('')
   const [source, setSource] = useState('applied_self')
   const [company, setCompany] = useState<Company | null>(null)
-  const [isLoadingCompany, setIsLoadingCompany] = useState(false)
   const [platforms, setPlatforms] = useState<Array<Platform>>([])
   const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
+  const [showCompanyDetails, setShowCompanyDetails] = useState(false)
   
   // Application data for view mode
   const [app, setApp] = useState<any | null>(null)
   const [convs, setConvs] = useState<Array<any>>([])
   const [rounds, setRounds] = useState<Array<any>>([])
+
+  // Derived
+  const selectedSource = useMemo(() => sourceOptions.find((o) => o.value === source), [source])
 
   // Load application data when in view/edit mode
   useEffect(() => {
@@ -194,42 +196,8 @@ export function ApplicationModal({
     })()
   }, [open, getToken])
 
-  // Auto-fetch company info when URL changes (create mode)
-  useEffect(() => {
-    if (mode !== 'create' || !url.trim() || !isValidUrl(url)) {
-      if (mode === 'create') setCompany(null)
-      return
-    }
+  // Removed URL-driven company auto-fetch. Company is selected via combobox now.
 
-    const fetchCompanyInfo = async () => {
-      setIsLoadingCompany(true)
-      setError('')
-      
-      try {
-        const token = await getToken()
-        // Always call upsert endpoint to fetch metadata first and lazily refresh logo/name
-        const upserted = await createCompany<Company>(token!, url)
-        setCompany(upserted)
-      } catch (err) {
-        setError('Failed to fetch company information')
-        console.error('Company fetch error:', err)
-      } finally {
-        setIsLoadingCompany(false)
-      }
-    }
-
-    const debounceTimer = setTimeout(fetchCompanyInfo, 500)
-    return () => clearTimeout(debounceTimer)
-  }, [url, getToken, mode])
-
-  const isValidUrl = (str: string) => {
-    try {
-      const u = new URL(str)
-      return u.protocol === 'http:' || u.protocol === 'https:'
-    } catch {
-      return false
-    }
-  }
 
   const normalizeUrl = (str: string) => {
     try {
@@ -243,8 +211,21 @@ export function ApplicationModal({
     }
   }
 
+  // Flush form state whenever create modal opens to avoid stale values
+  useEffect(() => {
+    if (open && mode === 'create') {
+      setUrl('')
+      setRole('')
+      setSource('applied_self')
+      setCompany(null)
+      setSelectedPlatformId(null)
+      setShowCompanyDetails(false)
+      setError('')
+    }
+  }, [open, mode])
+
   const handleSubmit = async () => {
-    if (!role || (mode === 'create' && (!url || !company))) return
+    if (!role || (mode === 'create' && !company)) return
     
     setIsSubmitting(true)
     setError('')
@@ -256,13 +237,12 @@ export function ApplicationModal({
         const application = await apiWithToken<ApplicationListItem>('/v1/applications', token!, {
           method: 'POST',
           body: JSON.stringify({
-            // Send website_url so backend can parse metadata before DB access
-            company: { website_url: normalizeUrl(url) },
+            company: { company_id: company!.id },
             role,
-            job_url: normalizeUrl(url),
+            job_url: url ? normalizeUrl(url) : undefined,
             platform_id: selectedPlatformId,
-            source
-          })
+            source,
+          }),
         })
         onCreated?.(application)
         handleClose()
@@ -315,7 +295,6 @@ export function ApplicationModal({
     }, 150)
   }
 
-  const selectedSource = sourceOptions.find(opt => opt.value === source)
   const modalTitle = useMemo(() => (mode === 'create' ? 'Add Application' : app?.role || 'Application'), [mode, app?.role])
 
   if (!open) return null
@@ -382,39 +361,39 @@ export function ApplicationModal({
             ) : mode === 'create' ? (
               <div className="p-6 overflow-y-auto">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className="max-w-4xl mx-auto space-y-6"
                 >
                   <Card className="border border-border">
                     <CardContent className="p-6 space-y-6">
                       <Field
-                        label="Job URL"
+                        label="Company"
                         input={
-                          <div className="relative">
-                            <Input
-                              value={url}
-                              onChange={(e) => setUrl(e.target.value)}
-                              onBlur={(e) => setUrl(normalizeUrl(e.target.value))}
-                              placeholder="https://company.com/careers/job-123"
-                              className="bg-background/50 border-border pr-9"
-                            />
-                            {isLoadingCompany && (
-                              <motion.div
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                              >
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                  className="w-4 h-4 rounded-full border-2 border-muted-foreground/20 border-t-muted-foreground"
-                                />
-                              </motion.div>
-                            )}
-                          </div>
+                          <CompanySearchCombobox
+                            value={company}
+                            onChange={(c) => setCompany(c)}
+                            placeholder="Search companies by name"
+                            variant="dialog"
+                          />
+
                         }
+                      />
+
+                      {/* Job URL - Optional and less prominent */}
+                      <Field
+                        label="Job URL (optional)"
+                        input={
+                          <Input
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            onBlur={(e) => setUrl(normalizeUrl(e.target.value))}
+                            placeholder="https://company.com/careers/job-123"
+                            className="bg-background/50 border-border"
+                          />
+                        }
+                        hint={<p className="text-xs text-muted-foreground">Optional: Link to the job posting</p>}
                       />
 
                       <AnimatePresence>
@@ -438,12 +417,22 @@ export function ApplicationModal({
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium truncate">{company.name}</div>
-                                <div className="text-xs text-muted-foreground truncate">{company.website_url}</div>
+                                <div className="text-xs text-muted-foreground truncate flex gap-2 items-center">
+                                  <span className="truncate">{company.website_url}</span>
+                                  {company.founded_year && <span>• Founded {company.founded_year}</span>}
+                                  {company.hq && (company.hq.city || company.hq.country) && (
+                                    <span>• {(company.hq.city ? company.hq.city + ', ' : '') + (company.hq.country || '')}</span>
+                                  )}
+                                </div>
                               </div>
-                              <Badge variant="secondary" className="text-xs">
-                                <Check className="h-3 w-3 mr-1" />
-                                Verified
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                {company.industries?.[0] && (
+                                  <Badge variant="secondary" className="text-xs">{company.industries[0]}</Badge>
+                                )}
+                                <Button variant="secondary" size="sm" onClick={() => setShowCompanyDetails(true)}>
+                                  View details
+                                </Button>
+                              </div>
                             </div>
                           </motion.div>
                         )}
@@ -521,56 +510,68 @@ export function ApplicationModal({
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Company Details Dialog */}
+                  <Dialog open={showCompanyDetails} onOpenChange={setShowCompanyDetails}>
+                    <DialogContent className="max-w-xl">
+                      <DialogHeader>
+                        <DialogTitle>Company Details</DialogTitle>
+                      </DialogHeader>
+                      {company && (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            {company.logo_blob_base64 ? (
+                              <img
+                                src={company.logo_blob_base64.startsWith('data:') ? company.logo_blob_base64 : `data:image/png;base64,${company.logo_blob_base64}`}
+                                alt={company.name}
+                                className="w-10 h-10 rounded-lg object-cover border border-border"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-primary" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{company.name}</div>
+                              <a className="text-xs text-primary truncate inline-flex items-center gap-1" href={company.website_url} target="_blank" rel="noreferrer">
+                                <ExternalLink className="h-3 w-3" /> {company.website_url}
+                              </a>
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            {company.founded_year && <div>Founded: {company.founded_year}</div>}
+                            {company.hq && (company.hq.city || company.hq.country) && (
+                              <div>HQ: {(company.hq.city ? company.hq.city + ', ' : '') + (company.hq.country || '')}</div>
+                            )}
+                            {company.industries && company.industries.length > 0 && (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {company.industries.map((i, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">{i}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {company.description && (
+                            <div className="text-sm leading-relaxed">{company.description}</div>
+                          )}
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </motion.div>
               </div>
             ) : (
               <div className="flex flex-1 overflow-hidden min-h-0">
                 {/* Main Content Area (Left) */}
                 <div className="flex-1 flex flex-col min-h-0">
-                  <ScrollArea className="flex-1">
+                  <ScrollArea className="flex-1 h-full min-h-0">
                     <div className="p-6">
-                      {loading ? (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="space-y-6"
-                        >
-                          {/* Loading Skeleton */}
-                          <Card className="border border-border">
-                            <CardContent className="p-6">
-                              <div className="space-y-4">
-                                <div className="flex items-center space-x-2">
-                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                  <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
-                                </div>
-                                <div className="space-y-3">
-                                  <div className="h-10 bg-muted animate-pulse rounded"></div>
-                                  <div className="h-10 bg-muted animate-pulse rounded"></div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="h-10 bg-muted animate-pulse rounded"></div>
-                                    <div className="h-10 bg-muted animate-pulse rounded"></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                              <Card key={i} className="border border-border">
-                                <CardContent className="p-6">
-                                  <div className="h-32 bg-muted animate-pulse rounded"></div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="space-y-6"
-                        >
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className="space-y-6"
+                      >
                     {/* Basic Info - Always Editable */}
                     <Card className="border border-border">
                       <CardContent className="p-6 space-y-6">
@@ -797,7 +798,6 @@ export function ApplicationModal({
                       }} 
                     />
                         </motion.div>
-                      )}
                     </div>
                   </ScrollArea>
                 </div>
@@ -1035,8 +1035,9 @@ export function ApplicationModal({
             <div className="flex items-center justify-between">
               {error && (
                 <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className="flex items-center space-x-2 text-destructive text-copy-14"
                 >
                   <AlertCircle className="h-4 w-4" />
@@ -1044,18 +1045,22 @@ export function ApplicationModal({
                 </motion.div>
               )}
               
-              <div className="flex items-center space-x-3 ml-auto">
+              <div className="flex items-center w-full">
                 {mode === 'create' ? (
-                  <>
-                    <Button 
+                  <div className="flex items-center justify-between w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={handleClose}
                       disabled={isSubmitting}
                     >
                       Cancel
                     </Button>
                     <Button 
+                      size="sm"
+                      variant="default"
                       onClick={handleSubmit}
-                      disabled={isSubmitting || !role || (!url || !company)}
+                      disabled={isSubmitting || !role || !company}
                     >
                       {isSubmitting ? (
                         <>
@@ -1068,14 +1073,23 @@ export function ApplicationModal({
                         </>
                       ) : (
                         <>
-                          Add
+                          Create Application
                         </>
                       )}
                     </Button>
-                  </>
+                  </div>
                 ) : (
                   
-                  <>
+                  <div className="flex items-center justify-between w-full">
+                    <Button 
+                    size="sm"
+                      variant="secondary"
+                      onClick={handleClose}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <div className="flex items-center gap-2">
                     <Button
                       size="sm"
                       variant="destructive"
@@ -1093,15 +1107,8 @@ export function ApplicationModal({
                     >
                       Save
                     </Button>
-                    <Button 
-                    size="sm"
-                      variant="secondary"
-                      onClick={handleClose}
-                      disabled={isSubmitting}
-                    >
-                      Close
-                    </Button>
-                  </>
+                    
+                    </div>                  </div>
                 )}
               </div>
             </div>

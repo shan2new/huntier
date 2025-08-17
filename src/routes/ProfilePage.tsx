@@ -1,27 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
-import { apiWithToken } from '../lib/api'
 import { motion } from 'framer-motion'
 import { 
-  User, 
+  AlertCircle, 
+  Briefcase, 
   Calendar, 
+  CheckCircle, 
+  ChevronDown,
+  Clock, 
   DollarSign, 
   MessageSquare, 
-  Settings, 
-  Briefcase, 
-  Clock, 
+  Save,
+  Settings,
   Target,
   TrendingUp,
-
-  Save,
-
-  CheckCircle,
-  AlertCircle
+  User
 } from 'lucide-react'
+import { apiWithToken } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Calendar as DateCalendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
 interface Profile {
@@ -85,6 +86,8 @@ export function ProfilePage() {
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+  const [joinDateOpen, setJoinDateOpen] = useState(false)
+  const [joinDate, setJoinDate] = useState<Date | undefined>(undefined)
 
   useEffect(() => {
     ;(async () => {
@@ -96,6 +99,13 @@ export function ProfilePage() {
           apiWithToken('/v1/recruiter-qa', token!)
         ])
         setProfile(p as any)
+        // Initialize date picker state from profile date (YYYY-MM-DD)
+        if ((p as any)?.earliest_join_date) {
+          const d = new Date((p as any).earliest_join_date)
+          if (!isNaN(d.getTime())) setJoinDate(d)
+        } else {
+          setJoinDate(undefined)
+        }
         setQa(q as any)
       } finally {
         setLoading(false)
@@ -117,6 +127,19 @@ export function ProfilePage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  function formatDisplayDate(date: Date | undefined) {
+    if (!date) return 'dd/mm/yyyy'
+    return date.toLocaleDateString('en-GB')
+  }
+
+  function toISODateString(date: Date | undefined) {
+    if (!date) return null
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   async function toggleTheme() {
@@ -257,14 +280,38 @@ export function ProfilePage() {
                   <Clock className="h-3.5 w-3.5" />
                   <span>Notice Period (Days)</span>
                 </label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 60"
-                  value={profile?.notice_period_days || ''}
-                  onChange={(e) => setProfile({ ...profile, notice_period_days: Number(e.target.value) || null })}
-                  disabled={!editMode}
-                  className="bg-background/50 h-8 text-sm"
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!editMode}
+                    onClick={() => setProfile({ ...profile, notice_period_days: Math.max(0, (profile?.notice_period_days || 0) - 15) })}
+                  >
+                    -15
+                  </Button>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="e.g., 60"
+                    value={profile?.notice_period_days ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value === '' ? null : Number(e.target.value)
+                      setProfile({ ...profile, notice_period_days: v })
+                    }}
+                    disabled={!editMode}
+                    className="bg-background/50 h-8 text-sm w-28"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!editMode}
+                    onClick={() => setProfile({ ...profile, notice_period_days: Math.min(365, (profile?.notice_period_days || 0) + 15) })}
+                  >
+                    +15
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">Your standard notice period in days</p>
               </div>
 
@@ -273,13 +320,31 @@ export function ProfilePage() {
                   <Calendar className="h-3.5 w-3.5" />
                   <span>Earliest Join Date</span>
                 </label>
-                <Input
-                  type="date"
-                  value={profile?.earliest_join_date || ''}
-                  onChange={(e) => setProfile({ ...profile, earliest_join_date: e.target.value || null })}
-                  disabled={!editMode}
-                  className="bg-background/50 h-8 text-sm"
-                />
+                <Popover open={joinDateOpen} onOpenChange={setJoinDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!editMode}
+                      className="w-[220px] justify-between font-normal h-8 text-sm"
+                    >
+                      {formatDisplayDate(joinDate)}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DateCalendar
+                      mode="single"
+                      selected={joinDate}
+                      captionLayout="dropdown"
+                      onSelect={(d) => {
+                        setJoinDate(d)
+                        setJoinDateOpen(false)
+                        setProfile({ ...profile, earliest_join_date: toISODateString(d) })
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
                 <p className="text-xs text-muted-foreground">When you can start a new role</p>
               </div>
             </CardContent>

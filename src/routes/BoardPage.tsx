@@ -110,23 +110,25 @@ export function BoardPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-6"
     >
       {/* Header */}
       <div className="space-y-1">
         <motion.h1 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           className="text-heading-32 tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
         >
           Application Board
         </motion.h1>
         <motion.p 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
           className="text-muted-foreground"
         >
           Drag and drop to move applications through your pipeline
@@ -135,9 +137,9 @@ export function BoardPage() {
 
       {/* Pipeline Stats */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
         className="flex items-center justify-between p-4 rounded-xl border border-border bg-card"
       >
         <div className="flex items-center space-x-6">
@@ -174,9 +176,9 @@ export function BoardPage() {
           return (
             <motion.div
               key={col.key}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: columnIndex * 0.1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 + (columnIndex * 0.1), ease: "easeOut" }}
             >
               <Card className={cn(
                 "h-fit min-h-[450px] transition-all duration-300",
@@ -212,16 +214,16 @@ export function BoardPage() {
                       <motion.div
                         key={app.id}
                         layout
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0 }}
                         animate={{ 
                           opacity: draggedItem === app.id ? 0.6 : 1, 
                           scale: draggedItem === app.id ? 0.95 : 1,
                           rotateZ: draggedItem === app.id ? 2 : 0
                         }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        whileHover={{ scale: 1.02, y: -2 }}
+                        exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                        whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                         whileDrag={{ scale: 1.05, rotate: 3, zIndex: 50 }}
-                        transition={{ delay: index * 0.02 }}
+                        transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
                         className="cursor-grab active:cursor-grabbing"
                         draggable
                         onDragStart={(e) => onDragStart(e as any, app.id)}
@@ -302,8 +304,9 @@ export function BoardPage() {
                   {/* Drop Zone Hint */}
                   {columnApps.length > 0 && isDropTarget && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                       className="text-center py-4 border-t border-dashed border-primary/50 bg-primary/5 rounded-lg"
                     >
                       <div className="flex items-center justify-center space-x-2 text-primary font-medium">

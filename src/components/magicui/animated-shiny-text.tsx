@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import type { CSSProperties, ReactElement } from "react";
+import { cn } from "@/lib/utils";
 
 interface AnimatedShinyTextProps {
   children: string;

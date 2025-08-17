@@ -1,22 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Target, UserPlus } from 'lucide-react'
-import { apiWithToken } from '../lib/api'
-import type { ApplicationListItem } from '../lib/api'
+import { Activity, Award, Building2, Calendar, ChevronRight, ClipboardList, Clock, ExternalLink, Handshake, Phone, Target, UserPlus } from 'lucide-react'
+import { apiWithToken, listPlatforms } from '../lib/api'
+import type { ApplicationListItem, Platform } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ApplicationModal } from '@/components/ApplicationModal'
+import { CreateApplicationModal } from '@/components/CreateApplicationModal'
+import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const milestoneConfig = {
+const milestoneConfig: Partial<Record<string, { label: string; icon: any }>> = {
   exploration: { label: 'Exploration', icon: Target },
   interviewing: { label: 'Interviewing', icon: Calendar },
   post_interview: { label: 'Post Interview', icon: Award },
 }
 
-const sourceConfig = {
+const sourceConfig: Partial<Record<string, { icon: any; label: string }>> = {
   applied_self: { icon: UserPlus, label: 'Self Applied' },
   applied_referral: { icon: Handshake, label: 'Referral' },
   recruiter_outreach: { icon: Phone, label: 'Recruiter' },
@@ -26,23 +28,41 @@ export function ApplicationsPage() {
   const { getToken } = useAuth()
   const [apps, setApps] = useState<Array<ApplicationListItem>>([])
   const [loading, setLoading] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'view'>('create')
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [updateModalOpen, setUpdateModalOpen] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | undefined>()
   const search = new URLSearchParams(globalThis.location.search).get('search') || ''
+  const initialPlatform = new URLSearchParams(globalThis.location.search).get('platform_id') || ''
+  const [platformId, setPlatformId] = useState<string>(initialPlatform)
+  const [platforms, setPlatforms] = useState<Array<Platform>>([])
 
   useEffect(() => {
     ;(async () => {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications?search=${encodeURIComponent(search)}`, token!)
+        const params = new URLSearchParams()
+        if (search) params.set('search', search)
+        if (platformId) params.set('platform_id', platformId)
+        const qs = params.toString()
+        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`, token!)
         setApps(data)
       } finally {
         setLoading(false)
       }
     })()
-  }, [getToken, search])
+  }, [getToken, search, platformId])
+
+  // Fetch platforms for filter
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const token = await getToken()
+        const data = await listPlatforms<Array<Platform>>(token!)
+        setPlatforms(data)
+      } catch {}
+    })()
+  }, [])
 
   const stats = useMemo(() => {
     const total = apps.length
@@ -54,31 +74,89 @@ export function ApplicationsPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-8"
     >
       {/* Header */}
       <div className="flex space-y-4 flex-row items-center justify-between">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           className="space-y-1"
         >
           <h1 className="text-2xl text-foreground tracking-tight">Applications</h1>
           <p className="text-sm text-muted-foreground">Track and manage your job applications</p>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
+          className="flex items-center gap-2"
         >
+          <Select
+            value={platformId || 'all'}
+            onValueChange={(val) => {
+              const next = val === 'all' ? '' : val
+              setPlatformId(next)
+              const qs = new URLSearchParams(globalThis.location.search)
+              if (next) qs.set('platform_id', next)
+              else qs.delete('platform_id')
+              if (search) qs.set('search', search)
+              else qs.delete('search')
+              const query = qs.toString()
+              window.history.replaceState(null, '', query ? `?${query}` : globalThis.location.pathname)
+            }}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue placeholder="All platforms">
+                {platformId ? (
+                  <span className="flex items-center gap-2">
+                    {(() => {
+                      const sel = platforms.find((pl) => pl.id === platformId)
+                      return sel?.logo_blob_base64 ? (
+                        <img
+                          src={sel.logo_blob_base64.startsWith('data:') ? sel.logo_blob_base64 : `data:image/png;base64,${sel.logo_blob_base64}`}
+                          alt={sel.name}
+                          className="h-4 w-4 rounded-sm border border-border object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-3 w-3" />
+                      )
+                    })()}
+                    <span className="truncate max-w-[10rem]">{platforms.find((pl) => pl.id === platformId)?.name ?? 'Platform'}</span>
+                  </span>
+                ) : (
+                  'All platforms'
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All platforms</SelectItem>
+              {platforms.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  <span className="flex items-center gap-2">
+                    {p.logo_blob_base64 ? (
+                      <img
+                        src={p.logo_blob_base64.startsWith('data:') ? p.logo_blob_base64 : `data:image/png;base64,${p.logo_blob_base64}`}
+                        alt={p.name}
+                        className="h-4 w-4 rounded-sm border border-border object-cover"
+                      />
+                    ) : (
+                      <Building2 className="h-3 w-3" />
+                    )}
+                    <span>{p.name}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             size="sm"
             onClick={() => {
-              setModalMode('create')
-              setSelectedAppId(undefined)
-              setModalOpen(true)
+              setCreateModalOpen(true)
             }}
           >
             Add
@@ -89,9 +167,9 @@ export function ApplicationsPage() {
       {/* Enhanced Stats Cards */}
       <motion.div 
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
         {[
           { 
@@ -125,10 +203,10 @@ export function ApplicationsPage() {
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 + (index * 0.1), ease: "easeOut" }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           >
             <Card className="relative overflow-hidden border border-border bg-card transition-all duration-200">
               <CardContent className="p-6">
@@ -153,16 +231,16 @@ export function ApplicationsPage() {
 
       {/* Applications Grid */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
         <Card>
-          <CardHeader className="border-b border-border">
+          <CardHeader className="border-b border-border py-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold flex items-center space-x-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                  <Building2 className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10">
+                  <ClipboardList className="h-5 w-5 text-primary" />
                 </div>
                 <span>Applications</span>
                 </CardTitle>
@@ -186,18 +264,21 @@ export function ApplicationsPage() {
                   {apps.map((app, index) => (
                     <motion.div
                       key={app.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.02 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                      transition={{ 
+                        duration: 0.3, 
+                        delay: index * 0.05, 
+                        ease: "easeOut"
+                      }}
                       className="group"
                     >
                       <div 
                         className="cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
                         onClick={() => {
-                          setModalMode('view')
                           setSelectedAppId(app.id)
-                          setModalOpen(true)
+                          setUpdateModalOpen(true)
                         }}
                       >
                         <div>
@@ -206,7 +287,7 @@ export function ApplicationsPage() {
                               <div className="flex items-center space-x-2.5">
                                 <div className="flex-shrink-0">
                                   {(() => {
-                                    const Icon = sourceConfig[app.source as keyof typeof sourceConfig]?.icon || UserPlus
+                                    const Icon = sourceConfig[app.source]?.icon ?? UserPlus
                                     return <Icon className="h-4 w-4 text-muted-foreground" />
                                   })()}
                                 </div>
@@ -231,6 +312,21 @@ export function ApplicationsPage() {
                                       <span className="truncate max-w-[12rem] sm:max-w-none">{app.company?.name ?? `Company ${app.company_id.slice(0, 8)}...`}</span>
                                     </span>
                                     <span>•</span>
+                                    {app.platform && (
+                                      <span className="flex items-center space-x-1">
+                                        {app.platform.logo_blob_base64 ? (
+                                          <img
+                                            src={app.platform.logo_blob_base64.startsWith('data:') ? app.platform.logo_blob_base64 : `data:image/png;base64,${app.platform.logo_blob_base64}`}
+                                            alt={app.platform.name}
+                                            className="h-4 w-4 rounded-sm border border-border object-cover"
+                                          />
+                                        ) : (
+                                          <Building2 className="h-3 w-3" />
+                                        )}
+                                        <span className="truncate max-w-[10rem]">{app.platform.name}</span>
+                                      </span>
+                                    )}
+                                    {app.platform && <span>•</span>}
                                     <span className="flex items-center space-x-1">
                                       <Clock className="h-3 w-3" />
                                       <span>Updated {formatDateIndian(app.last_activity_at)}</span>
@@ -243,10 +339,10 @@ export function ApplicationsPage() {
                             <div className="flex items-center space-x-2.5 sm:self-start sm:justify-end">
                               <div className="flex items-center space-x-1.5 whitespace-nowrap">
                                 <Badge className="text-xs font-medium px-2 py-0.5 bg-secondary text-secondary-foreground">
-                                  {sourceConfig[app.source as keyof typeof sourceConfig]?.label}
+                                  {sourceConfig[app.source]?.label}
                                 </Badge>
                                 <Badge className="text-xs font-medium px-2 py-0.5" variant="outline">
-                                  {milestoneConfig[app.milestone as keyof typeof milestoneConfig]?.label}
+                                  {milestoneConfig[app.milestone]?.label}
                                 </Badge>
                                 {/* Only show stage if it's not redundant with source */}
                                 {app.stage !== app.source && !['applied_self', 'applied_referral', 'recruiter_outreach'].includes(app.stage) && (
@@ -272,6 +368,7 @@ export function ApplicationsPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="text-center py-12"
               >
                 <div className="mb-4">
@@ -289,16 +386,23 @@ export function ApplicationsPage() {
         </Card>
       </motion.div>
 
-      {/* Application Modal */}
-      <ApplicationModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        mode={modalMode}
-        applicationId={selectedAppId}
-        onCreated={(app) => setApps((prev) => [app, ...prev])}
-        onUpdated={(app) => setApps((prev) => prev.map((a) => (a.id === app.id ? app : a)))}
-        onDeleted={(id) => setApps((prev) => prev.filter((a) => a.id !== id))}
+      {/* Create Application Modal */}
+      <CreateApplicationModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onCreated={(app: ApplicationListItem) => setApps((prev) => [app, ...prev])}
       />
+
+      {/* Update Application Modal */}
+      {selectedAppId && (
+        <UpdateApplicationModal
+          open={updateModalOpen}
+          onOpenChange={setUpdateModalOpen}
+          applicationId={selectedAppId}
+          onUpdated={(app: ApplicationListItem) => setApps((prev) => prev.map((a) => (a.id === app.id ? app : a)))}
+          onDeleted={(id: string) => setApps((prev) => prev.filter((a) => a.id !== id))}
+        />
+      )}
     </motion.div>
   )
 }

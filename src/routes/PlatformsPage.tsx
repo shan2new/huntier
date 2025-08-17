@@ -226,8 +226,8 @@ export function PlatformsPage() {
                               
                               <div className="text-center">
                                 <div className="flex items-center space-x-1 mb-1">
-                                  <XCircle className="h-4 w-4 text-red-600" />
-                                  <span className="text-lg font-bold text-red-600">{platform.rejects}</span>
+                                  <XCircle className="h-4 w-4 text-destructive" />
+                                  <span className="text-lg font-bold text-destructive">{platform.rejects}</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">Rejected</p>
                               </div>

@@ -8,6 +8,7 @@ import { AnimatedShinyText } from '@/components/magicui/animated-shiny-text'
 import { DotPattern } from '@/components/magicui/dot-pattern'
 import { FloatingShapes } from '@/components/magicui/floating-shapes'
 import { ParticleField } from '@/components/magicui/particle-field'
+import logo192 from '/logo192.svg'
 
 export function LandingPage() {
 	const { isSignedIn } = useUser()
@@ -65,46 +66,19 @@ export function LandingPage() {
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ duration: 0.6, ease: "easeOut" }}
-				className="relative z-50 w-full max-w-7xl mx-auto px-6 py-8 flex items-center justify-between"
+				className="relative z-50 w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between"
 			>
 				<motion.div 
-					className="flex items-center space-x-3"
+					className="flex items-center space-x-2"
 					whileHover={{ scale: 1.02 }}
 					transition={{ duration: 0.2 }}
 				>
 					<motion.div 
-						className="relative flex h-9 w-9 items-center justify-center"
+						className="relative flex h-6 w-6 items-center justify-center"
 						whileHover={{ rotate: 5 }}
 						transition={{ duration: 0.3 }}
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
-							<defs>
-								<linearGradient id="heroIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254)', stopOpacity:1}} />
-									<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254)', stopOpacity:1}} />
-								</linearGradient>
-								<linearGradient id="heroTierGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-									<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
-									<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
-								</linearGradient>
-							</defs>
-							
-							{/* Background circle for better icon definition */}
-							<circle cx="24" cy="24" r="22" fill="url(#heroIconGradient)" opacity="0.1"/>
-							
-							{/* H symbol with tier elements for icon */}
-							<g fill="url(#heroIconGradient)">
-								{/* Main H structure */}
-								<rect x="12" y="12" width="4" height="24" rx="2"/>
-								<rect x="32" y="12" width="4" height="24" rx="2"/>
-								<rect x="12" y="22" width="24" height="4" rx="2"/>
-								
-								{/* Tier steps ascending - simplified for icon */}
-								<rect x="38" y="32" width="6" height="2" rx="1" fill="url(#heroTierGradient)"/>
-								<rect x="40" y="28" width="6" height="2" rx="1" fill="url(#heroTierGradient)"/>
-								<rect x="42" y="24" width="4" height="2" rx="1" fill="url(#heroIconGradient)"/>
-							</g>
-						</svg>
+						<img src={logo192} alt="Huntier logo" className="w-6 h-6" />
 					</motion.div>
 					<span className="text-xl font-semibold tracking-tight">Huntier</span>
 				</motion.div>
@@ -123,7 +97,7 @@ export function LandingPage() {
 				</motion.div>
 			</motion.header>
 
-			<main className="relative z-40 flex-1 w-full max-w-7xl mx-auto px-6 py-20 md:py-32">
+			<main className="relative z-40 flex-1 w-full max-w-7xl mx-auto px-6 py-20">
 				<div className="text-center space-y-16 max-w-5xl mx-auto">
 					{/* Hero content */}
 					<div className="space-y-12">
@@ -212,15 +186,15 @@ export function LandingPage() {
 								
 								<div className="grid md:grid-cols-3 gap-6 text-center">
 									{[
-										{ emoji: "😫", text: "Endless spreadsheets", bad: true },
+										{ emoji: "😫", text: "Complicated spreadsheets", bad: true },
 										{ emoji: "→", text: "becomes", neutral: true },
 										{ emoji: "😌", text: "Calm organization", good: true }
 									].map((item, index) => (
 										<motion.div
 											key={index}
 											className={`p-4 rounded-2xl ${
-												item.bad ? 'bg-red-500/5 border border-red-500/20' :
-												item.good ? 'bg-green-500/5 border border-green-500/20' :
+												item.bad ? 'bg-destructive/10 border border-destructive/30' :
+												item.good ? 'bg-primary/5 border border-primary/20' :
 												'bg-muted/20'
 											}`}
 											initial={{ opacity: 0, y: 20 }}
@@ -230,8 +204,8 @@ export function LandingPage() {
 										>
 											<div className="text-3xl mb-2">{item.emoji}</div>
 											<p className={`text-sm font-medium ${
-												item.bad ? 'text-red-600/80' :
-												item.good ? 'text-green-600/80' :
+												item.bad ? 'text-destructive' :
+												item.good ? 'text-primary/80' :
 												'text-muted-foreground'
 											}`}>
 												{item.text}
@@ -264,9 +238,8 @@ export function LandingPage() {
 										className="relative"
 									>
 										<Button className="relative px-6 text-button-14">
-											{/* Animated background */}
 											<motion.div
-												className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+												className="absolute inset-0"
 												initial={{ x: '-100%' }}
 												whileHover={{ x: '100%' }}
 												transition={{ duration: 0.6 }}
@@ -275,16 +248,6 @@ export function LandingPage() {
 												<span className="flex flex-col items-start">
 													<span className="leading-none">Start your PEACEFUL HUNT</span>
 												</span>
-												<motion.svg 
-													className="w-6 h-6"
-													initial={{ x: 0 }}
-													whileHover={{ x: 6 }}
-													transition={{ duration: 0.2 }}
-													fill="currentColor" 
-													viewBox="0 0 20 20"
-												>
-													<path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-												</motion.svg>
 											</span>
 										</Button>
 									</motion.div>
@@ -463,41 +426,6 @@ export function LandingPage() {
 					
 					<div className="relative w-full max-w-7xl mx-auto px-6 py-16">
 						<div className="flex flex-col items-center space-y-12">
-							{/* Logo section */}
-							<motion.div 
-								className="flex flex-col items-center space-y-4"
-								whileHover={{ scale: 1.02 }}
-								transition={{ duration: 0.3 }}
-							>
-								<div className="relative flex h-12 w-12 items-center justify-center">
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" className="w-full h-full">
-										<defs>
-											<linearGradient id="footerIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-												<stop offset="0%" style={{stopColor:'oklch(0.72 0.22 254 / 0.8)', stopOpacity:0.8}} />
-												<stop offset="100%" style={{stopColor:'oklch(0.65 0.22 254 / 0.6)', stopOpacity:0.6}} />
-											</linearGradient>
-										</defs>
-										<circle cx="24" cy="24" r="22" fill="url(#footerIconGradient)" opacity="0.1"/>
-										<g fill="url(#footerIconGradient)">
-											<rect x="12" y="12" width="4" height="24" rx="2"/>
-											<rect x="32" y="12" width="4" height="24" rx="2"/>
-											<rect x="12" y="22" width="24" height="4" rx="2"/>
-											<rect x="38" y="32" width="6" height="2" rx="1"/>
-											<rect x="40" y="28" width="6" height="2" rx="1"/>
-											<rect x="42" y="24" width="4" height="2" rx="1"/>
-										</g>
-									</svg>
-								</div>
-								<div className="text-center space-y-2">
-									<h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-										Huntier
-									</h3>
-									<p className="text-muted-foreground/70 text-sm">
-										Job hunting, simplified.
-									</p>
-								</div>
-							</motion.div>
-							
 							{/* Elegant tagline */}
 							<div className="text-center max-w-lg space-y-4">
 								<p className="text-muted-foreground/80 leading-relaxed">

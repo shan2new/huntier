@@ -2,12 +2,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
-import { BarChart3, ClipboardCheck, ClipboardList, Kanban, Search, User } from 'lucide-react'
+import { ClipboardList, Search, User } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { getProfile } from '@/lib/api'
+import { SplashLoader } from '@/components/SplashLoader'
 import logo512 from '/logo512.svg'
 
 export function Layout() {
@@ -54,11 +55,7 @@ export function Layout() {
   // theme toggling is now handled on Profile page
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
+    return <SplashLoader />
   }
 
   if (!isSignedIn) {

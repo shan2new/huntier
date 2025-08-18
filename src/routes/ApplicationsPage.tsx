@@ -87,8 +87,8 @@ export function ApplicationsPage() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="space-y-1"
         >
-          <h1 className="text-2xl text-foreground tracking-tight">Applications</h1>
-          <p className="text-sm text-muted-foreground">Track and manage your job applications</p>
+          {/* <h1 className="text-2xl text-foreground tracking-tight">Applications</h1> */}
+          {/* <p className="text-sm text-muted-foreground">Track and manage your job applications</p> */}
         </motion.div>
         <motion.div
           initial={{ opacity: 0 }}

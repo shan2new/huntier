@@ -2,27 +2,23 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
-  AlertCircle,
-  Building2,
-  Briefcase,
-  Globe,
-  Target,
-  DollarSign,
-  Info,
   Activity,
-  MessageSquare,
-  Calendar,
-  Clock,
+  AlertCircle,
+  Briefcase,
+  Building2,
+  DollarSign,
+  Globe,
+  Info,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
-import { 
-  apiWithToken, 
-  getApplication, 
-  getCompanyById, 
+import {
+  apiWithToken,
+  getApplication,
+  getCompanyById,
+  listPlatforms,
   patchApplication,
-  listPlatforms 
 } from '@/lib/api'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatDateIndian } from '@/lib/utils'
+import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
 
 const sourceOptions = [
   { value: 'applied_self', label: 'Self', icon: '🎯' },
@@ -90,6 +87,8 @@ export function UpdateApplicationModal({
   const [includeJobUrl, setIncludeJobUrl] = useState(false)
   const [platforms, setPlatforms] = useState<Array<Platform>>([])
   const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
+  const [companySearchOpen, setCompanySearchOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Load application data
   useEffect(() => {
@@ -161,7 +160,7 @@ export function UpdateApplicationModal({
       })
       
       setApp({ ...app, ...updated })
-      onUpdated?.(updated)
+      _onUpdated?.(updated)
       handleClose()
     } catch (err) {
       setError('Failed to update application')
@@ -172,13 +171,14 @@ export function UpdateApplicationModal({
   }
 
   const handleDelete = async () => {
-    if (!applicationId || !confirm('Are you sure you want to delete this application?')) return
-    
+    if (!applicationId) return
     setIsSubmitting(true)
+    setError('')
     try {
       const token = await getToken()
       await apiWithToken(`/v1/applications/${applicationId}`, token!, { method: 'DELETE' })
       onDeleted?.(applicationId)
+      setShowDeleteConfirm(false)
       handleClose()
     } catch (err) {
       setError('Failed to delete application')
@@ -209,44 +209,80 @@ export function UpdateApplicationModal({
         <div className="flex flex-col h-full min-h-0">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b border-border">
-            <div className="flex items-center gap-3">
-              {app?.company?.logo_blob_base64 ? (
-                <img
-                  src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
-                  alt={app.company.name}
-                  className="w-10 h-10 rounded-xl object-cover border border-border"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <DialogTitle className="text-lg font-semibold tracking-tight truncate">
-                  {app?.role || 'Application'}
-                </DialogTitle>
-                <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
-                  {app?.company?.name && <span className="truncate">{app.company.name}</span>}
-                  {app?.company?.hq && (app.company.hq.city || app.company.hq.country) && (
-                    <>
-                      <span>•</span>
-                      <span>{(app.company.hq.city ? app.company.hq.city + ', ' : '') + (app.company.hq.country || '')}</span>
-                    </>
-                  )}
-                  {app?.company?.website_url && (
-                    <>
-                      <span>•</span>
-                      <span className="truncate">{app.company.website_url.replace(/^https?:\/\//i, '')}</span>
-                    </>
-                  )}
-                  {app?.last_activity_at && (
-                    <>
-                      <span>•</span>
-                      <span>Updated {formatDateIndian(new Date(app.last_activity_at))}</span>
-                    </>
-                  )}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {app?.company?.logo_blob_base64 ? (
+                  <img
+                    src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
+                    alt={app.company.name}
+                    className="w-10 h-10 rounded-xl object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <DialogTitle className="text-lg font-semibold tracking-tight truncate">
+                    {app?.role || 'Application'}
+                  </DialogTitle>
+                  <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
+                    {app?.company?.name && <span className="truncate">{app.company.name}</span>}
+                    {app?.company?.hq && (app.company.hq.city || app.company.hq.country) && (
+                      <>
+                        <span>•</span>
+                        <span>{(app.company.hq.city ? app.company.hq.city + ', ' : '') + (app.company.hq.country || '')}</span>
+                      </>
+                    )}
+                    {app?.company?.website_url && (
+                      <>
+                        <span>•</span>
+                        <span className="truncate">{app.company.website_url.replace(/^https?:\/\//i, '')}</span>
+                      </>
+                    )}
+                    {app?.last_activity_at && (
+                      <>
+                        <span>•</span>
+                        <span>Updated {formatDateIndian(new Date(app.last_activity_at))}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+              {app && (
+                <CompanySearchCombobox
+                  value={app.company || null}
+                  onChange={async (c) => {
+                    if (!c || !app) return
+                    try {
+                      const token = await getToken()
+                      const updated = await patchApplication<any>(token!, app.id, { company_id: c.id })
+                      const hydrated = { ...(app || {}), ...(updated || {}), company: c, company_id: c.id }
+                      setApp(hydrated)
+                      // reflect derived fields locally
+                      setSelectedPlatformId(hydrated.platform_id || null)
+                      setSource(hydrated.source || source)
+                      setRole(hydrated.role || role)
+                      setUrl(hydrated.job_url || url)
+                      setIncludeJobUrl(!!hydrated.job_url)
+                      setCompanySearchOpen(false)
+                      setError('')
+                      _onUpdated?.(hydrated)
+                    } catch (err) {
+                      console.error('Failed to change company:', err)
+                      setError('Failed to change company')
+                    }
+                  }}
+                  open={companySearchOpen}
+                  onOpenChange={setCompanySearchOpen}
+                  variant="dialog"
+                  triggerAsChild={
+                    <Button variant="outline" size="sm" className="h-8 px-3">
+                      Change
+                    </Button>
+                  }
+                />
+              )}
             </div>
           </DialogHeader>
 
@@ -538,7 +574,7 @@ export function UpdateApplicationModal({
                 <div className="flex items-center gap-2">
                   <Button
                     variant="destructive"
-                    onClick={handleDelete}
+                    onClick={() => setShowDeleteConfirm(true)}
                     disabled={isSubmitting}
                   >
                     Delete
@@ -566,6 +602,25 @@ export function UpdateApplicationModal({
           </div>
         </div>
       </DialogContent>
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete application?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the application and related data (contacts, conversations, interviews, history).
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

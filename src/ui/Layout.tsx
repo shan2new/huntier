@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
-import { ClipboardList, Search, User } from 'lucide-react'
+import { ClipboardList, Search, User, Github, Twitter, Linkedin } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -68,7 +68,7 @@ export function Layout() {
   ]
 
   return (
-    <div className="min-h-screen bg-accent/20">
+    <div className="min-h-screen bg-accent/20 flex flex-col">
       <motion.header 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -160,11 +160,93 @@ export function Layout() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="container mx-auto max-w-7xl px-4 py-6"
+        className="container mx-auto max-w-7xl px-4 py-6 flex-1"
       >
         <Outlet />
       </motion.main>
+
+      <Footer />
     </div>
+  )
+}
+
+function Footer() {
+  const currentYear = new Date().getFullYear()
+  
+  const footerLinks = [
+    { label: 'About', href: '#' },
+    { label: 'Contact', href: '#' },
+    { label: 'Privacy Policy', href: '#' },
+    { label: 'Terms of Service', href: '#' },
+  ]
+
+  const socialLinks = [
+    { icon: Twitter, href: '#', label: 'Twitter' },
+    { icon: Github, href: '#', label: 'GitHub' },
+    { icon: Linkedin, href: '#', label: 'LinkedIn' },
+  ]
+
+  return (
+    <motion.footer
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="border-t bg-background/50 backdrop-blur-sm"
+    >
+      <div className="container mx-auto max-w-7xl px-4 py-2">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Brand */}
+          <div className="flex items-center space-x-2">
+            <img
+              src="/logo512.svg"
+              alt="Huntier logo"
+              className="h-6 w-6"
+            />
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-foreground">
+                Huntier
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Modern job hunting platform
+              </span>
+            </div>
+          </div>
+
+          {/* Links */}
+          <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            {footerLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Social & Copyright */}
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+            <div className="flex items-center gap-3">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={social.label}
+                >
+                  <social.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+            <div className="hidden md:block w-px h-4 bg-border" />
+            <span className="text-xs text-muted-foreground text-center">
+              © {currentYear} Huntier. All rights reserved.
+            </span>
+          </div>
+        </div>
+      </div>
+    </motion.footer>
   )
 }
 

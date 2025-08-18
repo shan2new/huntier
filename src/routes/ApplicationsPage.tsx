@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, Calendar, ChevronRight, ClipboardList, Clock, ExternalLink, Handshake, Phone, Target, UserPlus } from 'lucide-react'
-import { apiWithToken, listPlatforms } from '../lib/api'
-import type { ApplicationListItem, Platform } from '../lib/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
+import { apiWithToken } from '../lib/api'
+import type { ApplicationListItem } from '../lib/api'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 
 const milestoneConfig: Partial<Record<string, { label: string; icon: any }>> = {
   exploration: { label: 'Exploration', icon: Target },
@@ -32,9 +32,6 @@ export function ApplicationsPage() {
   const [updateModalOpen, setUpdateModalOpen] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | undefined>()
   const search = new URLSearchParams(globalThis.location.search).get('search') || ''
-  const initialPlatform = new URLSearchParams(globalThis.location.search).get('platform_id') || ''
-  const [platformId, setPlatformId] = useState<string>(initialPlatform)
-  const [platforms, setPlatforms] = useState<Array<Platform>>([])
 
   useEffect(() => {
     ;(async () => {
@@ -43,7 +40,6 @@ export function ApplicationsPage() {
         const token = await getToken()
         const params = new URLSearchParams()
         if (search) params.set('search', search)
-        if (platformId) params.set('platform_id', platformId)
         const qs = params.toString()
         const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`, token!)
         setApps(data)
@@ -51,18 +47,7 @@ export function ApplicationsPage() {
         setLoading(false)
       }
     })()
-  }, [getToken, search, platformId])
-
-  // Fetch platforms for filter
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const token = await getToken()
-        const data = await listPlatforms<Array<Platform>>(token!)
-        setPlatforms(data)
-      } catch {}
-    })()
-  }, [])
+  }, [getToken, search])
 
   const stats = useMemo(() => {
     const total = apps.length
@@ -77,39 +62,12 @@ export function ApplicationsPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="space-y-8"
+      className="relative space-y-8 h-full"
     >
-      {/* Header */}
-      <div className="flex space-y-4 flex-row items-center justify-between">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className="space-y-1"
-        >
-          {/* <h1 className="text-2xl text-foreground tracking-tight">Applications</h1> */}
-          {/* <p className="text-sm text-muted-foreground">Track and manage your job applications</p> */}
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
-          className="flex items-center gap-2"
-        >
-          <Button
-            size="sm"
-            onClick={() => {
-              setCreateModalOpen(true)
-            }}
-          >
-            Add
-          </Button>
-        </motion.div>
-      </div>
 
       {/* Enhanced Stats Cards */}
       <motion.div 
-        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
@@ -340,6 +298,23 @@ export function ApplicationsPage() {
           onDeleted={(id: string) => setApps((prev) => prev.filter((a) => a.id !== id))}
         />
       )}
+
+      {/* Floating Add Button (FAB) */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="absolute bottom-6 right-6 z-40"
+      >
+        <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+        <Button
+          size="icon"
+          className="relative h-14 w-14 rounded-full shadow-lg"
+          onClick={() => setCreateModalOpen(true)}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </motion.div>
     </motion.div>
   )
 }

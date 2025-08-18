@@ -2,6 +2,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Ensure full height for flex layouts */
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure React root and providers take full height */
+#app > div {
+  height: 100%;
+}
+
 /* Fonts */
 @import "@fontsource/outfit";
 @import "@fontsource-variable/geist-mono";

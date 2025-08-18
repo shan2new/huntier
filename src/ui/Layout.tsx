@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
-import { BarChart3, Kanban, Search, User } from 'lucide-react'
+import { BarChart3, ClipboardCheck, ClipboardList, Kanban, Search, User } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -66,8 +66,7 @@ export function Layout() {
   }
 
   const navItems = [
-    { to: '/applications', label: 'Applications', icon: BarChart3 },
-    { to: '/board', label: 'Board', icon: Kanban },
+    { to: '/applications', label: 'Applications', icon: ClipboardList },
     { to: '/profile', label: 'Profile', icon: User },
   ]
 

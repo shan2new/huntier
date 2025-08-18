@@ -116,14 +116,14 @@ export function ApplicationsPage() {
       >
         {[
           { 
-            label: 'Total Applications', 
+            label: 'Total', 
             value: stats.total, 
             icon: Building2, 
             change: '+12%',
             description: 'Applications this month'
           },
           { 
-            label: 'Active Pipeline', 
+            label: 'Active', 
             value: stats.active, 
             icon: Activity, 
             change: '+8%',
@@ -137,7 +137,7 @@ export function ApplicationsPage() {
             description: 'Interview scheduled'
           },
           { 
-            label: 'Offers Received', 
+            label: 'Offers', 
             value: stats.offers, 
             icon: Award, 
             change: '+15%',
@@ -178,17 +178,11 @@ export function ApplicationsPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
-        <Card>
-          <CardHeader className="border-b border-border py-2 bg-accent/40">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <div className="rounded-lg bg-primary/10">
-                  <ClipboardList className="h-4 w-4 text-primary" />
-                </div>
-                <span className="light:text-zinc-800">Applications</span>
-                </CardTitle>
-              <Badge variant="outline" className="text-xs text-zinc-800 bg-zinc-100">
-                {apps.length} {apps.length === 1 ? 'application' : 'applications'}
+        <Card className="shadow-xs">
+          <CardHeader className="border-b border-border py-2 bg-accent/20">
+            <div className="flex items-center justify-end">
+              <Badge variant="outline" className="text-xs rounded-4xl">
+                {apps.length}
               </Badge>
             </div>
           </CardHeader>

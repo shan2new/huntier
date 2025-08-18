@@ -179,49 +179,45 @@ export function ApplicationsPage() {
                         <div>
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                             <div className="flex-1 space-y-2 min-w-0">
-                              <div className="flex items-center space-x-2.5">
+                              <div className="flex items-center space-x-3">
                                 <div className="flex-shrink-0">
-                                  {(() => {
-                                    const Icon = sourceConfig[app.source]?.icon ?? UserPlus
-                                    return <Icon className="h-4 w-4 text-muted-foreground" />
-                                  })()}
+                                  {app.company?.logo_blob_base64 ? (
+                                    <img
+                                      src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
+                                      alt={app.company.name}
+                                      className="h-8 w-8 rounded-md border border-border object-cover"
+                                    />
+                                  ) : (
+                                    <Building2 className="h-8 w-8 text-muted-foreground" />
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center space-x-2 min-w-0">
                                     <h3 className="font-medium text-base text-foreground group-hover:text-primary transition-colors truncate">
-                                      {app.role}
+                                      {app.company?.name ?? `Company ${app.company_id.slice(0, 8)}...`}
                                     </h3>
                                     <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                                   </div>
-                                  <div className="flex items-center space-x-3 mt-0.5 text-xs text-muted-foreground min-w-0">
-                                    <span className="flex items-center space-x-1">
-                                      {app.company?.logo_blob_base64 ? (
-                                        <img
-                                          src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
-                                          alt={app.company.name}
-                                          className="h-4 w-4 rounded-sm border border-border object-cover"
-                                        />
-                                      ) : (
-                                        <Building2 className="h-3 w-3" />
-                                      )}
-                                      <span className="truncate max-w-[12rem] sm:max-w-none">{app.company?.name ?? `Company ${app.company_id.slice(0, 8)}...`}</span>
-                                    </span>
-                                    <span>•</span>
+                                  <div className="flex items-center space-x-3 text-xs text-muted-foreground min-w-0">
+                                    <span className="truncate">{app.role}</span>
                                     {app.platform && (
-                                      <span className="flex items-center space-x-1">
-                                        {app.platform.logo_blob_base64 ? (
-                                          <img
-                                            src={app.platform.logo_blob_base64.startsWith('data:') ? app.platform.logo_blob_base64 : `data:image/png;base64,${app.platform.logo_blob_base64}`}
-                                            alt={app.platform.name}
-                                            className="h-4 w-4 rounded-sm border border-border object-cover"
-                                          />
-                                        ) : (
-                                          <Building2 className="h-3 w-3" />
-                                        )}
-                                        <span className="truncate max-w-[10rem]">{app.platform.name}</span>
-                                      </span>
+                                      <>
+                                        <span>•</span>
+                                        <span className="flex items-center space-x-1">
+                                          {app.platform.logo_blob_base64 ? (
+                                            <img
+                                              src={app.platform.logo_blob_base64.startsWith('data:') ? app.platform.logo_blob_base64 : `data:image/png;base64,${app.platform.logo_blob_base64}`}
+                                              alt={app.platform.name}
+                                              className="h-3.5 w-3.5 rounded-sm border border-border object-cover"
+                                            />
+                                          ) : (
+                                            <Building2 className="h-3 w-3" />
+                                          )}
+                                          <span className="truncate max-w-[10rem]">{app.platform.name}</span>
+                                        </span>
+                                      </>
                                     )}
-                                    {app.platform && <span>•</span>}
+                                    <span>•</span>
                                     <span className="flex items-center space-x-1">
                                       <Clock className="h-3 w-3" />
                                       <span>Updated {formatDateIndian(app.last_activity_at)}</span>

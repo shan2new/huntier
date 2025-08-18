@@ -36,6 +36,7 @@ import {
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
 import { ContactModal } from '@/components/ContactModal'
 import { PlatformCombobox } from '@/components/PlatformCombobox'
+import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
 
 interface CreateApplicationModalProps {
   open: boolean
@@ -320,9 +321,13 @@ export function CreateApplicationModal({
                           <Briefcase className="h-4 w-4" />
                           Role
                         </Label>
-                        <Input
-                          value={role}
-                          onChange={(e) => setRole(e.target.value)}
+                        <RoleSuggestionCombobox
+                          companyId={company.id}
+                          onChoose={(s) => setRole(s.role)}
+                          currentRole={role}
+                          showAsInput
+                          inputValue={role}
+                          onInputValueChange={setRole}
                           placeholder="e.g. Senior Software Engineer"
                           className="w-full"
                         />
@@ -373,32 +378,56 @@ export function CreateApplicationModal({
                         </Label>
                         
                         <div className="space-y-4">
-                          <div className="flex items-center gap-4">
+                          {/* Number inputs above slider */}
+                          <div className="flex justify-between gap-4">
                             <Input
-                              type="number"
-                              value={salaryRange[0]}
-                              onChange={(e) => setSalaryRange([Number(e.target.value), salaryRange[1]])}
-                              className="w-20 shrink-0 text-center"
-                              step="0.5"
+                              type="text"
+                              value={salaryRange[0] || ''}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  setSalaryRange([value === '' ? 0 : Number(value), salaryRange[1]])
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value
+                                const numValue = value === '' ? 10 : Number(value)
+                                setSalaryRange([numValue, salaryRange[1]])
+                              }}
+                              className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder="10"
                             />
-                            <div className="flex-1">
-                              <Slider
-                                value={salaryRange}
-                                onValueChange={setSalaryRange}
-                                min={0}
-                                max={100}
-                                step={0.5}
-                                className="w-full"
-                              />
-                            </div>
                             <Input
-                              type="number"
-                              value={salaryRange[1]}
-                              onChange={(e) => setSalaryRange([salaryRange[0], Number(e.target.value)])}
-                              className="w-20 shrink-0 text-center"
-                              step="0.5"
+                              type="text"
+                              value={salaryRange[1] || ''}
+                              onChange={(e) => {
+                                const value = e.target.value
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  setSalaryRange([salaryRange[0], value === '' ? 0 : Number(value)])
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const value = e.target.value
+                                const numValue = value === '' ? 30 : Number(value)
+                                setSalaryRange([salaryRange[0], numValue])
+                              }}
+                              className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder="30"
                             />
                           </div>
+                          
+                          {/* Slider below inputs */}
+                          <div className="px-1">
+                            <Slider
+                              value={salaryRange}
+                              onValueChange={setSalaryRange}
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              className="w-full"
+                            />
+                          </div>
+                          
                           <div className="text-xs text-muted-foreground text-center">
                             ₹{salaryRange[0]} - ₹{salaryRange[1]} LPA
                           </div>

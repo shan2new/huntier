@@ -7,7 +7,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { listPlatforms } from '@/lib/api'
+import { listPlatforms, searchPlatformsByName } from '@/lib/api'
 
 export type PlatformComboboxProps = {
   value: Platform | null
@@ -52,6 +52,8 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [rows, setRows] = useState<Array<Platform>>([])
+  const [mode, setMode] = useState<'list' | 'search'>('list')
+  const MIN_SEARCH_CHARS = 4 // keep in sync with backend validation
 
   const isControlled = openProp !== undefined
   const isOpen = isControlled ? !!openProp : internalOpen
@@ -70,10 +72,13 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
         const token = await getToken()
         if (!token) return
         const data = await listPlatforms<Array<Platform>>(token)
-        if (!cancelled) setRows(data)
+        if (!cancelled) {
+          setRows(data)
+          setMode('list')
+        }
       } catch (err) {
         console.error('Platforms load error:', err)
-        if (!cancelled) setError('Failed to load platforms')
+        if (!cancelled) setError((err as any)?.message || 'Failed to load platforms')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -83,6 +88,63 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
       cancelled = true
     }
   }, [isOpen, getToken])
+
+  // AI-assisted search when typing (debounced)
+  useEffect(() => {
+    if (!isOpen) return
+    const q = query.trim()
+    let cancelled = false
+    let handle: number | undefined
+
+    async function fetchList() {
+      setLoading(true)
+      setError('')
+      try {
+        const token = await getToken()
+        if (!token) return
+        const data = await listPlatforms<Array<Platform>>(token)
+        if (!cancelled) {
+          setRows(data)
+          setMode('list')
+        }
+      } catch (err) {
+        console.error('Platforms load error:', err)
+        if (!cancelled) setError((err as any)?.message || 'Failed to load platforms')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    async function fetchSearch() {
+      setLoading(true)
+      setError('')
+      try {
+        const token = await getToken()
+        if (!token) return
+        const data = await searchPlatformsByName<Array<Platform>>(token, q)
+        if (!cancelled) {
+          setRows(data)
+          setMode('search')
+        }
+      } catch (err) {
+        console.error('Platform search error:', err)
+        if (!cancelled) setError((err as any)?.message || 'Failed to search platforms')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    if (q.length >= MIN_SEARCH_CHARS) {
+      handle = window.setTimeout(fetchSearch, 300)
+    } else if (q.length === 0) {
+      fetchList()
+    }
+
+    return () => {
+      cancelled = true
+      if (handle) window.clearTimeout(handle)
+    }
+  }, [isOpen, query, getToken])
 
   // Cmd+K to open
   useEffect(() => {
@@ -103,10 +165,12 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
   }, [value, placeholder])
 
   const filtered = useMemo(() => {
+    // When results come from server-side search, they are already relevant (fuzzy/AI).
+    if (mode === 'search') return rows
     const q = query.trim().toLowerCase()
     if (!q) return rows
     return rows.filter((p) => p.name.toLowerCase().includes(q))
-  }, [rows, query])
+  }, [rows, query, mode])
 
   const trigger = triggerAsChild
     ? cloneElement(triggerAsChild as any, {

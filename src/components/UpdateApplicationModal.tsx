@@ -37,6 +37,8 @@ import {
 } from '@/components/ui/select'
 import { formatDateIndian } from '@/lib/utils'
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
+import { PlatformCombobox } from '@/components/PlatformCombobox'
+import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
 
 const sourceOptions = [
   { value: 'applied_self', label: 'Self', icon: '🎯' },
@@ -87,6 +89,7 @@ export function UpdateApplicationModal({
   const [includeJobUrl, setIncludeJobUrl] = useState(false)
   const [platforms, setPlatforms] = useState<Array<Platform>>([])
   const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
   const [companySearchOpen, setCompanySearchOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
@@ -118,6 +121,7 @@ export function UpdateApplicationModal({
         setRole(hydratedApp.role || '')
         setSource(hydratedApp.source || 'applied_self')
         setSelectedPlatformId(hydratedApp.platform_id || null)
+        if (hydratedApp.platform) setSelectedPlatform(hydratedApp.platform)
         setIncludeJobUrl(!!hydratedApp.job_url)
       } catch (err) {
         setError('Failed to load application')
@@ -138,11 +142,15 @@ export function UpdateApplicationModal({
         const token = await getToken()
         const rows = await listPlatforms<Array<Platform>>(token!)
         setPlatforms(rows)
+        if (!selectedPlatform && selectedPlatformId) {
+          const found = rows.find(r => r.id === selectedPlatformId)
+          if (found) setSelectedPlatform(found)
+        }
       } catch {
         // ignore silently
       }
     })()
-  }, [open, getToken])
+  }, [open, getToken, selectedPlatform, selectedPlatformId])
 
   const handleSave = async () => {
     if (!role || !app) return
@@ -205,7 +213,7 @@ export function UpdateApplicationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 gap-0 border border-border rounded-xl bg-card">
+      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 gap-0 border border-border rounded-xl bg-card" hideClose>
         <div className="flex flex-col h-full min-h-0">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b border-border">
@@ -326,12 +334,25 @@ export function UpdateApplicationModal({
                             <div className="space-y-4">
                               <div className="space-y-2">
                                 <Label className="text-sm">Role Title</Label>
-                                <Input
-                                  value={role}
-                                  onChange={(e) => setRole(e.target.value)}
-                                  placeholder="Senior Software Engineer"
-                                  className="bg-background/50 border-border"
-                                />
+                                {app?.company?.id ? (
+                                  <RoleSuggestionCombobox
+                                    companyId={app.company.id}
+                                    onChoose={(s) => setRole(s.role)}
+                                    currentRole={role}
+                                    showAsInput
+                                    inputValue={role}
+                                    onInputValueChange={setRole}
+                                    placeholder="e.g. Senior Software Engineer"
+                                    className="bg-background/50 border-border"
+                                  />
+                                ) : (
+                                  <Input
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    placeholder="Senior Software Engineer"
+                                    className="bg-background/50 border-border"
+                                  />
+                                )}
                               </div>
                               
                               {/* Job URL with toggle */}
@@ -375,35 +396,15 @@ export function UpdateApplicationModal({
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                   <Label className="text-sm">Platform</Label>
-                                  <Select 
-                                    value={selectedPlatformId ?? ''} 
-                                    onValueChange={(v) => setSelectedPlatformId(v || null)}
-                                  >
-                                    <SelectTrigger className="bg-background/50 border-border">
-                                      <SelectValue placeholder="Select platform" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        <SelectLabel>Platforms</SelectLabel>
-                                        {platforms.map((p) => (
-                                          <SelectItem key={p.id} value={p.id}>
-                                            <div className="flex items-center gap-2">
-                                              {p.logo_blob_base64 ? (
-                                                <img
-                                                  src={p.logo_blob_base64.startsWith('data:') ? p.logo_blob_base64 : `data:image/png;base64,${p.logo_blob_base64}`}
-                                                  alt={p.name}
-                                                  className="w-4 h-4 rounded-sm border border-border object-cover"
-                                                />
-                                              ) : (
-                                                <span className="w-4 h-4 rounded-sm bg-muted inline-block" />
-                                              )}
-                                              <span>{p.name}</span>
-                                            </div>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
+                                  <PlatformCombobox
+                                    value={selectedPlatform}
+                                    onChange={(p) => {
+                                      setSelectedPlatform(p)
+                                      setSelectedPlatformId(p?.id ?? null)
+                                    }}
+                                    placeholder="Select or search platform..."
+                                    className="bg-background/50 border-border"
+                                  />
                                 </div>
 
                                 <div className="space-y-2">
@@ -564,6 +565,14 @@ export function UpdateApplicationModal({
               )}
               
               <div className="flex items-center justify-between w-full">
+              <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isSubmitting}
+                  >
+                    Delete
+                  </Button>
+                <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
                   onClick={handleClose}
@@ -571,14 +580,6 @@ export function UpdateApplicationModal({
                 >
                   Close
                 </Button>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={isSubmitting}
-                  >
-                    Delete
-                  </Button>
                   <Button 
                     onClick={handleSave}
                     disabled={isSubmitting || !role}
@@ -593,7 +594,7 @@ export function UpdateApplicationModal({
                         Saving...
                       </>
                     ) : (
-                      'Save Changes'
+                      'Save'
                     )}
                   </Button>
                 </div>

@@ -51,7 +51,7 @@ html, body, #app {
 
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9731 0 0);
-  --ring: oklch(0.8348 0.1302 160.9080);
+  --ring: oklch(0.7 0.02 200);
 
   --radius: 0.5rem;
 
@@ -121,7 +121,7 @@ html, body, #app {
 
   --border: oklch(0.2809 0 0);
   --input: oklch(0.2603 0 0);
-  --ring: oklch(0.8003 0.1821 151.7110);
+  --ring: oklch(0.380 0 0);
   --chart-1: oklch(0.8003 0.1821 151.7110);
   --chart-2: oklch(0.7137 0.1434 254.6240);
   --chart-3: oklch(0.7090 0.1592 293.5412);
@@ -286,7 +286,7 @@ html, body, #app {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/20;
   }
   body {
     @apply bg-background text-foreground;

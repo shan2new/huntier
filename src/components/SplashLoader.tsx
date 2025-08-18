@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import logo512 from '/logo512.svg'
 
 const funTexts = [

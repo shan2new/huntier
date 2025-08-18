@@ -10,6 +10,8 @@ export type Company = {
   domain?: string | null
   description?: string | null
 }
+export type RoleSuggestion = { role: string; reason?: string; confidence?: number }
+export type RoleSuggestionResponse = { suggestions: Array<RoleSuggestion> }
 export type Platform = { id: string; name: string; url: string; logo_blob_base64?: string | null }
 export type ApplicationListItem = {
   id: string
@@ -115,6 +117,14 @@ export async function listPlatforms<T>(token: string): Promise<T> {
   return apiWithToken(`/v1/platforms`, token)
 }
 
+// New: POST /v1/platforms/search - AI-assisted search by platform name
+export async function searchPlatformsByName<T>(token: string, query: string): Promise<T> {
+  return apiWithToken(`/v1/platforms/search`, token, {
+    method: 'POST',
+    body: JSON.stringify({ query }),
+  })
+}
+
 // Companies
 export async function searchCompanies<T>(token: string, search?: string): Promise<T> {
   const query = search ? `?search=${encodeURIComponent(search)}` : ''
@@ -141,13 +151,38 @@ export async function getCompanyById<T>(token: string, id: string): Promise<T> {
   return apiWithToken(`/v1/companies/${id}`, token)
 }
 
-// Profile (theme)
-export type UserProfile = { notice_period_days?: number | null; earliest_join_date?: string | null; theme?: 'light' | 'dark' | null }
+// Profile
+export type UserProfile = { 
+  notice_period_days?: number | null; 
+  earliest_join_date?: string | null; 
+  theme?: 'light' | 'dark' | null;
+  current_role?: string | null;
+  // Deprecated free-text field retained for backward compatibility
+  current_company?: string | null;
+  // New canonical company reference
+  current_company_id?: string | null;
+  // Hydrated company entity when available (server loads relation)
+  company?: Company | null;
+  persona?: 'student' | 'intern' | 'professional' | null;
+  persona_info?: Record<string, any> | null;
+}
 export async function getProfile<T = UserProfile>(token: string): Promise<T> {
   return apiWithToken(`/v1/profile`, token)
 }
 export async function updateProfile<T = UserProfile>(token: string, body: Partial<UserProfile>): Promise<T> {
   return apiWithToken(`/v1/profile`, token, { method: 'PATCH', body: JSON.stringify(body) })
+}
+
+// Role suggestions
+export async function getRoleSuggestions(
+  token: string,
+  companyId: string,
+  body?: { current_role?: string | null; current_company?: string | null }
+): Promise<RoleSuggestionResponse> {
+  return apiWithToken(`/v1/companies/${companyId}/role-suggestions`, token, { 
+    method: 'POST', 
+    body: JSON.stringify(body || {})
+  })
 }
 
 

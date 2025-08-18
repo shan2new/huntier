@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
 import { 
-  AlertCircle, 
   Briefcase, 
   Calendar, 
   CheckCircle, 
@@ -16,7 +15,8 @@ import {
   TrendingUp,
   User
 } from 'lucide-react'
-import { apiWithToken } from '../lib/api'
+import type { Company, UserProfile } from '@/lib/api'
+import { apiWithToken } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,11 +24,11 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar as DateCalendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
+import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
 
-interface Profile {
-  notice_period_days?: number | null
-  earliest_join_date?: string | null
-}
+type Profile = UserProfile
 
 interface RecruiterQA {
   current_ctc_text?: string
@@ -88,6 +88,8 @@ export function ProfilePage() {
   const [theme, setTheme] = useState<'light' | 'dark'>(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
   const [joinDateOpen, setJoinDateOpen] = useState(false)
   const [joinDate, setJoinDate] = useState<Date | undefined>(undefined)
+  const [internAvailOpen, setInternAvailOpen] = useState(false)
+  const [internAvailDate, setInternAvailDate] = useState<Date | undefined>(undefined)
 
   useEffect(() => {
     ;(async () => {
@@ -106,6 +108,14 @@ export function ProfilePage() {
         } else {
           setJoinDate(undefined)
         }
+        // Initialize intern available date if present
+        const pi = (p as any)?.persona_info
+        if (pi?.available_from) {
+          const d2 = new Date(pi.available_from)
+          if (!isNaN(d2.getTime())) setInternAvailDate(d2)
+        } else {
+          setInternAvailDate(undefined)
+        }
         setQa(q as any)
       } finally {
         setLoading(false)
@@ -117,8 +127,9 @@ export function ProfilePage() {
     setSaving(true)
     try {
       const token = await getToken()
+      const { company: _company, ...patchProfile } = (profile || {}) as any
       await Promise.all([
-        apiWithToken('/v1/profile', token!, { method: 'PATCH', body: JSON.stringify(profile) }),
+        apiWithToken('/v1/profile', token!, { method: 'PATCH', body: JSON.stringify(patchProfile) }),
         apiWithToken('/v1/recruiter-qa', token!, { method: 'PUT', body: JSON.stringify(qa) })
       ])
       setSaveSuccess(true)
@@ -149,7 +160,7 @@ export function ProfilePage() {
     // Persist to profile
     try {
       const token = await getToken()
-      await fetch('/v1/profile', { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: next }) })
+      await apiWithToken('/v1/profile', token!, { method: 'PATCH', body: JSON.stringify({ theme: next }) })
     } catch {}
   }
 
@@ -171,66 +182,6 @@ export function ProfilePage() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 min-w-0 max-w-full overflow-hidden hide-scrollbar"
     >
-      {/* Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-1"
-        >
-          <h1 className="text-heading-32 tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Profile
-          </h1>
-          <p className="text-muted-foreground">Manage your professional profile and recruiter responses</p>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center space-x-3"
-        >
-          <Button variant="outline" size="sm" onClick={toggleTheme}>
-            {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-          </Button>
-          {saveSuccess && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center"
-            >
-              <span className="text-sm font-medium">Saved successfully!</span>
-            </motion.div>
-          )}
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEditMode(!editMode)}
-
-          >
-            <span>{editMode ? 'Cancel' : 'Edit'}</span>
-          </Button>
-          
-          <Button
-            size="sm"
-            onClick={save}
-            disabled={saving || !editMode}
-          >
-            {saving ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="h-2 w-2 rounded-full border-2 border-white border-t-transparent"
-              />
-            ) : (
-              <Save className="h-2 w-2" />
-            )}
-            <span>{saving ? 'Saving...' : 'Save'}</span>
-          </Button>
-        </motion.div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-w-0">
         {/* User Info & Basic Profile */}
         <motion.div
@@ -275,6 +226,28 @@ export function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
+              {/* Persona Selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center space-x-1.5">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span>Persona</span>
+                </label>
+                <Select
+                  value={profile?.persona || ''}
+                  onValueChange={(v) => setProfile({ ...profile, persona: (v as any) || null })}
+                  disabled={!editMode}
+                >
+                  <SelectTrigger className="w-[220px] h-8 text-sm">
+                    <SelectValue placeholder="Select persona" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="professional">Working Professional</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="intern">Intern</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-medium flex items-center space-x-1.5">
                   <Clock className="h-3.5 w-3.5" />
@@ -347,6 +320,169 @@ export function ProfilePage() {
                 </Popover>
                 <p className="text-xs text-muted-foreground">When you can start a new role</p>
               </div>
+              {/* Persona-specific sections */}
+              {profile && profile.persona === 'professional' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Current Role</label>
+                    {editMode && profile.company?.id ? (
+                      // Role suggestions integrated input when company is selected
+                      <RoleSuggestionCombobox
+                        companyId={profile.company.id}
+                        currentRole={profile.current_role || ''}
+                        currentCompany={profile.company.name || profile.current_company || ''}
+                        showAsInput
+                        inputValue={profile.current_role || ''}
+                        onInputValueChange={(v: string) => setProfile({ ...profile, current_role: v })}
+                        onChoose={(s) => setProfile({ ...profile, current_role: s.role })}
+                        placeholder="e.g., Senior Frontend Engineer"
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <Input
+                        placeholder="e.g., Senior Frontend Engineer"
+                        value={profile.current_role || ''}
+                        onChange={(e) => setProfile({ ...profile, current_role: e.target.value })}
+                        disabled={!editMode}
+                        className="bg-background/50 h-8 text-sm"
+                      />
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Current Company</label>
+                    {editMode ? (
+                      <CompanySearchCombobox
+                        value={profile.company || null}
+                        onChange={(c: Company | null) => {
+                          setProfile({
+                            ...profile,
+                            company: c,
+                            current_company_id: c?.id ?? null,
+                            current_company: c?.name ?? null,
+                          })
+                        }}
+                        placeholder="Search your company..."
+                        variant="dialog"
+                      />
+                    ) : (
+                      <Input
+                        placeholder="e.g., Acme Corp"
+                        value={profile.company?.name || profile.current_company || ''}
+                        disabled
+                        className="bg-background/50 h-8 text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+              {profile && profile.persona === 'student' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Degree</label>
+                    <Input
+                      placeholder="e.g., B.Tech Computer Science"
+                      value={profile.persona_info?.degree || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), degree: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Institution</label>
+                    <Input
+                      placeholder="e.g., IIT Delhi"
+                      value={profile.persona_info?.institution || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), institution: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Graduation Year</label>
+                    <Input
+                      placeholder="e.g., 2026"
+                      value={profile.persona_info?.graduation_year || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), graduation_year: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Major</label>
+                    <Input
+                      placeholder="e.g., Computer Science"
+                      value={profile.persona_info?.major || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), major: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+              {profile && profile.persona === 'intern' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Internship Role</label>
+                    <Input
+                      placeholder="e.g., Frontend Intern"
+                      value={profile.persona_info?.role || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), role: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Organization</label>
+                    <Input
+                      placeholder="e.g., Acme Corp"
+                      value={profile.persona_info?.organization || ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), organization: e.target.value } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Available From</label>
+                    <Popover open={internAvailOpen} onOpenChange={setInternAvailOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={!editMode}
+                          className="w-[220px] justify-between font-normal h-8 text-sm"
+                        >
+                          {formatDisplayDate(internAvailDate)}
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <DateCalendar
+                          mode="single"
+                          selected={internAvailDate}
+                          captionLayout="dropdown"
+                          onSelect={(d) => {
+                            setInternAvailDate(d)
+                            setInternAvailOpen(false)
+                            setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), available_from: toISODateString(d) } })
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium">Duration (months)</label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="e.g., 6"
+                      value={profile.persona_info?.duration_months ?? ''}
+                      onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), duration_months: e.target.value === '' ? null : Number(e.target.value) } })}
+                      disabled={!editMode}
+                      className="bg-background/50 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -421,6 +557,48 @@ export function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex items-center space-x-3 justify-end pt-3"
+          >
+            <Button variant="outline" size="sm" onClick={toggleTheme}>
+              {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+            </Button>
+            {saveSuccess && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center"
+              >
+                <span className="text-sm font-medium">Saved successfully!</span>
+              </motion.div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditMode(!editMode)}
+            >
+              <span>{editMode ? 'Cancel' : 'Edit'}</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={save}
+              disabled={saving || !editMode}
+            >
+              {saving ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="h-2 w-2 rounded-full border-2 border-white border-t-transparent"
+                />
+              ) : (
+                <Save className="h-2 w-2" />
+              )}
+              <span>{saving ? 'Saving...' : 'Save'}</span>
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>

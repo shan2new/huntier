@@ -114,6 +114,10 @@ export function RoleSuggestionCombobox({
         if (selectedIndex >= 0 && filteredRows[selectedIndex]) {
           onChoose(filteredRows[selectedIndex])
           setOpen(false)
+        } else if (searchQuery.trim()) {
+          // If no suggestion is selected but user entered text, use it as custom role
+          onChoose({ role: searchQuery, reason: 'Custom role' })
+          setOpen(false)
         }
         break
       case 'Escape':
@@ -218,31 +222,69 @@ export function RoleSuggestionCombobox({
           )}
           
           {error && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="text-center mb-4">
                 <div className="text-sm text-destructive mb-1">Failed to load suggestions</div>
-                <div className="text-xs text-muted-foreground">{error}</div>
+                <div className="text-xs text-muted-foreground mb-2">{error}</div>
+                <div className="text-xs text-muted-foreground">You can still enter a custom role</div>
               </div>
+              {searchQuery && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    onChoose({ role: searchQuery, reason: 'Custom role' })
+                    setOpen(false)
+                  }}
+                >
+                  Use "{searchQuery}"
+                </Button>
+              )}
             </div>
           )}
           
           {empty && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="text-center mb-4">
                 <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <div className="text-sm font-medium mb-1">No suggestions available</div>
-                <div className="text-xs text-muted-foreground">Try creating a role manually</div>
+                <div className="text-xs text-muted-foreground">Use your custom role instead</div>
               </div>
+              {searchQuery && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    onChoose({ role: searchQuery, reason: 'Custom role' })
+                    setOpen(false)
+                  }}
+                >
+                  Use "{searchQuery}"
+                </Button>
+              )}
             </div>
           )}
           
           {noResults && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="text-center mb-4">
                 <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <div className="text-sm font-medium mb-1">No matching roles</div>
-                <div className="text-xs text-muted-foreground">Try a different search term</div>
+                <div className="text-xs text-muted-foreground">Use your custom role instead</div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  onChoose({ role: searchQuery, reason: 'Custom role' })
+                  setOpen(false)
+                }}
+              >
+                Use "{searchQuery}"
+              </Button>
             </div>
           )}
           

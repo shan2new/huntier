@@ -13,6 +13,14 @@ export type Company = {
 export type RoleSuggestion = { role: string; reason?: string; confidence?: number }
 export type RoleSuggestionResponse = { suggestions: Array<RoleSuggestion> }
 export type Platform = { id: string; name: string; url: string; logo_blob_base64?: string | null }
+export type ApplicationCompensation = {
+  fixed_min_lpa?: string | null
+  fixed_max_lpa?: string | null
+  var_min_lpa?: string | null
+  var_max_lpa?: string | null
+  tentative_ctc_note?: string | null
+}
+
 export type ApplicationListItem = {
   id: string
   company_id: string
@@ -27,6 +35,7 @@ export type ApplicationListItem = {
   created_at: string
   last_activity_at: string
   notes?: string | null
+  compensation?: ApplicationCompensation | null
 }
 
 const BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api'

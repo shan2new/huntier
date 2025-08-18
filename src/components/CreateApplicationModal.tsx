@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   DollarSign,
+  ExternalLink,
   Flag,
   Globe,
   Phone,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import { addApplicationContact, apiWithToken } from '@/lib/api'
+import { cn, extractHostname } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +39,8 @@ import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
 import { ContactModal } from '@/components/ContactModal'
 import { PlatformCombobox } from '@/components/PlatformCombobox'
 import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
+import { ApplicationNotes } from '@/components/ApplicationNotes'
+import { ApplicationConversations } from '@/components/ApplicationConversations'
 
 interface CreateApplicationModalProps {
   open: boolean
@@ -93,7 +97,11 @@ export function CreateApplicationModal({
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
   const [stageStatus, setStageStatus] = useState('applied_self')
   const [contacts, setContacts] = useState<Array<Contact>>([])
+  const [pendingNotes, setPendingNotes] = useState<Array<string>>([])
   const [companySearchOpen, setCompanySearchOpen] = useState(false)
+  
+  // Tab state for Notes/Conversations
+  const [activeTab, setActiveTab] = useState<'notes' | 'conversations'>('notes')
   
   // Contact modal
   const [contactModalOpen, setContactModalOpen] = useState(false)
@@ -113,9 +121,21 @@ export function CreateApplicationModal({
       setSelectedPlatform(null)
       setStageStatus('applied_self')
       setContacts([])
+      setPendingNotes([])
       setError('')
     }
   }, [open])
+  
+  // Add a note to pending notes list or update pending notes
+  const addPendingNote = (content: string, updatedNotes?: Array<string>) => {
+    if (content === "__UPDATE_PENDING_NOTES__" && updatedNotes) {
+      // Special case to handle note deletion
+      setPendingNotes(updatedNotes)
+    } else {
+      // Regular case to add a new note
+      setPendingNotes([...pendingNotes, content])
+    }
+  }
 
   const normalizeUrl = (url: string) => {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -150,6 +170,7 @@ export function CreateApplicationModal({
         method: 'POST',
         body: JSON.stringify(applicationData),
       })
+      
       // Save contacts after application is created
       if (contacts.length) {
         try {
@@ -165,6 +186,23 @@ export function CreateApplicationModal({
         } catch (e) {
           console.error('Failed to save one or more contacts:', e)
           // Do not block application creation on contact failure
+        }
+      }
+      
+      // Save notes after application is created
+      if (pendingNotes.length) {
+        try {
+          await Promise.all(
+            pendingNotes.map(content =>
+              apiWithToken(`/v1/applications/${application.id}/notes`, token, {
+                method: 'POST',
+                body: JSON.stringify({ content }),
+              })
+            )
+          )
+        } catch (e) {
+          console.error('Failed to save one or more notes:', e)
+          // Do not block application creation on notes failure
         }
       }
       
@@ -240,7 +278,14 @@ export function CreateApplicationModal({
                           {company.website_url && (
                             <>
                               <span>•</span>
-                              <span className="truncate">{company.website_url.replace(/^https?:\/\//i, '')}</span>
+                              <a
+                                className="truncate inline-flex items-center gap-1 text-primary"
+                                href={company.website_url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink className="h-3 w-3" /> {extractHostname(company.website_url)}
+                              </a>
                             </>
                           )}
                         </div>
@@ -313,7 +358,7 @@ export function CreateApplicationModal({
                     className="relative grid grid-cols-[3fr_2fr] gap-6 h-full"
                   >
                     <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border pointer-events-none" aria-hidden="true"></div>
-                    {/* Column 1: Basic Information */}
+                      {/* Column 1: Basic Information */}
                     <div className="space-y-4 pr-6">
                       {/* Role */}
                       <div className="space-y-2">
@@ -368,6 +413,55 @@ export function CreateApplicationModal({
                             </motion.div>
                           )}
                         </AnimatePresence>
+                      </div>
+
+                      {/* Notes & Conversations Tabs */}
+                      <div className="space-y-3 mt-6">
+                        <div className="flex gap-2 border-b">
+                          <button
+                            onClick={() => setActiveTab('notes')}
+                            className={cn(
+                              "px-3 py-2 text-sm font-medium transition-colors relative",
+                              activeTab === 'notes' 
+                                ? "text-foreground" 
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            Notes
+                            {activeTab === 'notes' && (
+                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('conversations')}
+                            className={cn(
+                              "px-3 py-2 text-sm font-medium transition-colors relative",
+                              activeTab === 'conversations' 
+                                ? "text-foreground" 
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            Conversations
+                            {activeTab === 'conversations' && (
+                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                            )}
+                          </button>
+                        </div>
+                        
+                        {activeTab === 'notes' ? (
+                          <ApplicationNotes
+                            token={null}
+                            isCreating={true}
+                            pendingNotes={pendingNotes}
+                            onAddPendingNote={addPendingNote}
+                          />
+                        ) : (
+                          <ApplicationConversations
+                            token={null}
+                            isCreating={true}
+                            className="h-[400px]"
+                          />
+                        )}
                       </div>
 
                       {/* Salary Range */}
@@ -554,6 +648,7 @@ export function CreateApplicationModal({
                           </Button>
                         </div>
                       </div>
+                      
                     </div>
                   </motion.div>
                 </div>

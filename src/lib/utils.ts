@@ -6,6 +6,17 @@ export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs))
 }
 
+// Extracts hostname from a URL, removing protocol and common prefixes
+export function extractHostname(url?: string) {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    return u.hostname.replace(/^www\./, '')
+  } catch {
+    return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  }
+}
+
 // Formats a date in Indian locale (DD Mon YYYY or with time if includeTime)
 export function formatDateIndian(dateLike: string | number | Date, includeTime = false) {
   const d = new Date(dateLike)
@@ -34,3 +45,4 @@ export function formatDateIndian(dateLike: string | number | Date, includeTime =
 
   return formatted
 }
+

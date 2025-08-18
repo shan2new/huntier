@@ -7,8 +7,13 @@ import {
   Briefcase,
   Building2,
   DollarSign,
+  ExternalLink,
+  Flag,
   Globe,
   Info,
+  MessageSquare,
+  Target,
+  Users,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import {
@@ -24,8 +29,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -35,7 +38,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatDateIndian } from '@/lib/utils'
+import { cn, extractHostname, formatDateIndian } from '@/lib/utils'
+import { ApplicationNotes } from '@/components/ApplicationNotes'
+import { ApplicationConversations } from '@/components/ApplicationConversations'
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
 import { PlatformCombobox } from '@/components/PlatformCombobox'
 import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
@@ -86,12 +91,42 @@ export function UpdateApplicationModal({
   const [url, setUrl] = useState('')
   const [role, setRole] = useState('')
   const [source, setSource] = useState('applied_self')
-  const [includeJobUrl, setIncludeJobUrl] = useState(false)
-  const [platforms, setPlatforms] = useState<Array<Platform>>([])
-  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
+  const [includeJobUrl, setIncludeJobUrl] = useState(false) // Use platform list to display names
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
   const [companySearchOpen, setCompanySearchOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  
+  // Auth token for notes component
+  const [authToken, setAuthToken] = useState<string | null>(null)
+  
+  // Tab state for Notes/Conversations
+  const [activeTab, setActiveTab] = useState<'notes' | 'conversations'>('notes')
+
+  // Compensation fields
+  const [fixedMinLpa, setFixedMinLpa] = useState('')
+  const [fixedMaxLpa, setFixedMaxLpa] = useState('')
+  const [varMinLpa, setVarMinLpa] = useState('')
+  const [varMaxLpa, setVarMaxLpa] = useState('')
+  
+  // Status fields
+  const [stageStatus, setStageStatus] = useState('applied')
+  
+  const stageStatusOptions = [
+    { value: 'applied', label: 'Applied' },
+    { value: 'interview', label: 'Interviewing' },
+    { value: 'offered', label: 'Offered' },
+    { value: 'accepted', label: 'Accepted' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'withdrawn', label: 'Withdrawn' },
+  ]
+
+  // Get auth token for API calls
+  useEffect(() => {
+    if (open) {
+      getToken().then(token => setAuthToken(token))
+    }
+  }, [open, getToken])
 
   // Load application data
   useEffect(() => {
@@ -121,6 +156,15 @@ export function UpdateApplicationModal({
         setRole(hydratedApp.role || '')
         setSource(hydratedApp.source || 'applied_self')
         setSelectedPlatformId(hydratedApp.platform_id || null)
+        setStageStatus(hydratedApp.stage || 'applied')
+        
+        // Populate compensation data if available
+        if (hydratedApp.compensation) {
+          setFixedMinLpa(hydratedApp.compensation.fixed_min_lpa?.toString() || '')
+          setFixedMaxLpa(hydratedApp.compensation.fixed_max_lpa?.toString() || '')
+          setVarMinLpa(hydratedApp.compensation.var_min_lpa?.toString() || '')
+          setVarMaxLpa(hydratedApp.compensation.var_max_lpa?.toString() || '')
+        }
         if (hydratedApp.platform) setSelectedPlatform(hydratedApp.platform)
         setIncludeJobUrl(!!hydratedApp.job_url)
       } catch (err) {
@@ -136,21 +180,22 @@ export function UpdateApplicationModal({
 
   // Load platforms for selection
   useEffect(() => {
-    if (!open) return
-    ;(async () => {
-      try {
-        const token = await getToken()
-        const rows = await listPlatforms<Array<Platform>>(token!)
-        setPlatforms(rows)
-        if (!selectedPlatform && selectedPlatformId) {
-          const found = rows.find(r => r.id === selectedPlatformId)
-          if (found) setSelectedPlatform(found)
-        }
-      } catch {
-        // ignore silently
-      }
-    })()
-  }, [open, getToken, selectedPlatform, selectedPlatformId])
+    if (open && authToken) {
+      listPlatforms(authToken)
+        .then((response) => {
+          const platformData = response as Array<Platform>
+          // Set selected platform if application already has one
+          if (app?.platform_id) {
+            const platform = platformData.find((p) => p.id === app.platform_id)
+            if (platform) {
+              setSelectedPlatform(platform)
+              setSelectedPlatformId(platform.id)
+            }
+          }
+        })
+        .catch(console.error)
+    }
+  }, [open, authToken, app])
 
   const handleSave = async () => {
     if (!role || !app) return
@@ -213,7 +258,7 @@ export function UpdateApplicationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 gap-0 border border-border rounded-xl bg-card" hideClose>
+      <DialogContent hideClose className="max-w-4xl p-0 gap-0 border border-border rounded-xl bg-card">
         <div className="flex flex-col h-full min-h-0">
           {/* Header */}
           <DialogHeader className="px-6 py-4 border-b border-border">
@@ -245,7 +290,14 @@ export function UpdateApplicationModal({
                     {app?.company?.website_url && (
                       <>
                         <span>•</span>
-                        <span className="truncate">{app.company.website_url.replace(/^https?:\/\//i, '')}</span>
+                        <a
+                          className="truncate inline-flex items-center gap-1 text-primary"
+                          href={app.company.website_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLink className="h-3 w-3" /> {extractHostname(app.company.website_url)}
+                        </a>
                       </>
                     )}
                     {app?.last_activity_at && (
@@ -312,240 +364,336 @@ export function UpdateApplicationModal({
                 </motion.div>
               </div>
             ) : (
-              <div className="flex flex-1 overflow-hidden min-h-0">
-                {/* Main Content Area */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <ScrollArea className="flex-1 h-full min-h-0">
-                    <div className="p-6">
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3, ease: "easeOut" }}
-                        className="space-y-6"
-                      >
-                        {/* Basic Application Details */}
-                        <Card className="border border-border">
-                          <CardContent className="p-6 space-y-6">
-                            <div className="flex items-center space-x-2 text-sm font-medium text-foreground mb-4">
-                              <Briefcase className="h-4 w-4 text-muted-foreground" />
-                              <span>Application Details</span>
-                            </div>
-                            
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <Label className="text-sm">Role Title</Label>
-                                {app?.company?.id ? (
-                                  <RoleSuggestionCombobox
-                                    companyId={app.company.id}
-                                    onChoose={(s) => setRole(s.role)}
-                                    currentRole={role}
-                                    showAsInput
-                                    inputValue={role}
-                                    onInputValueChange={setRole}
-                                    placeholder="e.g. Senior Software Engineer"
-                                    className="bg-background/50 border-border"
-                                  />
-                                ) : (
-                                  <Input
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    placeholder="Senior Software Engineer"
-                                    className="bg-background/50 border-border"
-                                  />
-                                )}
-                              </div>
-                              
-                              {/* Job URL with toggle */}
-                              <div className="space-y-3">
-                                <div className="flex items-center space-x-2 justify-end">
-                                  <Checkbox
-                                    id="include-job-url"
-                                    checked={includeJobUrl}
-                                    onCheckedChange={(checked) => setIncludeJobUrl(!!checked)}
-                                  />
-                                  <Label htmlFor="include-job-url" className="text-xs">
-                                    Include Job Link
-                                  </Label>
-                                </div>
-                                
-                                <AnimatePresence>
-                                  {includeJobUrl && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: 'auto' }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      transition={{ duration: 0.3, ease: "easeOut" }}
-                                      className="space-y-2"
-                                    >
-                                      <Label className="flex items-center gap-2 text-sm">
-                                        <Globe className="h-4 w-4" />
-                                        Job URL
-                                      </Label>
-                                      <Input
-                                        value={url}
-                                        onChange={(e) => setUrl(e.target.value)}
-                                        onBlur={(e) => setUrl(normalizeUrl(e.target.value))}
-                                        placeholder="https://company.com/careers/job-123"
-                                        className="bg-background/50 border-border"
-                                      />
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
+<div className="flex-1 overflow-y-auto p-4">
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.3, ease: "easeOut" }}
+    className="relative grid grid-cols-[3fr_2fr] gap-6 h-full"
+  >
+    <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border pointer-events-none" aria-hidden="true"></div>
+    
+    {/* Column 1: Core Details */}
+    <div className="space-y-4 pr-6 overflow-y-auto max-h-[calc(70vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
+      
+      {/* Role */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Briefcase className="h-4 w-4" />
+          Role
+        </Label>
+        {app?.company?.id ? (
+          <RoleSuggestionCombobox
+            companyId={app.company.id}
+            onChoose={(s) => setRole(s.role)}
+            currentRole={role}
+            showAsInput
+            inputValue={role}
+            onInputValueChange={setRole}
+            placeholder="e.g. Senior Software Engineer"
+            className="w-full"
+          />
+        ) : (
+          <Input
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            placeholder="Senior Software Engineer"
+            className="w-full"
+          />
+        )}
+      </div>
+      
+      {/* Notes & Conversations Tabs */}
+      <div className="space-y-3 mt-6">
+        <div className="flex gap-2 border-b">
+          <button
+            onClick={() => setActiveTab('notes')}
+            className={cn(
+              "px-3 py-2 text-sm font-medium transition-colors relative",
+              activeTab === 'notes' 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Notes
+            {activeTab === 'notes' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('conversations')}
+            className={cn(
+              "px-3 py-2 text-sm font-medium transition-colors relative",
+              activeTab === 'conversations' 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Conversations
+            {activeTab === 'conversations' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
+          </button>
+        </div>
+        
+        {activeTab === 'notes' ? (
+          <ApplicationNotes
+            applicationId={applicationId}
+            token={authToken}
+          />
+        ) : (
+          <ApplicationConversations
+            applicationId={applicationId}
+            token={authToken}
+          />
+        )}
+      </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                  <Label className="text-sm">Platform</Label>
-                                  <PlatformCombobox
-                                    value={selectedPlatform}
-                                    onChange={(p) => {
-                                      setSelectedPlatform(p)
-                                      setSelectedPlatformId(p?.id ?? null)
-                                    }}
-                                    placeholder="Select or search platform..."
-                                    className="bg-background/50 border-border"
-                                  />
-                                </div>
+      {/* Job URL with toggle */}
+      <div className="space-y-3 w-full">
+        <div className="flex items-center space-x-2 w-full justify-end">
+          <Checkbox
+            id="include-job-url"
+            checked={includeJobUrl}
+            onCheckedChange={(checked) => setIncludeJobUrl(!!checked)}
+          />
+          <Label htmlFor="include-job-url" className="flex items-center gap-2 text-xs">
+            Include Job Link
+          </Label>
+        </div>
+        
+        <AnimatePresence>
+          {includeJobUrl && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="space-y-2"
+            >
+              <Label className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Job URL
+              </Label>
+              <Input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onBlur={(e) => setUrl(normalizeUrl(e.target.value))}
+                placeholder="https://company.com/careers/job-123"
+                className="w-full"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-                                <div className="space-y-2">
-                                  <Label className="text-sm">Application Source</Label>
-                                  <Select value={source} onValueChange={setSource}>
-                                    <SelectTrigger className="bg-background/50 border-border">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectGroup>
-                                        <SelectLabel>How did you apply?</SelectLabel>
-                                        {sourceOptions.map((option) => (
-                                          <SelectItem key={option.value} value={option.value}>
-                                            <div className="flex items-center gap-2">
-                                              <span>{option.icon}</span>
-                                              <span>{option.label}</span>
-                                            </div>
-                                          </SelectItem>
-                                        ))}
-                                      </SelectGroup>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+    </div>
 
+    {/* Column 2: Additional Details */}
+    <div className="space-y-4 pl-6 overflow-y-auto max-h-[calc(70vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
+      {/* Application Status */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Application Status
+        </Label>
+        <Badge variant="outline" className="text-xs">
+          {app?.stage ? app.stage.replace('_', ' ') : 'Applied'}
+        </Badge>
+      </div>
 
-                      </motion.div>
-                    </div>
-                  </ScrollArea>
-                </div>
+      {/* Compensation */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4" />
+          Compensation
+        </Label>
 
-                {/* Sidebar */}
-                <div className="w-80 flex-shrink-0 border-l border-border bg-muted/10 overflow-y-auto hidden lg:block min-h-0">
-                  <div className="p-4 space-y-4">
-                    {/* Application Status */}
-                    <Card className="border border-border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-2 text-sm font-medium text-foreground mb-3">
-                          <Activity className="h-4 w-4 text-muted-foreground" />
-                          <span>Application Status</span>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Stage</span>
-                            <Badge variant="outline" className="text-xs">
-                              {app?.stage ? app.stage.replace('_', ' ') : 'Applied'}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Source</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {sourceOptions.find(s => s.value === source)?.label || 'Unknown'}
-                            </Badge>
-                          </div>
-                          {selectedPlatformId && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">Platform</span>
-                              <span className="text-xs">
-                                {platforms.find(p => p.id === selectedPlatformId)?.name || 'Unknown'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Input
+              value={fixedMinLpa}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setFixedMinLpa(value)
+                }
+              }}
+              className="w-full"
+              placeholder="Fixed Min (LPA)"
+            />
+          </div>
+          <div>
+            <Input
+              value={fixedMaxLpa}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setFixedMaxLpa(value)
+                }
+              }}
+              className="w-full"
+              placeholder="Fixed Max (LPA)"
+            />
+          </div>
+          <div>
+            <Input
+              value={varMinLpa}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setVarMinLpa(value)
+                }
+              }}
+              className="w-full"
+              placeholder="Variable Min (LPA)"
+            />
+          </div>
+          <div>
+            <Input
+              value={varMaxLpa}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  setVarMaxLpa(value)
+                }
+              }}
+              className="w-full"
+              placeholder="Variable Max (LPA)"
+            />
+          </div>
+        </div>
 
-                    {/* Compensation */}
-                    <Card className="border border-border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-2 text-sm font-medium text-foreground mb-3">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          <span>Compensation</span>
-                        </div>
-                        <div className="space-y-3">
-                          {app?.compensation ? (
-                            <>
-                              {(app.compensation.fixed_min_lpa || app.compensation.fixed_max_lpa) && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-muted-foreground">Fixed (LPA)</span>
-                                  <span className="text-xs">
-                                    ₹{app.compensation.fixed_min_lpa || 'N/A'} - ₹{app.compensation.fixed_max_lpa || 'N/A'}
-                                  </span>
-                                </div>
-                              )}
-                              {(app.compensation.var_min_lpa || app.compensation.var_max_lpa) && (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-muted-foreground">Variable (LPA)</span>
-                                  <span className="text-xs">
-                                    ₹{app.compensation.var_min_lpa || 'N/A'} - ₹{app.compensation.var_max_lpa || 'N/A'}
-                                  </span>
-                                </div>
-                              )}
-                              {app.compensation.note && (
-                                <div className="space-y-1">
-                                  <span className="text-sm text-muted-foreground">Notes</span>
-                                  <p className="text-xs leading-relaxed">{app.compensation.note}</p>
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="text-xs text-muted-foreground">No compensation details available</div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Application Details */}
-                    <Card className="border border-border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-2 text-sm font-medium text-foreground mb-3">
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                          <span>Details</span>
-                        </div>
-                        <div className="space-y-3 text-sm">
-                          {app?.created_at && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Created</span>
-                              <span>{formatDateIndian(new Date(app.created_at))}</span>
-                            </div>
-                          )}
-                          {app?.last_activity_at && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Last Activity</span>
-                              <span>{formatDateIndian(new Date(app.last_activity_at))}</span>
-                            </div>
-                          )}
-                          {app?.created_at && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Days Active</span>
-                              <span>{Math.ceil((Date.now() - new Date(app.created_at).getTime()) / (1000 * 60 * 60 * 24))}</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
+        {app?.compensation && (
+          <div className="text-xs text-muted-foreground space-y-1">
+            <div className="flex justify-between">
+              <span className="text-xs">Fixed:</span>
+              <span className="text-xs">
+                ₹{app.compensation.fixed_min_lpa || 'N/A'} - ₹{app.compensation.fixed_max_lpa || 'N/A'}
+              </span>
+            </div>
+            {(app.compensation.var_min_lpa || app.compensation.var_max_lpa) && (
+              <div className="flex justify-between">
+                <span className="text-xs">Variable:</span>
+                <span className="text-xs">
+                  ₹{app.compensation.var_min_lpa || 'N/A'} - ₹{app.compensation.var_max_lpa || 'N/A'}
+                </span>
               </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Status */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Flag className="h-4 w-4" />
+          Status
+        </Label>
+        <Select value={stageStatus} onValueChange={setStageStatus}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {stageStatusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">
+                      {option.label}
+                    </Badge>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {/* Source */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Target className="h-4 w-4" />
+          Source
+        </Label>
+        <Select value={source} onValueChange={setSource}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>How did you apply?</SelectLabel>
+              {sourceOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    <span>{option.icon}</span>
+                    <span>{option.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Platform */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Globe className="h-4 w-4" />
+          Platform
+        </Label>
+        <PlatformCombobox
+          value={selectedPlatform}
+          onChange={(p) => {
+            setSelectedPlatform(p)
+            setSelectedPlatformId(p?.id ?? null)
+          }}
+          placeholder="Select platform"
+          className="w-full"
+        />
+      </div>
+
+      {/* Application Details */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Info className="h-4 w-4" />
+          Details
+        </Label>
+        <div className="space-y-2 text-sm">
+          {app?.created_at && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Created</span>
+              <span>{formatDateIndian(new Date(app.created_at))}</span>
+            </div>
+          )}
+          {app?.last_activity_at && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Last Activity</span>
+              <span>{formatDateIndian(new Date(app.last_activity_at))}</span>
+            </div>
+          )}
+          {app?.created_at && (
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Days Active</span>
+              <span>{Math.ceil((Date.now() - new Date(app.created_at).getTime()) / (1000 * 60 * 60 * 24))}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Contacts section - placeholder for potential future implementation */}
+      <div className="space-y-2 opacity-50">
+        <Label className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Contacts
+        </Label>
+        <div className="text-xs text-muted-foreground text-center py-2 border border-dashed border-border rounded-md">
+          No contacts available
+        </div>
+      </div>
+    </div>
+  </motion.div>
+</div>
             )}
           </div>
 

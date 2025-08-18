@@ -38,7 +38,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { QASnapshotEditor } from '@/routes/components/QASnapshotEditor'
 import { ConversationFeed } from '@/routes/components/ConversationFeed'
 import { InterviewsTimeline } from '@/routes/components/InterviewsTimeline'
-import { formatDateIndian } from '@/lib/utils'
+import { extractHostname, formatDateIndian } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -418,7 +418,14 @@ export function ApplicationModal({
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium truncate">{company.name}</div>
                                 <div className="text-xs text-muted-foreground truncate flex gap-2 items-center">
-                                  <span className="truncate">{company.website_url}</span>
+                                  <a
+                                    className="truncate inline-flex items-center gap-1 text-primary"
+                                    href={company.website_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    <ExternalLink className="h-3 w-3" /> {extractHostname(company.website_url)}
+                                  </a>
                                   {company.founded_year && <span>• Founded {company.founded_year}</span>}
                                   {company.hq && (company.hq.city || company.hq.country) && (
                                     <span>• {(company.hq.city ? company.hq.city + ', ' : '') + (company.hq.country || '')}</span>
@@ -534,7 +541,7 @@ export function ApplicationModal({
                             <div className="min-w-0">
                               <div className="font-medium truncate">{company.name}</div>
                               <a className="text-xs text-primary truncate inline-flex items-center gap-1" href={company.website_url} target="_blank" rel="noreferrer">
-                                <ExternalLink className="h-3 w-3" /> {company.website_url}
+                                <ExternalLink className="h-3 w-3" /> {extractHostname(company.website_url)}
                               </a>
                             </div>
                           </div>

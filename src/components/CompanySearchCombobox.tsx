@@ -1,7 +1,7 @@
 import { cloneElement, useEffect, useRef, useState } from 'react'
 import { useDebouncedValue } from '@tanstack/react-pacer/debouncer'
 import { useAuth } from '@clerk/clerk-react'
-import { Building2, Calendar, Globe, Loader2, MapPin, Search, X } from 'lucide-react'
+import { AlertCircle, Building2, Calendar, Globe, HelpCircle, Loader2, MapPin, Search, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { Company } from '@/lib/api'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { searchCompaniesByName } from '@/lib/api'
+import { extractHostname } from '@/lib/utils'
 
 export type CompanySearchComboboxProps = {
   value: Company | null
@@ -23,15 +24,6 @@ export type CompanySearchComboboxProps = {
   variant?: 'popover' | 'dialog'
 }
 
-function extractHostname(url?: string) {
-  if (!url) return ''
-  try {
-    const u = new URL(url)
-    return u.hostname.replace(/^www\./, '')
-  } catch {
-    return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
-  }
-}
 
 function CompanyItem({ c }: { c: Company }) {
   const hq = c.hq ? [c.hq.city, c.hq.country].filter(Boolean).join(', ') : null
@@ -68,6 +60,71 @@ function CompanyItem({ c }: { c: Company }) {
       </div>
     </div>
   )
+}
+
+function EmptyState({ 
+  type, 
+  query 
+}: { 
+  type: 'initial' | 'no-results' | 'error' | 'loading'
+  query?: string 
+}) {
+  switch (type) {
+    case 'initial':
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+            <Search className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-sm font-medium mb-1">Search for companies</h3>
+          <p className="text-xs text-muted-foreground max-w-48">
+            Start typing to find companies by name, industry, or location
+          </p>
+        </div>
+      )
+    
+    case 'no-results':
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+            <HelpCircle className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-sm font-medium mb-1">No companies found</h3>
+          <p className="text-xs text-muted-foreground max-w-48">
+            No companies match "{query}". Try a different search term or check the spelling.
+          </p>
+        </div>
+      )
+    
+    case 'error':
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+            <AlertCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <h3 className="text-sm font-medium mb-1">Search failed</h3>
+          <p className="text-xs text-muted-foreground max-w-48">
+            Unable to search companies. Please try again in a moment.
+          </p>
+        </div>
+      )
+    
+    case 'loading':
+      return (
+        <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+          <h3 className="text-sm font-medium mb-1">Searching...</h3>
+          <p className="text-xs text-muted-foreground max-w-48">
+            Looking for companies matching "{query}"
+          </p>
+        </div>
+      )
+    
+    default:
+      return null
+  }
 }
 
 export function CompanySearchCombobox({ value, onChange, placeholder = 'Search companies...', className, open: openProp, onOpenChange, triggerAsChild, variant = 'popover' }: CompanySearchComboboxProps) {
@@ -211,20 +268,30 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
             <div className="space-y-2">
               {error && <div className="text-xs text-destructive px-1">{error}</div>}
               <ScrollArea className="max-h-72 pr-2">
-                <div className="space-y-1">
-                  {results.map((c) => (
-                    <button
-                      key={c.id}
-                      className="w-full text-left rounded-md border border-transparent hover:border-border hover:bg-muted/40 p-2"
-                      onClick={() => {
-                        onChange(c)
-                        setOpen(false)
-                      }}
-                    >
-                      <CompanyItem c={c} />
-                    </button>
-                  ))}
-                </div>
+                {loading ? (
+                  <EmptyState type="loading" query={debouncedQuery} />
+                ) : error ? (
+                  <EmptyState type="error" />
+                ) : results.length > 0 ? (
+                  <div className="space-y-1">
+                    {results.map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-full text-left rounded-md border border-transparent hover:border-border hover:bg-muted/40 p-2"
+                        onClick={() => {
+                          onChange(c)
+                          setOpen(false)
+                        }}
+                      >
+                        <CompanyItem c={c} />
+                      </button>
+                    ))}
+                  </div>
+                ) : debouncedQuery.trim().length >= 2 ? (
+                  <EmptyState type="no-results" query={debouncedQuery} />
+                ) : (
+                  <EmptyState type="initial" />
+                )}
               </ScrollArea>
             </div>
           </PopoverContent>
@@ -305,20 +372,30 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
           </div>
           {error && <div className="text-xs text-destructive px-4 py-2">{error}</div>}
           <ScrollArea className="max-h-[60vh] p-3">
-            <div className="space-y-1">
-              {results.map((c) => (
-                <button
-                  key={c.id}
-                  className="w-full text-left rounded-md border border-transparent hover:border-border hover:bg-muted/40 p-2"
-                  onClick={() => {
-                    onChange(c)
-                    setOpen(false)
-                  }}
-                >
-                  <CompanyItem c={c} />
-                </button>
-              ))}
-            </div>
+            {loading ? (
+              <EmptyState type="loading" query={debouncedQuery} />
+            ) : error ? (
+              <EmptyState type="error" />
+            ) : results.length > 0 ? (
+              <div className="space-y-1">
+                {results.map((c) => (
+                  <button
+                    key={c.id}
+                    className="w-full text-left rounded-md border border-transparent hover:border-border hover:bg-muted/40 p-2"
+                    onClick={() => {
+                      onChange(c)
+                      setOpen(false)
+                    }}
+                  >
+                    <CompanyItem c={c} />
+                  </button>
+                ))}
+              </div>
+            ) : debouncedQuery.trim().length >= 2 ? (
+              <EmptyState type="no-results" query={debouncedQuery} />
+            ) : (
+              <EmptyState type="initial" />
+            )}
           </ScrollArea>
         </DialogContent>
       </Dialog>

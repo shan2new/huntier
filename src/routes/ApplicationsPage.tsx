@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
+import { Activity, Award, Building2, Calendar, ChevronRight, Clock, DollarSign, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
 import { apiWithToken } from '../lib/api'
 import type { ApplicationListItem } from '../lib/api'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -10,6 +10,42 @@ import { Button } from '@/components/ui/button'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
+
+// Helper function to format salary information
+function formatSalary(compensation: any) {
+  if (!compensation) return null
+  
+  const fixed = compensation.fixed_min_lpa || compensation.fixed_max_lpa
+  const variable = compensation.var_min_lpa || compensation.var_max_lpa
+  
+  if (!fixed && !variable) return null
+  
+  const parts = []
+  
+  if (fixed) {
+    const min = compensation.fixed_min_lpa || 'N/A'
+    const max = compensation.fixed_max_lpa || 'N/A'
+    // Clean up decimal places - remove .00 if both min and max end with .00
+    const formatValue = (val: string) => {
+      if (val === 'N/A') return val
+      return val.endsWith('.00') ? val.slice(0, -3) : val
+    }
+    parts.push(`₹${formatValue(min)}-${formatValue(max)} LPA`)
+  }
+  
+  if (variable) {
+    const min = compensation.var_min_lpa || 'N/A'
+    const max = compensation.var_max_lpa || 'N/A'
+    // Clean up decimal places - remove .00 if both min and max end with .00
+    const formatValue = (val: string) => {
+      if (val === 'N/A') return val
+      return val.endsWith('.00') ? val.slice(0, -3) : val
+    }
+    parts.push(`+₹${formatValue(min)}-${formatValue(max)} variable`)
+  }
+  
+  return parts.join(' ')
+}
 
 
 const milestoneConfig: Partial<Record<string, { label: string; icon: any }>> = {
@@ -200,6 +236,12 @@ export function ApplicationsPage() {
                                   </div>
                                   <div className="flex items-center space-x-3 text-xs text-muted-foreground min-w-0">
                                     <span className="truncate">{app.role}</span>
+                                    {formatSalary(app.compensation) && (
+                                      <>
+                                        <span>•</span>
+                                        <span className="truncate">{formatSalary(app.compensation)}</span>
+                                      </>
+                                    )}
                                     {app.platform && (
                                       <>
                                         <span>•</span>
@@ -208,10 +250,10 @@ export function ApplicationsPage() {
                                             <img
                                               src={app.platform.logo_blob_base64.startsWith('data:') ? app.platform.logo_blob_base64 : `data:image/png;base64,${app.platform.logo_blob_base64}`}
                                               alt={app.platform.name}
-                                              className="h-3.5 w-3.5 rounded-sm border border-border object-cover"
+                                              className="h-4 w-4 rounded-sm border border-border object-cover"
                                             />
                                           ) : (
-                                            <Building2 className="h-3 w-3" />
+                                            <Building2 className="h-4 w-4" />
                                           )}
                                           <span className="truncate max-w-[10rem]">{app.platform.name}</span>
                                         </span>
@@ -220,7 +262,7 @@ export function ApplicationsPage() {
                                     <span>•</span>
                                     <span className="flex items-center space-x-1">
                                       <Clock className="h-3 w-3" />
-                                      <span>Updated {formatDateIndian(app.last_activity_at)}</span>
+                                      <span>{formatDateIndian(app.last_activity_at)}</span>
                                     </span>
                                   </div>
                                 </div>

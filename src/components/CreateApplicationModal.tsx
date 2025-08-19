@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Slider } from '@/components/ui/slider'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -416,53 +417,59 @@ export function CreateApplicationModal({
                       </div>
 
                       {/* Notes & Conversations Tabs */}
-                      <div className="space-y-3 mt-6">
-                        <div className="flex gap-2 border-b">
-                          <button
-                            onClick={() => setActiveTab('notes')}
-                            className={cn(
-                              "px-3 py-2 text-sm font-medium transition-colors relative",
-                              activeTab === 'notes' 
-                                ? "text-foreground" 
-                                : "text-muted-foreground hover:text-foreground"
-                            )}
-                          >
-                            Notes
-                            {activeTab === 'notes' && (
-                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('conversations')}
-                            className={cn(
-                              "px-3 py-2 text-sm font-medium transition-colors relative",
-                              activeTab === 'conversations' 
-                                ? "text-foreground" 
-                                : "text-muted-foreground hover:text-foreground"
-                            )}
-                          >
-                            Conversations
-                            {activeTab === 'conversations' && (
-                              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                            )}
-                          </button>
-                        </div>
-                        
-                        {activeTab === 'notes' ? (
-                          <ApplicationNotes
-                            token={null}
-                            isCreating={true}
-                            pendingNotes={pendingNotes}
-                            onAddPendingNote={addPendingNote}
-                          />
-                        ) : (
-                          <ApplicationConversations
-                            token={null}
-                            isCreating={true}
-                            className="h-[400px]"
-                          />
-                        )}
-                      </div>
+                      <Card className="mt-6">
+                        <CardContent className="p-0">
+                          <div className="space-y-3">
+                            <div className="flex gap-2 border-b px-6 pt-6">
+                              <button
+                                onClick={() => setActiveTab('notes')}
+                                className={cn(
+                                  "px-3 py-2 text-sm font-medium transition-colors relative",
+                                  activeTab === 'notes' 
+                                    ? "text-foreground" 
+                                    : "text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                Notes
+                                {activeTab === 'notes' && (
+                                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setActiveTab('conversations')}
+                                className={cn(
+                                  "px-3 py-2 text-sm font-medium transition-colors relative",
+                                  activeTab === 'conversations' 
+                                    ? "text-foreground" 
+                                    : "text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                Conversations
+                                {activeTab === 'conversations' && (
+                                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                                )}
+                              </button>
+                            </div>
+                            
+                            <div className="px-6 pb-6">
+                              {activeTab === 'notes' ? (
+                                <ApplicationNotes
+                                  token={null}
+                                  isCreating={true}
+                                  pendingNotes={pendingNotes}
+                                  onAddPendingNote={addPendingNote}
+                                />
+                              ) : (
+                                <ApplicationConversations
+                                  token={null}
+                                  isCreating={true}
+                                  className="h-[400px]"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
                       {/* Salary Range */}
                       <div className="space-y-4">

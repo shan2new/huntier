@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -404,50 +405,56 @@ export function UpdateApplicationModal({
       </div>
       
       {/* Notes & Conversations Tabs */}
-      <div className="space-y-3 mt-6">
-        <div className="flex gap-2 border-b">
-          <button
-            onClick={() => setActiveTab('notes')}
-            className={cn(
-              "px-3 py-2 text-sm font-medium transition-colors relative",
-              activeTab === 'notes' 
-                ? "text-foreground" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Notes
-            {activeTab === 'notes' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('conversations')}
-            className={cn(
-              "px-3 py-2 text-sm font-medium transition-colors relative",
-              activeTab === 'conversations' 
-                ? "text-foreground" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Conversations
-            {activeTab === 'conversations' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        </div>
-        
-        {activeTab === 'notes' ? (
-          <ApplicationNotes
-            applicationId={applicationId}
-            token={authToken}
-          />
-        ) : (
-          <ApplicationConversations
-            applicationId={applicationId}
-            token={authToken}
-          />
-        )}
-      </div>
+      <Card className="mt-6">
+        <CardContent className="p-0">
+          <div className="space-y-3">
+            <div className="flex gap-2 border-b px-2 pt-0">
+              <button
+                onClick={() => setActiveTab('notes')}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium transition-colors relative",
+                  activeTab === 'notes' 
+                    ? "text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Notes
+                {activeTab === 'notes' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('conversations')}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium transition-colors relative",
+                  activeTab === 'conversations' 
+                    ? "text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Conversations
+                {activeTab === 'conversations' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                )}
+              </button>
+            </div>
+            
+            <div className="px-6 pb-6">
+              {activeTab === 'notes' ? (
+                <ApplicationNotes
+                  applicationId={applicationId}
+                  token={authToken}
+                />
+              ) : (
+                <ApplicationConversations
+                  applicationId={applicationId}
+                  token={authToken}
+                />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Job URL with toggle */}
       <div className="space-y-3 w-full">

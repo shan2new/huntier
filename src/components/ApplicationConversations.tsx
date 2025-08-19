@@ -261,11 +261,13 @@ export function ApplicationConversations({
                   )}
                 >
                   {!isUser && (
+                    <div className="flex items-center justify-center">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs">
                         {getContactInitials(conv)}
                       </AvatarFallback>
                     </Avatar>
+                    </div>
                   )}
                   
                   <div className={cn(
@@ -299,11 +301,13 @@ export function ApplicationConversations({
                   </div>
                   
                   {isUser && (
+                    <div className="flex items-end justify-center">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                         Y
                       </AvatarFallback>
                     </Avatar>
+                    </div>
                   )}
                 </motion.div>
               </div>

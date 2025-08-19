@@ -1,14 +1,13 @@
 import { formatDistanceToNow } from 'date-fns'
-import { HelpCircle, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { MessageSquare, Plus, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
 
 import { apiWithToken } from '@/lib/api'
-import { Avatar } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export interface Note {
   id: string
@@ -16,12 +15,6 @@ export interface Note {
   user_id: string
   created_at: string
   updated_at: string
-}
-
-interface FormattedPendingNote {
-  content: string
-  created_at: Date
-  id: string
 }
 
 interface ApplicationNotesProps {
@@ -46,12 +39,7 @@ export function ApplicationNotes({
   const [newNote, setNewNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   
-  // Format pendingNotes with timestamps
-  const formattedPendingNotes: Array<FormattedPendingNote> = pendingNotes.map((content, index) => ({
-    content,
-    created_at: new Date(),
-    id: `pending-${index}`
-  }))
+  // We now access pendingNotes directly in our bubble UI
   
   // Handle removing a pending note
   const handleRemovePendingNote = (index: number) => {
@@ -79,7 +67,7 @@ export function ApplicationNotes({
     
     try {
       const fetchedNotes = await apiWithToken<Array<Note>>(`/v1/applications/${applicationId}/notes`, token)
-      setNotes(fetchedNotes)
+      setNotes(fetchedNotes.reverse())
     } catch (err) {
       console.error('Failed to fetch notes:', err)
       setError('Failed to load notes')
@@ -123,7 +111,7 @@ export function ApplicationNotes({
         }
       )
       
-      setNotes([createdNote, ...notes])
+      setNotes([...notes, createdNote])
       setNewNote('')
     } catch (err) {
       console.error('Failed to add note:', err)
@@ -155,160 +143,169 @@ export function ApplicationNotes({
     }
   }
 
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // Scroll to bottom when notes change
+  useEffect(() => {
+    scrollToBottom()
+  }, [notes, pendingNotes])
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+  
   return (
-    <div className={`space-y-3 ${className}`}>
-      <Label className="flex items-center gap-2">
-        <MessageSquare className="h-4 w-4" />
-        Notes
-      </Label>
+    <div className={`flex flex-col h-full ${className}`}>
       
-      <div className="space-y-4">
-        {/* Add note input */}
-        <div className="space-y-2">
-          <Textarea
-            placeholder="Add notes... "
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            disabled={isLoading}
-            className="min-h-[80px] resize-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                handleAddNote(e)
-              }
-            }}
-          />
-          <div className="flex justify-end">
-            <Button 
-              size="sm"
-              onClick={(e) => handleAddNote(e)}
-              disabled={isLoading || !newNote.trim()}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add Note
-            </Button>
+      {/* Notes Area */}
+      <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-[300px] max-h-[400px]">
+        {!isLoading && !isCreating && notes.length === 0 && pendingNotes.length === 0 && (
+          <div className="text-center text-sm text-muted-foreground py-8">
+            No notes yet. Add one below.
           </div>
-        </div>
-        
-        {error && (
-          <div className="text-sm text-destructive">{error}</div>
         )}
         
-        {/* Pending notes (for create mode) */}
         <AnimatePresence>
-          {isCreating && pendingNotes.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-medium text-muted-foreground">Pending Notes</h4>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help">
-                        <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p className="text-xs">Notes will be added when the application is created</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="max-h-[300px] overflow-y-auto pr-1 space-y-2">
-                {formattedPendingNotes.map((note, index) => (
-                  <motion.div
-                    key={`pending-${index}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-3 rounded-md border border-border bg-background/50"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2">
-                        <Avatar className="h-6 w-6">
-                          <div className="bg-primary/10 flex items-center justify-center h-full w-full rounded-full">
-                            <span className="text-xs font-medium">?</span>
-                          </div>
-                        </Avatar>
-                        <div className="space-y-1">
-                          <div className="text-xs whitespace-pre-wrap">{note.content}</div>
-                          <div className="text-[10px] text-muted-foreground">
-                            pending
-                          </div>
-                        </div>
-                      </div>
+          {/* Existing notes */}
+          {!isCreating && notes.map((note) => (
+            <div key={note.id}>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex justify-end gap-2 mb-4"
+              >
+                <div className="max-w-[70%] space-y-1 items-end">                  
+                  <div className="flex items-end gap-2">
+                    <div className="flex items-center">
                       <Button
                         variant="ghost" 
                         size="icon" 
-                        className="h-6 w-6" 
-                        onClick={() => handleRemovePendingNote(index)}
-                      >
-                        <Trash2 className="h-3 w-3 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Existing notes */}
-        {!isCreating && notes.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs font-medium text-muted-foreground">Recent Notes</h4>
-            <div className="max-h-[300px] overflow-y-auto pr-1">
-              <AnimatePresence>
-                {notes.map((note) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-3 rounded-md border border-border bg-background/50 mb-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2">
-                        <Avatar className="h-6 w-6">
-                          <div className="bg-primary/10 flex items-center justify-center h-full w-full rounded-full">
-                            <span className="text-xs font-medium">{note.user_id.charAt(0).toUpperCase()}</span>
-                          </div>
-                        </Avatar>
-                        <div className="space-y-1">
-                          <div className="text-xs whitespace-pre-wrap">{note.content}</div>
-                          <div className="text-[10px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6" 
+                        className="h-6 w-6 opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity" 
                         onClick={() => handleDeleteNote(note.id)}
                       >
                         <Trash2 className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                    <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm">
+                      <div className="whitespace-pre-wrap break-words">{note.content}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-[10px] text-muted-foreground text-right">
+                    {formatDistanceToNow(new Date(note.created_at), { addSuffix: true })}
+                  </div>
+                </div>
+                
+                <div className="flex items-start justify-center">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      Y
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        )}
+          ))}
+          
+          {/* Pending notes (for create mode) */}
+          {pendingNotes.map((content, index) => (
+            <div key={`pending-${index}`}>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex justify-end gap-2 mb-4"
+              >
+                <div className="max-w-[70%] space-y-1 items-end">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-medium">You</span>
+                    <span>•</span>
+                    <span>pending</span>
+                  </div>
+                  
+                  <div className="flex items-end gap-2">
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity" 
+                        onClick={() => handleRemovePendingNote(index)}
+                      >
+                        <Trash2 className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                    </div>
+                    <div className="bg-primary/80 text-primary-foreground px-3 py-2 rounded-lg text-sm">
+                      <div className="whitespace-pre-wrap break-words">{content}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-end justify-center">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs bg-primary/70 text-primary-foreground">
+                      Y
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </motion.div>
+            </div>
+          ))}
+        </AnimatePresence>
         
-        {!isCreating && !isLoading && notes.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center py-6">
-            No notes yet
-          </div>
-        )}
-        
-        {isLoading && !isCreating && (
-          <div className="flex justify-center py-6">
+        {isLoading && (
+          <div className="flex justify-center py-4">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent"
             />
           </div>
+        )}
+        
+        <div ref={messagesEndRef} />
+      </div>
+      
+      {/* Input Area */}
+      <div className="border-t pt-3 space-y-3">
+        {/* Note input */}
+        <div className="flex gap-2 items-end">
+          <div className="flex items-end justify-center">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                Y
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          
+          <TextareaAutosize
+            minRows={1}
+            maxRows={5}
+            placeholder="Add a note..."
+            value={newNote}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewNote(e.target.value)}
+            disabled={isLoading}
+            className="flex-1 p-2 text-sm border rounded-md resize-none min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleAddNote(e)
+              }
+            }}
+          />
+          
+          <Button 
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={(e) => handleAddNote(e)}
+            disabled={isLoading || !newNote.trim()}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {error && (
+          <div className="text-xs text-destructive">{error}</div>
         )}
       </div>
     </div>

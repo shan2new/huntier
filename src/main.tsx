@@ -11,7 +11,12 @@ if (rootElement && !rootElement.innerHTML) {
   const clerkKey = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY
   root.render(
     <StrictMode>
-      <ClerkProvider publishableKey={clerkKey}>
+      <ClerkProvider 
+        publishableKey={clerkKey}
+        tokenCache="memory"
+        // Increase token refresh buffer to prevent timeouts
+        tokenRefreshBuffer={300} // 5 minutes in seconds
+      >
         <RouterProvider router={router} />
       </ClerkProvider>
     </StrictMode>,

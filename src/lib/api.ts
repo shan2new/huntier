@@ -40,11 +40,15 @@ export type ApplicationListItem = {
 
 const BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api'
 
+// Track if we're currently handling a 401 error to prevent infinite loops
+let isHandlingAuthError = false
+
 export async function apiWithToken<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...(init || {}),
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}), Authorization: `Bearer ${token}` },
   })
+  
   if (!res.ok) {
     let message = `${res.status}`
     try {
@@ -56,8 +60,33 @@ export async function apiWithToken<T>(path: string, token: string, init?: Reques
         message = text || message
       }
     } catch {}
+    
     const err: any = new Error(message)
     err.status = res.status
+    
+    // Handle 401 errors specially
+    if (res.status === 401 && !isHandlingAuthError) {
+      isHandlingAuthError = true
+      try {
+        // Clear any cached tokens and redirect to login
+        console.warn('Authentication failed - redirecting to login')
+        
+        // Clear any stored auth state
+        if (typeof window !== 'undefined') {
+          // Clear any cached tokens
+          localStorage.removeItem('clerk-token-cache')
+          sessionStorage.removeItem('clerk-token-cache')
+          
+          // Redirect to login after a short delay
+          setTimeout(() => {
+            window.location.href = '/auth'
+          }, 1000)
+        }
+      } finally {
+        isHandlingAuthError = false
+      }
+    }
+    
     throw err
   }
   return res.json()
@@ -100,9 +129,54 @@ export async function listInterviews<T>(token: string, appId: string): Promise<T
 export async function scheduleInterview<T>(
   token: string,
   appId: string,
-  body: { type: string; scheduled_at: string; mode: string },
+  body: { type: string; scheduled_at?: string; mode?: string; custom_name?: string },
 ): Promise<T> {
   return apiWithToken(`/v1/applications/${appId}/interviews`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function rescheduleInterview<T>(
+  token: string,
+  appId: string,
+  roundId: string,
+  body: { scheduled_at: string },
+): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/interviews/${roundId}/reschedule`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function completeInterview<T>(
+  token: string,
+  appId: string,
+  roundId: string,
+  body: { started_at?: string; completed_at: string; result: string; feedback?: string },
+): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/interviews/${roundId}/complete`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function rejectInterview<T>(
+  token: string,
+  appId: string,
+  roundId: string,
+  body: { rejection_reason?: string },
+): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/interviews/${roundId}/reject`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function withdrawInterview<T>(
+  token: string,
+  appId: string,
+  roundId: string,
+  body: { rejection_reason?: string },
+): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/interviews/${roundId}/withdraw`, token, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function updateInterviewName<T>(
+  token: string,
+  appId: string,
+  roundId: string,
+  body: { custom_name: string },
+): Promise<T> {
+  return apiWithToken(`/v1/applications/${appId}/interviews/${roundId}/name`, token, { method: 'PUT', body: JSON.stringify(body) })
 }
 
 // Application Contacts

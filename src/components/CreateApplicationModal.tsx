@@ -7,7 +7,6 @@ import {
   Building2,
   DollarSign,
   ExternalLink,
-  Flag,
   Globe,
   Phone,
   Plus,
@@ -18,6 +17,7 @@ import {
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import { addApplicationContact, apiWithToken } from '@/lib/api'
+import { useAuthToken } from '@/lib/auth'
 import { cn, extractHostname } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -55,17 +55,6 @@ const sourceOptions = [
   { value: 'recruiter_outreach', label: 'Recruiter', icon: Phone },
 ]
 
-const stageStatusOptions = [
-  { value: 'applied_self', label: 'Applied' },
-  { value: 'recruiter_discussion', label: 'In Discussion' },
-  { value: 'pending_shortlist', label: 'Pending Review' },
-  { value: 'interview_shortlist', label: 'Interview Shortlisted' },
-  { value: 'interview_scheduled', label: 'Interview Scheduled' },
-  { value: 'interview_completed', label: 'Interview Completed' },
-  { value: 'offer', label: 'Offer Received' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'on_hold', label: 'On Hold' },
-]
 
 interface Contact {
   id: string
@@ -81,7 +70,7 @@ export function CreateApplicationModal({
   onOpenChange,
   onCreated,
 }: CreateApplicationModalProps) {
-  const { getToken } = useAuth()
+  const { getToken } = useAuthToken()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -470,191 +459,172 @@ export function CreateApplicationModal({
                           </div>
                         </CardContent>
                       </Card>
-
-                      {/* Salary Range */}
-                      <div className="space-y-4">
-                        <Label className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4" />
-                          Salary Range (LPA)
-                        </Label>
-                        
-                        <div className="space-y-4">
-                          {/* Number inputs above slider */}
-                          <div className="flex justify-between gap-4">
-                            <Input
-                              type="text"
-                              value={salaryRange[0] || ''}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setSalaryRange([value === '' ? 0 : Number(value), salaryRange[1]])
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const value = e.target.value
-                                const numValue = value === '' ? 10 : Number(value)
-                                setSalaryRange([numValue, salaryRange[1]])
-                              }}
-                              className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="10"
-                            />
-                            <Input
-                              type="text"
-                              value={salaryRange[1] || ''}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setSalaryRange([salaryRange[0], value === '' ? 0 : Number(value)])
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const value = e.target.value
-                                const numValue = value === '' ? 30 : Number(value)
-                                setSalaryRange([salaryRange[0], numValue])
-                              }}
-                              className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="30"
-                            />
-                          </div>
-                          
-                          {/* Slider below inputs */}
-                          <div className="px-1">
-                            <Slider
-                              value={salaryRange}
-                              onValueChange={setSalaryRange}
-                              min={0}
-                              max={100}
-                              step={0.5}
-                              className="w-full"
-                            />
-                          </div>
-                          
-                          <div className="text-xs text-muted-foreground text-center">
-                            ₹{salaryRange[0]} - ₹{salaryRange[1]} LPA
-                          </div>
-                        </div>
-                      </div>
                     </div>
 
                     {/* Column 2: Additional Details */}
                     <div className="space-y-4 pl-6">
-                      {/* Source */}
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                          <Target className="h-4 w-4" />
-                          Source
-                        </Label>
-                        <Select value={source} onValueChange={setSource}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>How did you apply?</SelectLabel>
-                              {sourceOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  <div className="flex items-center gap-2">
-                                    <option.icon className="h-4 w-4" />
-                                    <span>{option.label}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {/* Compensation */}
+                      <Card>
+                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                          <Label className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4" />
+                            Compensation (LPA)
+                          </Label>
+                          <div className="space-y-4">
+                            {/* Number inputs above slider */}
+                            <div className="flex justify-between gap-4">
+                              <Input
+                                type="text"
+                                value={salaryRange[0] || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                    setSalaryRange([value === '' ? 0 : Number(value), salaryRange[1]])
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const value = e.target.value
+                                  const numValue = value === '' ? 10 : Number(value)
+                                  setSalaryRange([numValue, salaryRange[1]])
+                                }}
+                                className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="10"
+                              />
+                              <Input
+                                type="text"
+                                value={salaryRange[1] || ''}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                    setSalaryRange([salaryRange[0], value === '' ? 0 : Number(value)])
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const value = e.target.value
+                                  const numValue = value === '' ? 30 : Number(value)
+                                  setSalaryRange([salaryRange[0], numValue])
+                                }}
+                                className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                placeholder="30"
+                              />
+                            </div>
+                            
+                            {/* Slider below inputs */}
+                            <div className="px-1">
+                              <Slider
+                                value={salaryRange}
+                                onValueChange={setSalaryRange}
+                                min={0}
+                                max={100}
+                                step={0.5}
+                                className="w-full"
+                              />
+                            </div>
+                            
+                            <div className="text-xs text-muted-foreground text-center">
+                              ₹{salaryRange[0]} - ₹{salaryRange[1]} LPA
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
-                      {/* Platform (command-style picker) */}
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                          <Globe className="h-4 w-4" />
-                          Platform
-                        </Label>
-                        <PlatformCombobox
-                          value={selectedPlatform}
-                          onChange={setSelectedPlatform}
-                          placeholder="Select platform"
-                        />
-                      </div>
-
-                      {/* Stage and Status */}
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                          <Flag className="h-4 w-4" />
-                          Stage & Status
-                        </Label>
-                        <Select value={stageStatus} onValueChange={setStageStatus}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>Current stage</SelectLabel>
-                              {stageStatusOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {/* Source & Platform */}
+                      <Card>
+                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                          <Label className="flex items-center gap-2">
+                            <Target className="h-4 w-4" />
+                            Source & Platform
+                          </Label>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div>
+                              <Select value={source} onValueChange={setSource}>
+                                <SelectTrigger className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectGroup>
+                                    <SelectLabel>How did you apply?</SelectLabel>
+                                    {sourceOptions.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        <div className="flex items-center gap-2">
+                                          <option.icon className="h-4 w-4" />
+                                          <span>{option.label}</span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <PlatformCombobox
+                                value={selectedPlatform}
+                                onChange={setSelectedPlatform}
+                                placeholder="Select platform"
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
 
                       {/* Contacts */}
-                      <div className="space-y-3">
-                        <Label className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          Contacts
-                        </Label>
-                        
-                        <div className="space-y-2">
-                          <AnimatePresence>
-                            {contacts.map((contact) => (
-                              <motion.div
-                                key={contact.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3, ease: "easeOut" }}
-                                className="flex items-center gap-2 p-2 rounded-md border border-border bg-background/50 hover:bg-background/70 cursor-pointer transition-colors"
-                                onClick={() => {
-                                  setEditingContact(contact)
-                                  setContactModalOpen(true)
-                                }}
-                              >
-                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs font-medium">
-                                    {contact.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-medium truncate">{contact.name}</div>
-                                  <div className="flex items-center gap-1">
-                                    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                      {contact.role}
-                                    </Badge>
-                                    {contact.isThirdParty && (
-                                      <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                                        3rd Party
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </AnimatePresence>
+                      <Card>
+                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                          <Label className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Contacts
+                          </Label>
                           
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setContactModalOpen(true)}
-                            className="w-full h-8 text-xs"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add Contact
-                          </Button>
-                        </div>
-                      </div>
+                          <div className="space-y-2">
+                            <AnimatePresence>
+                              {contacts.map((contact) => (
+                                <motion.div
+                                  key={contact.id}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: "easeOut" }}
+                                  className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 cursor-pointer transition-colors"
+                                  onClick={() => {
+                                    setEditingContact(contact)
+                                    setContactModalOpen(true)
+                                  }}
+                                >
+                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-medium">
+                                      {contact.name.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium truncate">{contact.name}</div>
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                        {contact.role}
+                                      </Badge>
+                                      {contact.isThirdParty && (
+                                        <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                                          3rd Party
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setContactModalOpen(true)}
+                              className="w-full h-8 text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Contact
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                       
                     </div>
                   </motion.div>

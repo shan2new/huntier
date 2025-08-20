@@ -363,7 +363,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
                   }
                 }}
                 placeholder="Type a company name..."
-                className="bg-background/50 pr-8"
+                className="bg-input/70 pr-8"
               />
               {loading && (
                 <Loader2 className="h-4 w-4 animate-spin absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />

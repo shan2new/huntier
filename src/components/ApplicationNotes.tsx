@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns'
-import { MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { MessageSquare, Plus, SendHorizonal, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
@@ -8,6 +8,8 @@ import { apiWithToken } from '@/lib/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Textarea } from './ui/textarea'
 
 export interface Note {
   id: string
@@ -158,7 +160,8 @@ export function ApplicationNotes({
     <div className={`flex flex-col h-full ${className}`}>
       
       {/* Notes Area */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-[300px] max-h-[400px]">
+      <ScrollArea className="h-[300px] w-full">
+        <div className="space-y-4 px-3">
         {!isLoading && !isCreating && notes.length === 0 && pendingNotes.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-8">
             No notes yet. Add one below.
@@ -187,7 +190,7 @@ export function ApplicationNotes({
                         <Trash2 className="h-3 w-3 text-muted-foreground" />
                       </Button>
                     </div>
-                    <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm">
+                    <div className="text-primary-foreground px-3 py-2 rounded-lg text-sm bg-muted">
                       <div className="whitespace-pre-wrap break-words">{note.content}</div>
                     </div>
                   </div>
@@ -198,7 +201,7 @@ export function ApplicationNotes({
                 </div>
                 
                 <div className="flex items-start justify-center">
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-6 w-6">
                     <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                       Y
                     </AvatarFallback>
@@ -264,21 +267,14 @@ export function ApplicationNotes({
         )}
         
         <div ref={messagesEndRef} />
-      </div>
+        </div>
+      </ScrollArea>
       
       {/* Input Area */}
-      <div className="border-t pt-3 space-y-3">
+      <div className="border-t pt-2 px-2">
         {/* Note input */}
-        <div className="flex gap-2 items-end">
-          <div className="flex items-end justify-center">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                Y
-              </AvatarFallback>
-            </Avatar>
-          </div>
-          
-          <TextareaAutosize
+        <div className="flex gap-2 items-end">        
+          {/* <TextareaAutosize
             minRows={1}
             maxRows={5}
             placeholder="Add a note..."
@@ -292,15 +288,28 @@ export function ApplicationNotes({
                 handleAddNote(e)
               }
             }}
+          /> */}
+
+          <Textarea
+            value={newNote}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewNote(e.target.value)}
+            disabled={isLoading}
+            rows={1}
+            className="text-sm"
+            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleAddNote(e)
+              }
+            }}
           />
           
           <Button 
             size="icon"
-            className="h-9 w-9 shrink-0"
             onClick={(e) => handleAddNote(e)}
             disabled={isLoading || !newNote.trim()}
           >
-            <Plus className="h-4 w-4" />
+            <SendHorizonal />
           </Button>
         </div>
         

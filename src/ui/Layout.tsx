@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { UserButton, useAuth } from '@clerk/clerk-react'
+import { useAuthToken } from '@/lib/auth'
 import { motion } from 'motion/react'
 import { ClipboardList, Search, User, Github, Twitter, Linkedin } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
@@ -42,7 +43,8 @@ export function Layout() {
     ;(async () => {
       try {
         if (!isLoaded || !isSignedIn) return
-        const token = await (useAuth() as any).getToken?.()
+        const { getToken } = useAuthToken()
+        const token = await getToken()
         if (!token) return
         const profile = await getProfile<UserProfile>(token)
         const t = (profile.theme as 'light' | 'dark' | undefined) || 'light'

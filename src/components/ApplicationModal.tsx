@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
+import { useAuthToken } from '@/lib/auth'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Activity,
@@ -112,7 +113,7 @@ export function ApplicationModal({
   onUpdated,
   onDeleted,
 }: ApplicationModalProps) {
-  const { getToken } = useAuth()
+  const { getToken } = useAuthToken()
 
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -180,7 +181,7 @@ export function ApplicationModal({
     }
     
     loadApplication()
-  }, [open, mode, applicationId, getToken])
+  }, [open, mode, applicationId]) // Removed getToken from dependencies
 
   // Load platforms for selection
   useEffect(() => {
@@ -188,13 +189,13 @@ export function ApplicationModal({
     ;(async () => {
       try {
         const token = await getToken()
-        const rows = await listPlatforms<Array<Platform>>(token!)
+        const rows = await listPlatforms<Array<Platform>>(token)
         setPlatforms(rows)
       } catch {
         // ignore silently
       }
     })()
-  }, [open, getToken])
+  }, [open]) // Removed getToken from dependencies
 
   // Removed URL-driven company auto-fetch. Company is selected via combobox now.
 
@@ -234,7 +235,7 @@ export function ApplicationModal({
       const token = await getToken()
       
       if (mode === 'create') {
-        const application = await apiWithToken<ApplicationListItem>('/v1/applications', token!, {
+        const application = await apiWithToken<ApplicationListItem>('/v1/applications', token, {
           method: 'POST',
           body: JSON.stringify({
             company: { company_id: company!.id },
@@ -247,7 +248,7 @@ export function ApplicationModal({
         onCreated?.(application)
         handleClose()
       } else {
-        const updated = await patchApplication<ApplicationListItem>(token!, applicationId!, {
+        const updated = await patchApplication<ApplicationListItem>(token, applicationId!, {
           role,
           job_url: url,
           source,
@@ -269,7 +270,7 @@ export function ApplicationModal({
     setIsSubmitting(true)
     try {
       const token = await getToken()
-      await apiWithToken(`/v1/applications/${applicationId}`, token!, { method: 'DELETE' })
+      await apiWithToken(`/v1/applications/${applicationId}`, token, { method: 'DELETE' })
       onDeleted?.(applicationId)
       handleClose()
     } catch (err) {
@@ -390,7 +391,7 @@ export function ApplicationModal({
                             onChange={(e) => setUrl(e.target.value)}
                             onBlur={(e) => setUrl(normalizeUrl(e.target.value))}
                             placeholder="https://company.com/careers/job-123"
-                            className="bg-background/50 border-border"
+                            className="bg-input/70 border-border"
                           />
                         }
                         hint={<p className="text-xs text-muted-foreground">Optional: Link to the job posting</p>}
@@ -452,7 +453,6 @@ export function ApplicationModal({
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
                             placeholder="Senior Software Engineer"
-                            className="bg-background/50 border-border"
                           />
                         }
                       />
@@ -462,7 +462,7 @@ export function ApplicationModal({
                           label="Platform"
                           input={
                             <Select value={selectedPlatformId ?? ''} onValueChange={(v) => setSelectedPlatformId(v || null)}>
-                              <SelectTrigger className="bg-background/50 border-border">
+                              <SelectTrigger>
                                 <SelectValue placeholder="Select platform" />
                               </SelectTrigger>
                               <SelectContent>
@@ -495,7 +495,7 @@ export function ApplicationModal({
                           label="Application Source"
                           input={
                             <Select value={source} onValueChange={setSource}>
-                              <SelectTrigger className="bg-background/50 border-border">
+                              <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -605,7 +605,6 @@ export function ApplicationModal({
                                     }
                                   }}
                                   placeholder="https://company.com/careers/job-123"
-                                  className="bg-background/50 border-border"
                                 />
                               }
                             />
@@ -882,7 +881,7 @@ export function ApplicationModal({
                                     }, 1000)
                                   }
                                 }}
-                                className="bg-background/50 border-border text-xs h-8"
+                                className="text-xs h-8"
                               />
                               <Input
                                 placeholder="Max"
@@ -907,7 +906,7 @@ export function ApplicationModal({
                                     }, 1000)
                                   }
                                 }}
-                                className="bg-background/50 border-border text-xs h-8"
+                                className="text-xs h-8"
                               />
                             </div>
                           </div>

@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Globe,
   Linkedin,
@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { Separator } from '@/components/ui/separator';
 
 export interface Contact {
   id: string
@@ -224,10 +226,10 @@ export function ApplicationConversations({
   }
   
   return (
-    <div className={`flex flex-col h-full ${className}`}>
-      
+    <div className={`flex flex-col h-full ${className}`}>      
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-[300px] max-h-[400px]">
+      <ScrollArea className="h-[300px] w-full">
+        <div className="space-y-4 px-4 d-none">
         {conversations.length === 0 && !isLoading && (
           <div className="text-center text-sm text-muted-foreground py-8">
             No conversations yet. Start by adding a message below.
@@ -324,9 +326,9 @@ export function ApplicationConversations({
             />
           </div>
         )}
-        
         <div ref={messagesEndRef} />
-      </div>
+          </div>
+      </ScrollArea>
       
       {/* Input Area */}
       <div className="border-t pt-3 space-y-3">

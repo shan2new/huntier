@@ -5,6 +5,7 @@ import { apiWithToken } from '../lib/api'
 import { MotionEffect } from '@/components/animate-ui/effects/motion-effect'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useAuthToken } from '@/lib/auth'
 // no cn needed
 
 type PlatformRow = {
@@ -29,7 +30,7 @@ const platformIcons: Partial<Record<string, React.ComponentType<{ className?: st
 }
 
 export function PlatformsPage() {
-  const { getToken } = useAuth()
+  const { getToken } = useAuthToken()
   const [rows, setRows] = useState<Array<PlatformRow>>([])
   const [loading, setLoading] = useState(true)
 
@@ -38,13 +39,13 @@ export function PlatformsPage() {
       setLoading(true)
       try {
         const token = await getToken()
-        const data = await apiWithToken<Array<PlatformRow>>('/v1/analytics/platforms', token!)
+        const data = await apiWithToken<Array<PlatformRow>>('/v1/analytics/platforms', token)
         setRows(data)
       } finally {
         setLoading(false)
       }
     })()
-  }, [getToken])
+  }, []) // Removed getToken from dependencies since it's memoized
 
   const totalApplications = rows.reduce((sum, row) => sum + row.totals, 0)
   const totalOffers = rows.reduce((sum, row) => sum + row.offers, 0)

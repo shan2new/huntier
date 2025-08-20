@@ -82,7 +82,7 @@ html, body, #app {
   --shadow-offset-x: 0px;
   --shadow-offset-y: 1px;
   --letter-spacing: 0.025em;
-  --spacing: 0.25rem;
+  --spacing: 0.20rem;
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
@@ -146,7 +146,7 @@ html, body, #app {
   --shadow-offset-x: 0px;
   --shadow-offset-y: 1px;
   --letter-spacing: 0.025em;
-  --spacing: 0.25rem;
+  --spacing: 0.2rem;
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);

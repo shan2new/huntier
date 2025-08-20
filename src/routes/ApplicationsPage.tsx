@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
+import { useAuthToken } from '@/lib/auth'
 import { AnimatePresence, motion } from 'motion/react'
 import { Activity, Award, Building2, Calendar, ChevronRight, Clock, DollarSign, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
 import { apiWithToken } from '../lib/api'
@@ -61,7 +62,7 @@ const sourceConfig: Partial<Record<string, { icon: any; label: string }>> = {
 }
 
 export function ApplicationsPage() {
-  const { getToken } = useAuth()
+  const { getToken } = useAuthToken()
   const [apps, setApps] = useState<Array<ApplicationListItem>>([])
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -77,13 +78,13 @@ export function ApplicationsPage() {
         const params = new URLSearchParams()
         if (search) params.set('search', search)
         const qs = params.toString()
-        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`, token!)
+        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`, token)
         setApps(data)
       } finally {
         setLoading(false)
       }
     })()
-  }, [getToken, search])
+  }, [search]) // Removed getToken from dependencies since it's memoized
 
   const stats = useMemo(() => {
     const total = apps.length
@@ -173,13 +174,6 @@ export function ApplicationsPage() {
         transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
         <Card className="shadow-xs">
-          <CardHeader className="border-b border-border py-2 bg-accent/20">
-            <div className="flex items-center justify-end">
-              <Badge variant="outline" className="text-xs rounded-4xl">
-                {apps.length}
-              </Badge>
-            </div>
-          </CardHeader>
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">

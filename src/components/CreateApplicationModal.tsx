@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/clerk-react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   AlertCircle,
@@ -15,9 +14,10 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
+import { useAuth } from '@clerk/clerk-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
-import { addApplicationContact, apiWithToken } from '@/lib/api'
-import { useAuthToken } from '@/lib/auth'
+import { addApplicationContactWithRefresh } from '@/lib/api'
+import { useApi } from '@/lib/use-api'
 import { cn, extractHostname } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -70,7 +70,8 @@ export function CreateApplicationModal({
   onOpenChange,
   onCreated,
 }: CreateApplicationModalProps) {
-  const { getToken } = useAuthToken()
+  const { apiCall } = useApi()
+  const { getToken } = useAuth()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -136,37 +137,37 @@ export function CreateApplicationModal({
 
   const handleSubmit = async () => {
     if (!role || !company) return
-    
+
     setIsSubmitting(true)
     setError('')
-    
+
     try {
-      const token = await getToken()
-      if (!token) throw new Error('Not authenticated')
-      
+      const url = includeJobUrl ? jobUrl : undefined
+      const selectedPlatformId = selectedPlatform?.id
+
       const applicationData = {
         company: { company_id: company.id },
         role,
-        job_url: includeJobUrl && jobUrl ? normalizeUrl(jobUrl) : undefined,
-        platform_id: selectedPlatform?.id,
+        job_url: url ? normalizeUrl(url) : undefined,
+        platform_id: selectedPlatformId,
         source,
-        stage: stageStatus,
         compensation: {
           fixed_min_lpa: salaryRange[0],
           fixed_max_lpa: salaryRange[1],
         },
       }
-      const application = await apiWithToken<ApplicationListItem>('/v1/applications', token, {
+      const application = await apiCall<ApplicationListItem>('/v1/applications', {
         method: 'POST',
         body: JSON.stringify(applicationData),
       })
-      
+
       // Save contacts after application is created
       if (contacts.length) {
         try {
+          const getTokenStr = async () => await getToken() || ''
           await Promise.all(
             contacts.map((c, idx) =>
-              addApplicationContact(token, application.id, {
+              addApplicationContactWithRefresh(getTokenStr, application.id, {
                 contact: { name: c.name },
                 role: c.role,
                 is_primary: idx === 0,
@@ -184,7 +185,7 @@ export function CreateApplicationModal({
         try {
           await Promise.all(
             pendingNotes.map(content =>
-              apiWithToken(`/v1/applications/${application.id}/notes`, token, {
+              apiCall(`/v1/applications/${application.id}/notes`, {
                 method: 'POST',
                 body: JSON.stringify({ content }),
               })
@@ -443,14 +444,12 @@ export function CreateApplicationModal({
                             <div className="px-6 pb-6">
                               {activeTab === 'notes' ? (
                                 <ApplicationNotes
-                                  token={null}
                                   isCreating={true}
                                   pendingNotes={pendingNotes}
                                   onAddPendingNote={addPendingNote}
                                 />
                               ) : (
                                 <ApplicationConversations
-                                  token={null}
                                   isCreating={true}
                                   className="h-[400px]"
                                 />

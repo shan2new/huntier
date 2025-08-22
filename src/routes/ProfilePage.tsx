@@ -16,7 +16,7 @@ import {
   User
 } from 'lucide-react'
 import type { Company, UserProfile } from '@/lib/api'
-import { apiWithToken } from '@/lib/api'
+import { useApi } from '@/lib/use-api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,6 +77,7 @@ const qaFields = [
 ]
 
 export function ProfilePage() {
+  const { apiCall } = useApi()
   const { getToken } = useAuth()
   const { user } = useUser()
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -95,10 +96,9 @@ export function ProfilePage() {
     ;(async () => {
       setLoading(true)
       try {
-        const token = await getToken()
         const [p, q] = await Promise.all([
-          apiWithToken('/v1/profile', token!),
-          apiWithToken('/v1/recruiter-qa', token!)
+          apiCall('/v1/profile'),
+          apiCall('/v1/recruiter-qa')
         ])
         setProfile(p as any)
         // Initialize date picker state from profile date (YYYY-MM-DD)
@@ -126,11 +126,10 @@ export function ProfilePage() {
   async function save() {
     setSaving(true)
     try {
-      const token = await getToken()
       const { company: _company, ...patchProfile } = (profile || {}) as any
       await Promise.all([
-        apiWithToken('/v1/profile', token!, { method: 'PATCH', body: JSON.stringify(patchProfile) }),
-        apiWithToken('/v1/recruiter-qa', token!, { method: 'PUT', body: JSON.stringify(qa) })
+        apiCall('/v1/profile', { method: 'PATCH', body: JSON.stringify(patchProfile) }),
+        apiCall('/v1/recruiter-qa', { method: 'PUT', body: JSON.stringify(qa) })
       ])
       setSaveSuccess(true)
       setEditMode(false)
@@ -159,8 +158,7 @@ export function ProfilePage() {
     document.documentElement.classList.toggle('dark', next === 'dark')
     // Persist to profile
     try {
-      const token = await getToken()
-      await apiWithToken('/v1/profile', token!, { method: 'PATCH', body: JSON.stringify({ theme: next }) })
+      await apiCall('/v1/profile', { method: 'PATCH', body: JSON.stringify({ theme: next }) })
     } catch {}
   }
 

@@ -68,20 +68,19 @@ export function DateTimePicker({
   }
 
   const displayValue = selectedDate 
-    ? `${format(selectedDate, 'MMM d, yyyy')} at ${format(selectedDate, 'h:mm a')}` 
+    ? `${format(selectedDate, 'd MMM')}, ${format(selectedDate, 'h:mm a')}` 
     : placeholder
 
   return (
-    <div className={cn("flex gap-2", className)}>
-      <div className="flex flex-col gap-2 flex-1">
+    <div className={cn("flex justify-center", className)}>
+      <div className="flex flex-col gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              className="justify-between font-normal text-xs h-8"
+              variant="ghost"
+              className="text-xs px-2 py-1 h-auto rounded-md bg-muted text-muted-foreground border-none shadow-none hover:bg-muted/80 font-normal"
             >
               {displayValue}
-              <ChevronDownIcon className="h-3 w-3" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -99,12 +98,25 @@ export function DateTimePicker({
               </div>
               <div>
                 <Label className="text-xs">Time</Label>
-                <Input
-                  type="time"
-                  value={timeValue}
-                  onChange={(e) => handleTimeChange(e.target.value)}
-                  className="mt-1 text-xs h-8"
-                />
+                <div className="mt-1">
+                  <div className="flex items-center justify-center p-3 rounded-md border bg-card shadow-sm">
+                    <Input
+                      type="time"
+                      value={timeValue}
+                      onChange={(e) => handleTimeChange(e.target.value)}
+                      className="text-center text-base h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button 
+                  size="sm" 
+                  onClick={() => setOpen(false)}
+                  className="text-xs px-4"
+                >
+                  OK
+                </Button>
               </div>
             </div>
           </PopoverContent>

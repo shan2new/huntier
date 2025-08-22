@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAuth } from '@clerk/clerk-react'
-import { useAuthToken } from '@/lib/auth'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, Calendar, ChevronRight, Clock, DollarSign, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
-import { apiWithToken } from '../lib/api'
+import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
+import { useApi } from '../lib/use-api'
 import type { ApplicationListItem } from '../lib/api'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
@@ -62,8 +60,8 @@ const sourceConfig: Partial<Record<string, { icon: any; label: string }>> = {
 }
 
 export function ApplicationsPage() {
-  const { getToken } = useAuthToken()
-  const [apps, setApps] = useState<Array<ApplicationListItem>>([])
+  const { apiCall } = useApi()
+  const [apps, setApps] = useState<Array<ApplicationListItem>>([])  
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [updateModalOpen, setUpdateModalOpen] = useState(false)
@@ -74,23 +72,22 @@ export function ApplicationsPage() {
     ;(async () => {
       setLoading(true)
       try {
-        const token = await getToken()
         const params = new URLSearchParams()
         if (search) params.set('search', search)
         const qs = params.toString()
-        const data = await apiWithToken<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`, token)
+        const data = await apiCall<Array<ApplicationListItem>>(`/v1/applications${qs ? `?${qs}` : ''}`)
         setApps(data)
       } finally {
         setLoading(false)
       }
     })()
-  }, [search]) // Removed getToken from dependencies since it's memoized
+  }, [search, apiCall])
 
   const stats = useMemo(() => {
     const total = apps.length
-    const active = apps.filter(app => app.stage === 'applied_self' || app.stage === 'applied_referral' || app.stage === 'recruiter_outreach').length
+    const active = apps.filter(app => app.stage.id === 'applied_self' || app.stage.id === 'applied_referral' || app.stage.id === 'recruiter_outreach').length
     const interviewing = apps.filter(app => app.milestone === 'interviewing').length
-    const offers = apps.filter(app => app.stage === 'offer').length
+    const offers = apps.filter(app => app.stage.id === 'offer').length
     return { total, active, interviewing, offers }
   }, [apps])
 
@@ -272,9 +269,9 @@ export function ApplicationsPage() {
                                   {milestoneConfig[app.milestone]?.label}
                                 </Badge>
                                 {/* Only show stage if it's not redundant with source */}
-                                {app.stage !== app.source && !['applied_self', 'applied_referral', 'recruiter_outreach'].includes(app.stage) && (
+                                {app.stage.id !== app.source && !['applied_self', 'applied_referral', 'recruiter_outreach'].includes(app.stage.id) && (
                                   <Badge variant="outline" className="text-xs px-2 py-0.5">
-                                    {app.stage.replace('_', ' ')}
+                                    {app.stage.name}
                                   </Badge>
                                 )}
                               </div>

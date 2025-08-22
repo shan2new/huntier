@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { apiWithToken } from '@/lib/api'
+import { useAuth } from '@clerk/clerk-react'
+import { useApi } from '@/lib/use-api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -21,7 +22,6 @@ export interface Note {
 
 interface ApplicationNotesProps {
   applicationId?: string
-  token: string | null
   isCreating?: boolean
   onAddPendingNote?: (content: string, updatedNotes?: Array<string>) => void
   pendingNotes?: Array<string>
@@ -30,12 +30,12 @@ interface ApplicationNotesProps {
 
 export function ApplicationNotes({ 
   applicationId, 
-  token, 
   isCreating = false, 
   onAddPendingNote,
   pendingNotes = [],
   className = '' 
 }: ApplicationNotesProps) {
+  const { apiCall } = useApi()
   const [notes, setNotes] = useState<Array<Note>>([]) 
   const [isLoading, setIsLoading] = useState(false)
   const [newNote, setNewNote] = useState('')
@@ -56,19 +56,19 @@ export function ApplicationNotes({
 
   // Fetch existing notes when applicationId changes
   useEffect(() => {
-    if (applicationId && token && !isCreating) {
+    if (applicationId && !isCreating) {
       fetchNotes()
     }
-  }, [applicationId, token])
+  }, [applicationId])
 
   async function fetchNotes() {
-    if (!applicationId || !token) return
+    if (!applicationId) return
     
     setIsLoading(true)
     setError(null)
     
     try {
-      const fetchedNotes = await apiWithToken<Array<Note>>(`/v1/applications/${applicationId}/notes`, token)
+      const fetchedNotes = await apiCall<Array<Note>>(`/v1/applications/${applicationId}/notes`)
       setNotes(fetchedNotes.reverse())
     } catch (err) {
       console.error('Failed to fetch notes:', err)
@@ -98,15 +98,14 @@ export function ApplicationNotes({
       return
     }
     
-    if (!applicationId || !token) return
+    if (!applicationId) return
     
     setIsLoading(true)
     setError(null)
     
     try {
-      const createdNote = await apiWithToken<Note>(
+      const createdNote = await apiCall<Note>(
         `/v1/applications/${applicationId}/notes`,
-        token,
         {
           method: 'POST',
           body: JSON.stringify({ content: newNote }),
@@ -124,15 +123,12 @@ export function ApplicationNotes({
   }
 
   async function handleDeleteNote(noteId: string) {
-    if (!token) return
-    
     setIsLoading(true)
     setError(null)
     
     try {
-      await apiWithToken(
+      await apiCall(
         `/v1/applications/notes/${noteId}`,
-        token,
         { method: 'DELETE' }
       )
       

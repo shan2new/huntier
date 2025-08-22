@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/clerk-react'
 import { Award, BarChart3, Clock, Globe, TrendingUp, XCircle } from 'lucide-react'
-import { apiWithToken } from '../lib/api'
+import { useApi } from '../lib/use-api'
 import { MotionEffect } from '@/components/animate-ui/effects/motion-effect'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useAuthToken } from '@/lib/auth'
-// no cn needed
 
 type PlatformRow = {
   platform_id: string
@@ -30,7 +27,7 @@ const platformIcons: Partial<Record<string, React.ComponentType<{ className?: st
 }
 
 export function PlatformsPage() {
-  const { getToken } = useAuthToken()
+  const { apiCall } = useApi()
   const [rows, setRows] = useState<Array<PlatformRow>>([])
   const [loading, setLoading] = useState(true)
 
@@ -38,14 +35,13 @@ export function PlatformsPage() {
     ;(async () => {
       setLoading(true)
       try {
-        const token = await getToken()
-        const data = await apiWithToken<Array<PlatformRow>>('/v1/analytics/platforms', token)
+        const data = await apiCall<Array<PlatformRow>>('/v1/analytics/platforms')
         setRows(data)
       } finally {
         setLoading(false)
       }
     })()
-  }, []) // Removed getToken from dependencies since it's memoized
+  }, [apiCall]) // Removed getToken from dependencies since it's memoized
 
   const totalApplications = rows.reduce((sum, row) => sum + row.totals, 0)
   const totalOffers = rows.reduce((sum, row) => sum + row.offers, 0)

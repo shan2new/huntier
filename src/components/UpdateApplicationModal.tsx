@@ -13,13 +13,15 @@ import {
   Users,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
+import type { StageObject } from '@/types/application'
 import {
-  apiWithToken,
-  getApplication,
-  getCompanyById,
-  listPlatforms,
-  patchApplication,
+  getApplicationWithRefresh,
+  getCompanyByIdWithRefresh,
+  listPlatformsWithRefresh,
+  patchApplicationWithRefresh,
+  transitionStageWithRefresh,
 } from '@/lib/api'
+import { useApi } from '@/lib/use-api'
 import { cn, extractHostname, formatDateIndian } from '@/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -28,6 +30,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent } from '@/components/ui/card'
+
 import {
   Select,
   SelectContent,
@@ -71,27 +74,28 @@ const normalizeUrl = (str: string) => {
 
 interface UpdateApplicationModalProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
   applicationId: string
   onUpdated?: (app: ApplicationListItem) => void
   onDeleted?: (id: string) => void
 }
 
 export function UpdateApplicationModal({
-  open,
-  onOpenChange,
   applicationId,
-  onUpdated: _onUpdated,
+  open,
+  onClose,
+  onUpdated,
   onDeleted,
 }: UpdateApplicationModalProps) {
   const { getToken } = useAuth()
+  const { apiCall } = useApi()
 
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   // Application data
-  const [app, setApp] = useState<any | null>(null)
+  const [app, setApp] = useState<ApplicationListItem | null>(null)
 
   // Form fields
   const [url, setUrl] = useState('')
@@ -102,9 +106,6 @@ export function UpdateApplicationModal({
   const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null)
   const [companySearchOpen, setCompanySearchOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-
-  // Auth token for notes component
-  const [authToken, setAuthToken] = useState<string | null>(null)
 
   // Tab state for Notes/Conversations
   const [activeTab, setActiveTab] = useState<'notes' | 'conversations'>('notes')
@@ -119,27 +120,23 @@ export function UpdateApplicationModal({
   const [varMaxLpa, setVarMaxLpa] = useState('')
 
   // Status fields
-  const [stageStatus, setStageStatus] = useState('applied')
-
-  const stageStatusOptions = [
-    { value: 'applied', label: 'Applied' },
-    { value: 'interview', label: 'Interviewing' },
-    { value: 'offered', label: 'Offered' },
-    { value: 'accepted', label: 'Accepted' },
-    { value: 'rejected', label: 'Rejected' },
-    { value: 'withdrawn', label: 'Withdrawn' },
-  ]
+  const [stageStatus, setStageStatus] = useState<StageObject>({ id: 'applied', name: 'Applied', type: 'standard' })
 
   // Consider these stages as "in progress" for a visual pulse indicator
-  const inProgressStages = new Set(['applied', 'interview', 'offered'])
-  const isInProgress = inProgressStages.has(stageStatus)
+  const inProgressStages = new Set([
+    'applied',
+    'hr_shortlisted',
+    'hm_shortlisted',
+    'interview_scheduled',
+    'interview_rescheduled',
+    'offered',
+  ])
+  const isInProgress = inProgressStages.has(stageStatus.id)
 
-  // Get auth token for API calls
-  useEffect(() => {
-    if (open) {
-      getToken().then(token => setAuthToken(token))
-    }
-  }, [open, getToken])
+  // Map backend stage enums to compact badge labels
+  const stageBadgeLabel = (stage: StageObject) => {
+    return stage.name
+  }
 
   // Load application data
   useEffect(() => {
@@ -148,20 +145,22 @@ export function UpdateApplicationModal({
     const loadApplication = async () => {
       setLoading(true)
       try {
-        const token = await getToken()
-        const appData = await getApplication<any>(token!, applicationId)
+        const getTokenStr = async () => (await getToken()) || ''
+        const appData = await getApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId)
 
-        // If backend doesn't embed company, fetch it using company_id
-        let hydratedApp = appData
-        if (!hydratedApp.company && hydratedApp.company_id) {
+        // Hydrate company if backend didn't embed it
+        let company: Company | null = null
+        if (appData.company) {
+          company = appData.company
+        } else if (appData.company_id) {
           try {
-            const comp = await getCompanyById<Company>(token!, hydratedApp.company_id)
-            hydratedApp = { ...hydratedApp, company: comp }
+            company = await getCompanyByIdWithRefresh<Company>(getTokenStr, appData.company_id)
           } catch {
             // ignore if company fetch fails
           }
         }
 
+        const hydratedApp = { ...appData, company }
         setApp(hydratedApp)
 
         // Populate form fields from loaded data
@@ -169,7 +168,7 @@ export function UpdateApplicationModal({
         setRole(hydratedApp.role || '')
         setSource(hydratedApp.source || 'applied_self')
         setSelectedPlatformId(hydratedApp.platform_id || null)
-        setStageStatus(hydratedApp.stage || 'applied')
+        setStageStatus(hydratedApp.stage ?? { id: 'applied', name: 'Applied', type: 'standard' })
 
         // Populate compensation data if available
         if (hydratedApp.compensation) {
@@ -193,22 +192,21 @@ export function UpdateApplicationModal({
 
   // Load platforms for selection
   useEffect(() => {
-    if (open && authToken) {
-      listPlatforms(authToken)
-        .then((response) => {
-          const platformData = response as Array<Platform>
-          // Set selected platform if application already has one
-          if (app?.platform_id) {
-            const platform = platformData.find((p) => p.id === app.platform_id)
-            if (platform) {
-              setSelectedPlatform(platform)
-              setSelectedPlatformId(platform.id)
-            }
+    if (!open) return
+    const getTokenStr = async () => (await getToken()) || ''
+    listPlatformsWithRefresh<Array<Platform>>(getTokenStr)
+      .then((rows) => {
+        // Set selected platform if application already has one
+        if (app?.platform_id) {
+          const platform = rows.find((p) => p.id === app.platform_id)
+          if (platform) {
+            setSelectedPlatform(platform)
+            setSelectedPlatformId(platform.id)
           }
-        })
-        .catch(console.error)
-    }
-  }, [open, authToken, app])
+        }
+      })
+      .catch(console.error)
+  }, [open, getToken, app])
 
   const handleSave = async () => {
     if (!role || !app) return
@@ -217,18 +215,19 @@ export function UpdateApplicationModal({
     setError('')
 
     try {
-      const token = await getToken()
-      const updated = await patchApplication<ApplicationListItem>(token!, applicationId, {
+      const getTokenStr = async () => (await getToken()) || ''
+      const params = {
         role,
         job_url: includeJobUrl ? url : null,
         source,
         stage: stageStatus,
         platform_id: selectedPlatformId,
-      })
+      }
+      const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, params)
 
-      setApp({ ...app, ...updated })
-      _onUpdated?.(updated)
-      handleClose()
+      setApp((prev: ApplicationListItem | null) => ({ ...(prev ?? {}), ...updated }))
+      onUpdated?.(updated)
+      onClose()
     } catch (err) {
       setError('Failed to update application')
       console.error('Save error:', err)
@@ -237,17 +236,24 @@ export function UpdateApplicationModal({
     }
   }
 
-  // Update stage immediately from header dropdown
+  // Update stage immediately from header dropdown using transition API
   const updateStage = async (value: string) => {
-    setStageStatus(value)
+    setStageStatus({ id: value, name: value, type: 'standard' })
     try {
-      const token = await getToken()
-      const updated = await patchApplication<ApplicationListItem>(token!, applicationId, {
-        stage: value,
-      })
-      const hydrated = { ...(app ?? {}), ...updated, stage: value }
+      const getTokenStr = async () => (await getToken()) || ''
+      await transitionStageWithRefresh(getTokenStr, applicationId, value)
+      // Refresh application to reflect server-driven state
+      const updated = await getApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId)
+      let hydrated = updated as any
+      if (!hydrated.company && hydrated.company_id) {
+        try {
+          const comp = await getCompanyByIdWithRefresh<Company>(getTokenStr, hydrated.company_id)
+          hydrated = { ...hydrated, company: comp }
+        } catch {}
+      }
       setApp(hydrated)
-      _onUpdated?.(updated)
+      setStageStatus(updated.stage)
+      onUpdated?.(updated)
       setError('')
     } catch (err) {
       console.error('Failed to update status:', err)
@@ -260,11 +266,10 @@ export function UpdateApplicationModal({
     setIsSubmitting(true)
     setError('')
     try {
-      const token = await getToken()
-      await apiWithToken(`/v1/applications/${applicationId}`, token!, { method: 'DELETE' })
+      await apiCall(`/v1/applications/${applicationId}`, { method: 'DELETE' })
       onDeleted?.(applicationId)
       setShowDeleteConfirm(false)
-      handleClose()
+      onClose()
     } catch (err) {
       setError('Failed to delete application')
       console.error('Delete error:', err)
@@ -274,13 +279,14 @@ export function UpdateApplicationModal({
   }
 
   const handleClose = () => {
-    onOpenChange(false)
+    onClose()
     setTimeout(() => {
       setApp(null)
       setUrl('')
       setRole('')
       setSource('applied_self')
       setIncludeJobUrl(false)
+      setSelectedPlatform(null)
       setSelectedPlatformId(null)
       setError('')
     }, 150)
@@ -289,7 +295,7 @@ export function UpdateApplicationModal({
   if (!open) return null
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent hideClose className="max-w-5xl p-0 gap-0 border border-border rounded-xl bg-card">
         <div className="flex flex-col h-full min-h-0">
           {/* Header */}
@@ -358,9 +364,8 @@ export function UpdateApplicationModal({
                       aria-label="View stage timeline"
                       onClick={() => setStageVisualizationOpen(true)}
                     >
-                      {stageStatusOptions.find((s) => s.value === stageStatus)?.label || stageStatus}
+                      {stageBadgeLabel(stageStatus)}
                     </Badge>
-                    
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -369,7 +374,14 @@ export function UpdateApplicationModal({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {stageStatusOptions.map((option) => (
+                        {[
+                          { value: 'applied', label: 'Applied' },
+                          { value: 'hr_shortlisted', label: 'HR Shortlisted' },
+                          { value: 'hm_shortlisted', label: 'HM Shortlisted' },
+                          { value: 'interview_scheduled', label: 'Interview Scheduled' },
+                          { value: 'offer_made', label: 'Offer Made' },
+                          { value: 'rejected', label: 'Rejected' },
+                        ].map((option) => (
                           <DropdownMenuItem key={option.value} onSelect={() => updateStage(option.value)}>
                             <Badge variant="outline">{option.label}</Badge>
                           </DropdownMenuItem>
@@ -382,21 +394,23 @@ export function UpdateApplicationModal({
                   <CompanySearchCombobox
                     value={app.company || null}
                     onChange={async (c) => {
-                      if (!c || !app) return
+                      if (!c) return
                       try {
-                        const token = await getToken()
-                        const updated = await patchApplication<any>(token!, app.id, { company_id: c.id })
-                        const hydrated = { ...(app || {}), ...(updated || {}), company: c, company_id: c.id }
-                        setApp(hydrated)
-                        // reflect derived fields locally
-                        setSelectedPlatformId(hydrated.platform_id || null)
-                        setSource(hydrated.source || source)
-                        setRole(hydrated.role || role)
-                        setUrl(hydrated.job_url || url)
-                        setIncludeJobUrl(!!hydrated.job_url)
-                        setCompanySearchOpen(false)
-                        setError('')
-                        _onUpdated?.(hydrated)
+                        const getTokenStr = async () => (await getToken()) || ''
+                        const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, { company_id: c.id })
+                        setApp((prev) => {
+                          const merged = { ...(prev ?? {}), ...updated, company: c, company_id: c.id }
+                          // reflect derived fields locally
+                          setSelectedPlatformId(merged.platform_id || null)
+                          setSource(merged.source || source)
+                          setRole(merged.role || role)
+                          setUrl(merged.job_url || url)
+                          setIncludeJobUrl(!!merged.job_url)
+                          setCompanySearchOpen(false)
+                          setError('')
+                          onUpdated?.(merged as ApplicationListItem)
+                          return merged
+                        })
                       } catch (err) {
                         console.error('Failed to change company:', err)
                         setError('Failed to change company')
@@ -439,10 +453,8 @@ export function UpdateApplicationModal({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="relative grid grid-cols-[3fr_2fr] gap-3 h-full px-2"
+                  className="relative grid grid-cols-[4fr_2fr] gap-3 h-full px-2"
                 >
-                  <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border pointer-events-none" aria-hidden="true"></div>
-
                   {/* Column 1: Core Details */}
                   <div className="space-y-4 pr-6 overflow-y-auto max-h-[calc(70vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
 
@@ -552,12 +564,10 @@ export function UpdateApplicationModal({
                             {activeTab === 'notes' ? (
                               <ApplicationNotes
                                 applicationId={applicationId}
-                                token={authToken}
                               />
                             ) : (
                               <ApplicationConversations
                                 applicationId={applicationId}
-                                token={authToken}
                               />
                             )}
                           </div>
@@ -824,25 +834,45 @@ export function UpdateApplicationModal({
         open={stageVisualizationOpen}
         onOpenChange={setStageVisualizationOpen}
         currentStage={stageStatus}
-        onStageChange={(newStageId) => {
-          // Map stage back to application status
-          const statusMapping: Record<string, string> = {
-            'applied_self': 'applied',
-            'applied_referral': 'applied',
-            'recruiter_outreach': 'applied',
-            'hr_shortlist': 'applied',
-            'hm_shortlist': 'applied',
-            'dsa_r1': 'interview',
-            'system_design': 'interview',
-            'cultural_fit': 'interview',
-            'technical_r2': 'interview',
-            'final_round': 'interview',
-            'offer': 'offered',
-            'rejection': 'rejected'
+        applicationId={applicationId}
+        onStageChange={async (newStageId, reason) => {
+          // Handle withdrawn with reason via transition endpoint
+          if (newStageId === 'withdrawn') {
+            try {
+              const getTokenStr = async () => (await getToken()) || ''
+              await transitionStageWithRefresh(getTokenStr, applicationId, 'withdrawn', reason)
+              // Refresh application to reflect server state
+              const updated = await getApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId)
+              setApp(updated as any)
+              setStageStatus(typeof updated.stage === 'string' 
+                ? { id: updated.stage, name: updated.stage, type: 'standard' }
+                : updated.stage)
+              onUpdated?.(updated)
+              setError('')
+              // Close the timeline dialog after successful transition
+              setStageVisualizationOpen(false)
+            } catch (err) {
+              console.error('Failed to withdraw application:', err)
+              setError('Failed to withdraw application')
+            }
+            return
           }
-          
-          const newStatus = statusMapping[newStageId] || newStageId
-          updateStage(newStatus)
+          // Perform precise stage transition using backend enums
+          try {
+            const getTokenStr = async () => (await getToken()) || ''
+            await transitionStageWithRefresh(getTokenStr, applicationId, newStageId)
+            const updated = await getApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId)
+            setApp(updated as any)
+            setStageStatus(typeof updated.stage === 'string' 
+              ? { id: updated.stage, name: updated.stage, type: 'standard' }
+              : updated.stage)
+            onUpdated?.(updated)
+            setError('')
+            setStageVisualizationOpen(false)
+          } catch (err) {
+            console.error('Failed to transition stage:', err)
+            setError('Failed to transition stage')
+          }
         }}
       />
     </Dialog >

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import TextareaAutosize from 'react-textarea-autosize'
 
-import { apiWithToken } from '@/lib/api'
+import { useApi } from '@/lib/use-api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,7 +59,6 @@ export interface Conversation {
 
 interface ApplicationConversationsProps {
   applicationId?: string
-  token: string | null
   isCreating?: boolean
   className?: string
 }
@@ -82,10 +81,10 @@ const mediumLabels = {
 
 export function ApplicationConversations({
   applicationId,
-  token,
   isCreating = false,
   className = '',
 }: ApplicationConversationsProps) {
+  const { apiCall } = useApi()
   const [conversations, setConversations] = useState<Array<Conversation>>([])
   const [contacts, setContacts] = useState<Array<any>>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -114,22 +113,21 @@ export function ApplicationConversations({
   
   // Fetch conversations and contacts
   useEffect(() => {
-    if (applicationId && token && !isCreating) {
+    if (applicationId && !isCreating) {
       fetchConversations()
       fetchContacts()
     }
-  }, [applicationId, token])
+  }, [applicationId])
   
   async function fetchConversations() {
-    if (!applicationId || !token) return
+    if (!applicationId) return
     
     setIsLoading(true)
     setError(null)
     
     try {
-      const data = await apiWithToken<Array<Conversation>>(
-        `/v1/applications/${applicationId}/conversations?limit=100`,
-        token
+      const data = await apiCall<Array<Conversation>>(
+        `/v1/applications/${applicationId}/conversations?limit=100`
       )
       setConversations(data)
     } catch (err) {
@@ -141,12 +139,11 @@ export function ApplicationConversations({
   }
   
   async function fetchContacts() {
-    if (!applicationId || !token) return
+    if (!applicationId) return
     
     try {
-      const data = await apiWithToken<Array<any>>(
-        `/v1/applications/${applicationId}/contacts`,
-        token
+      const data = await apiCall<Array<any>>(
+        `/v1/applications/${applicationId}/contacts`
       )
       setContacts(data)
     } catch (err) {
@@ -155,7 +152,7 @@ export function ApplicationConversations({
   }
   
   const handleSendMessage = async () => {
-    if (!applicationId || !token || !newMessage.trim()) return
+    if (!applicationId || !newMessage.trim()) return
     
     setIsLoading(true)
     setError(null)
@@ -165,9 +162,8 @@ export function ApplicationConversations({
       let contactId = selectedContact === 'user' ? null : selectedContact
       
       if (showNewContact && newContactName.trim()) {
-        const newContact = await apiWithToken<any>(
+        const newContact = await apiCall<any>(
           `/v1/applications/${applicationId}/contacts`,
-          token,
           {
             method: 'POST',
             body: JSON.stringify({
@@ -186,9 +182,8 @@ export function ApplicationConversations({
       const sender = selectedContact === 'user' ? 'user' : 'contact'
       const direction = sender === 'user' ? 'outbound' : 'inbound'
       
-      const conversation = await apiWithToken<Conversation>(
+      const conversation = await apiCall<Conversation>(
         `/v1/applications/${applicationId}/conversations`,
-        token,
         {
           method: 'POST',
           body: JSON.stringify({

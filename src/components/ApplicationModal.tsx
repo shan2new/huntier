@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { useAuthToken } from '@/lib/auth'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Activity,
@@ -20,14 +19,14 @@ import {
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import {
-  apiWithToken,
-  getApplication,
-  getCompanyById,
-  listConversations,
-  listInterviews,
-  listPlatforms,
-  patchApplication,
+  getApplicationWithRefresh,
+  getCompanyByIdWithRefresh,
+  listConversationsWithRefresh,
+  listInterviewsWithRefresh,
+  listPlatformsWithRefresh,
+  patchApplicationWithRefresh,
 } from '@/lib/api'
+import { useApi } from '@/lib/use-api'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -113,7 +112,8 @@ export function ApplicationModal({
   onUpdated,
   onDeleted,
 }: ApplicationModalProps) {
-  const { getToken } = useAuthToken()
+  const { getToken } = useAuth()
+  const { apiCall } = useApi()
 
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -144,18 +144,18 @@ export function ApplicationModal({
     const loadApplication = async () => {
       setLoading(true)
       try {
-        const token = await getToken()
+        const getTokenStr = async () => await getToken() || ''
         const [appData, conversations, interviews] = await Promise.all([
-          getApplication<any>(token!, applicationId),
-          listConversations<Array<any>>(token!, applicationId),
-          listInterviews<Array<any>>(token!, applicationId),
+          getApplicationWithRefresh<any>(getTokenStr, applicationId),
+          listConversationsWithRefresh<Array<any>>(getTokenStr, applicationId),
+          listInterviewsWithRefresh<Array<any>>(getTokenStr, applicationId),
         ])
         
         // If backend doesn't embed company, fetch it using company_id
         let hydratedApp = appData
         if (!hydratedApp.company && hydratedApp.company_id) {
           try {
-            const comp = await getCompanyById<Company>(token!, hydratedApp.company_id)
+            const comp = await getCompanyByIdWithRefresh<Company>(getTokenStr, hydratedApp.company_id)
             hydratedApp = { ...hydratedApp, company: comp }
           } catch {
             // ignore if company fetch fails
@@ -188,8 +188,8 @@ export function ApplicationModal({
     if (!open) return
     ;(async () => {
       try {
-        const token = await getToken()
-        const rows = await listPlatforms<Array<Platform>>(token)
+        const getTokenStr = async () => await getToken() || ''
+        const rows = await listPlatformsWithRefresh<Array<Platform>>(getTokenStr)
         setPlatforms(rows)
       } catch {
         // ignore silently
@@ -232,10 +232,9 @@ export function ApplicationModal({
     setError('')
     
     try {
-      const token = await getToken()
       
       if (mode === 'create') {
-        const application = await apiWithToken<ApplicationListItem>('/v1/applications', token, {
+        const application = await apiCall<ApplicationListItem>('/v1/applications', {
           method: 'POST',
           body: JSON.stringify({
             company: { company_id: company!.id },
@@ -248,7 +247,8 @@ export function ApplicationModal({
         onCreated?.(application)
         handleClose()
       } else {
-        const updated = await patchApplication<ApplicationListItem>(token, applicationId!, {
+        const getTokenStr = async () => await getToken() || ''
+        const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId!, {
           role,
           job_url: url,
           source,
@@ -269,8 +269,7 @@ export function ApplicationModal({
     
     setIsSubmitting(true)
     try {
-      const token = await getToken()
-      await apiWithToken(`/v1/applications/${applicationId}`, token, { method: 'DELETE' })
+      await apiCall(`/v1/applications/${applicationId}`, { method: 'DELETE' })
       onDeleted?.(applicationId)
       handleClose()
     } catch (err) {
@@ -595,8 +594,8 @@ export function ApplicationModal({
                                     setUrl(normalizedUrl)
                                     if (app && normalizedUrl !== app.job_url) {
                                       try {
-                                        const token = await getToken()
-                                        const saved = await patchApplication<any>(token!, app.id, { job_url: normalizedUrl })
+                                        const getTokenStr = async () => await getToken() || ''
+                                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { job_url: normalizedUrl })
                                         setApp(saved)
                                         onUpdated?.(saved)
                                       } catch (err) {
@@ -627,8 +626,8 @@ export function ApplicationModal({
                                 onBlur={async (e) => {
                                   if (app && e.target.value !== app.role) {
                                     try {
-                                      const token = await getToken()
-                                      const saved = await patchApplication<any>(token!, app.id, { role: e.target.value })
+                                      const getTokenStr = async () => await getToken() || ''
+                                      const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { role: e.target.value })
                                       setApp(saved)
                                       onUpdated?.(saved)
                                     } catch (err) {
@@ -652,8 +651,8 @@ export function ApplicationModal({
                                       setSelectedPlatformId(newPlatformId)
                                       if (app) {
                                         try {
-                                          const token = await getToken()
-                                          const saved = await patchApplication<any>(token!, app.id, { platform_id: newPlatformId })
+                                          const getTokenStr = async () => await getToken() || ''
+                                          const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { platform_id: newPlatformId })
                                           setApp(saved)
                                           onUpdated?.(saved)
                                         } catch (err) {
@@ -699,8 +698,8 @@ export function ApplicationModal({
                                       setSource(v)
                                       if (app) {
                                         try {
-                                          const token = await getToken()
-                                          const saved = await patchApplication<any>(token!, app.id, { source: v })
+                                          const getTokenStr = async () => await getToken() || ''
+                                          const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { source: v })
                                           setApp(saved)
                                           onUpdated?.(saved)
                                         } catch (err) {
@@ -762,8 +761,7 @@ export function ApplicationModal({
                           <ConversationFeed 
                             items={convs} 
                             onAdd={async (body: any) => {
-                              const token = await getToken()
-                              const saved = await apiWithToken<any>(`/v1/applications/${app.id}/conversations`, token!, {
+                              const saved = await apiCall<any>(`/v1/applications/${app.id}/conversations`, {
                                 method: 'POST',
                                 body: JSON.stringify(body)
                               })
@@ -781,8 +779,7 @@ export function ApplicationModal({
                           <InterviewsTimeline 
                             items={rounds} 
                             onSchedule={async (body: any) => {
-                              const token = await getToken()
-                              const saved = await apiWithToken<any>(`/v1/applications/${app.id}/interviews`, token!, {
+                              const saved = await apiCall<any>(`/v1/applications/${app.id}/interviews`, {
                                 method: 'POST',
                                 body: JSON.stringify(body)
                               })
@@ -797,8 +794,8 @@ export function ApplicationModal({
                     <QASnapshotEditor 
                       app={app} 
                       onSave={async (payload: any) => {
-                        const token = await getToken()
-                        const saved = await patchApplication<any>(token!, app.id, { qa_snapshot: payload })
+                        const getTokenStr = async () => await getToken() || ''
+                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { qa_snapshot: payload })
                         setApp(saved)
                         onUpdated?.(saved)
                       }} 
@@ -866,8 +863,8 @@ export function ApplicationModal({
                                   if (app) {
                                     setTimeout(async () => {
                                       try {
-                                        const token = await getToken()
-                                        const saved = await patchApplication<any>(token!, app.id, { 
+                                        const getTokenStr = async () => await getToken() || ''
+                                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { 
                                           compensation: {
                                             ...app.compensation,
                                             fixed_min_lpa: value ? Number(value) : null
@@ -891,8 +888,8 @@ export function ApplicationModal({
                                   if (app) {
                                     setTimeout(async () => {
                                       try {
-                                        const token = await getToken()
-                                        const saved = await patchApplication<any>(token!, app.id, { 
+                                        const getTokenStr = async () => await getToken() || ''
+                                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { 
                                           compensation: {
                                             ...app.compensation,
                                             fixed_max_lpa: value ? Number(value) : null
@@ -922,8 +919,8 @@ export function ApplicationModal({
                                   if (app) {
                                     setTimeout(async () => {
                                       try {
-                                        const token = await getToken()
-                                        const saved = await patchApplication<any>(token!, app.id, { 
+                                        const getTokenStr = async () => await getToken() || ''
+                                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { 
                                           compensation: {
                                             ...app.compensation,
                                             var_min_lpa: value ? Number(value) : null
@@ -947,8 +944,8 @@ export function ApplicationModal({
                                   if (app) {
                                     setTimeout(async () => {
                                       try {
-                                        const token = await getToken()
-                                        const saved = await patchApplication<any>(token!, app.id, { 
+                                        const getTokenStr = async () => await getToken() || ''
+                                        const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { 
                                           compensation: {
                                             ...app.compensation,
                                             var_max_lpa: value ? Number(value) : null
@@ -977,8 +974,8 @@ export function ApplicationModal({
                                 if (app) {
                                   setTimeout(async () => {
                                     try {
-                                      const token = await getToken()
-                                      const saved = await patchApplication<any>(token!, app.id, { 
+                                      const getTokenStr = async () => await getToken() || ''
+                                      const saved = await patchApplicationWithRefresh<any>(getTokenStr, app.id, { 
                                         compensation: {
                                           ...app.compensation,
                                           note: value || null

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, Building2, Calendar, Clock, GripVertical, MoveRight, Target, Trophy } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
-import { apiWithToken, transitionStage } from '../lib/api'
+import { apiWithTokenRefresh, transitionStageWithRefresh } from '../lib/api'
 import type { ApplicationListItem } from '../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -48,18 +48,26 @@ export function BoardPage() {
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      try {
-        const token = await getToken()
-        const data = await apiWithToken<Array<ApplicationListItem>>('/v1/applications', token!)
-        setApps(data)
-      } finally {
-        setLoading(false)
-      }
-    })()
+  // Clerk's getToken returns Promise<string | null>; wrap to ensure non-null for our API helpers
+  const getTokenNonNull = useCallback(async () => {
+    const t = await getToken()
+    if (!t) throw new Error('Missing auth token')
+    return t
   }, [getToken])
+
+  const fetchApps = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await apiWithTokenRefresh<Array<ApplicationListItem>>('/v1/applications', getTokenNonNull)
+      setApps(data)
+    } finally {
+      setLoading(false)
+    }
+  }, [getTokenNonNull])
+
+  useEffect(() => {
+    fetchApps()
+  }, [fetchApps])
 
   async function onDrop(e: React.DragEvent, toStage: string, milestone: string) {
     e.preventDefault()
@@ -67,9 +75,11 @@ export function BoardPage() {
     if (!id) return
     
     try {
-      const token = await getToken()
-      await transitionStage(token!, id, toStage)
-      setApps((prev) => prev.map((a) => (a.id === id ? { ...a, stage: toStage, milestone } : a)))
+      await transitionStageWithRefresh(getTokenNonNull, id, toStage)
+      // Optimistically move card to new column
+      setApps((prev) => prev.map((a) => (a.id === id ? { ...a, milestone } : a)))
+      // Then refetch to ensure we have the correct StageObject
+      await fetchApps()
     } catch (error) {
       console.error('Failed to update stage:', error)
     }
@@ -234,7 +244,7 @@ export function BoardPage() {
                                   {sourceConfig[app.source as keyof typeof sourceConfig].label}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                                  {app.stage.replace('_', ' ')}
+                                  {app.stage.name}
                                 </Badge>
                               </div>
 

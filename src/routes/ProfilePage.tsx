@@ -271,7 +271,7 @@ export function ProfilePage() {
                       setProfile({ ...profile, notice_period_days: v })
                     }}
                     disabled={!editMode}
-                    className="bg-background/50 h-8 text-sm w-28"
+                    className="bg-background/50 rounded-xl h-8 text-sm w-28"
                   />
                   <Button
                     type="button"
@@ -342,7 +342,7 @@ export function ProfilePage() {
                         value={profile.current_role || ''}
                         onChange={(e) => setProfile({ ...profile, current_role: e.target.value })}
                         disabled={!editMode}
-                        className="bg-background/50 h-8 text-sm"
+                        className="bg-background/50 rounded-xl h-8 text-sm"
                       />
                     )}
                   </div>
@@ -367,7 +367,7 @@ export function ProfilePage() {
                         placeholder="e.g., Acme Corp"
                         value={profile.company?.name || profile.current_company || ''}
                         disabled
-                        className="bg-background/50 h-8 text-sm"
+                        className="bg-background/50 rounded-xl h-8 text-sm"
                       />
                     )}
                   </div>
@@ -382,7 +382,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.degree || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), degree: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -392,7 +392,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.institution || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), institution: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -402,7 +402,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.graduation_year || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), graduation_year: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -412,7 +412,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.major || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), major: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                 </div>
@@ -426,7 +426,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.role || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), role: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -436,7 +436,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.organization || ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), organization: e.target.value } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -476,7 +476,7 @@ export function ProfilePage() {
                       value={profile.persona_info?.duration_months ?? ''}
                       onChange={(e) => setProfile({ ...profile, persona_info: { ...(profile.persona_info || {}), duration_months: e.target.value === '' ? null : Number(e.target.value) } })}
                       disabled={!editMode}
-                      className="bg-background/50 h-8 text-sm"
+                      className="bg-background/50 rounded-xl h-8 text-sm"
                     />
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export function ProfilePage() {
                       disabled={!editMode}
                       rows={3}
                       className={cn(
-                        "w-full min-w-0 max-w-full px-3 py-3 bg-background/50 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-sm resize-none transition-all duration-200",
+                        "w-full min-w-0 max-w-full px-3 py-3 bg-background/50 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg text-sm resize-none transition-all duration-200",
                         "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50",
                         "overflow-hidden box-border break-words",
                         !editMode && "opacity-70"

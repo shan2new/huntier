@@ -8,8 +8,11 @@ import {
   Building2,
   DollarSign,
   ExternalLink,
+  Gift,
   Globe,
   Info,
+  Search,
+  Telescope,
   Users,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
@@ -59,6 +62,13 @@ const sourceOptions = [
   { value: 'applied_referral', label: 'Referral', icon: '🤝' },
   { value: 'recruiter_outreach', label: 'Recruiter', icon: '📞' },
 ]
+
+const milestoneConfig = {
+  exploration: { label: 'Exploration', icon: Telescope },
+  screening: { label: 'Screening', icon: Search },
+  interviewing: { label: 'Interviewing', icon: Users },
+  post_interview: { label: 'Offer', icon: Gift },
+}
 
 const normalizeUrl = (str: string) => {
   try {
@@ -133,8 +143,18 @@ export function UpdateApplicationModal({
   ])
   const isInProgress = inProgressStages.has(stageStatus.id)
 
-  // Map backend stage enums to compact badge labels
-  const stageBadgeLabel = (stage: StageObject) => {
+  // Map backend stage enums to compact badge labels with milestone icons
+  const stageBadgeLabel = (stage: StageObject, milestone?: string) => {
+    const config = milestone && milestone in milestoneConfig ? milestoneConfig[milestone as keyof typeof milestoneConfig] : null
+    if (config) {
+      const IconComponent = config.icon
+      return (
+        <div className="flex items-center gap-1.5">
+          <IconComponent className="h-3.5 w-3.5" />
+          <span>{stage.name}</span>
+        </div>
+      )
+    }
     return stage.name
   }
 
@@ -364,7 +384,7 @@ export function UpdateApplicationModal({
                       aria-label="View stage timeline"
                       onClick={() => setStageVisualizationOpen(true)}
                     >
-                      {stageBadgeLabel(stageStatus)}
+                      {stageBadgeLabel(stageStatus, app ? app.milestone : undefined)}
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -527,7 +547,7 @@ export function UpdateApplicationModal({
 
                     {/* Notes & Conversations Tabs */}
                     <Card className="mt-6">
-                      <CardContent className="p-0 bg-background/50">
+                      <CardContent className="p-0 bg-background/50 rounded-xl">
                         <div className="space-y-3">
                           <div className="flex gap-2 border-b px-2 pt-0">
                             <button
@@ -560,7 +580,7 @@ export function UpdateApplicationModal({
                             </button>
                           </div>
 
-                          <div className="px-6 pb-6">
+                          <div>
                             {activeTab === 'notes' ? (
                               <ApplicationNotes
                                 applicationId={applicationId}

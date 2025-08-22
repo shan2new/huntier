@@ -54,7 +54,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
                     placeholder="Min"
                     value={fixedMin}
                     onChange={(e) => setFixedMin(e.target.value)}
-                    className="bg-background/50 border-border"
+                    className="bg-background/50 rounded-xl border-border"
                   />
                   <Input
                     type="number"
@@ -64,7 +64,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
                     placeholder="Max"
                     value={fixedMax}
                     onChange={(e) => setFixedMax(e.target.value)}
-                    className="bg-background/50 border-border"
+                    className="bg-background/50 rounded-xl border-border"
                   />
                 </div>
                 {/* Sliders */}
@@ -120,7 +120,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
                     placeholder="Min"
                     value={varMin}
                     onChange={(e) => setVarMin(e.target.value)}
-                    className="bg-background/50 border-border"
+                    className="bg-background/50 rounded-xl border-border"
                   />
                   <Input
                     type="number"
@@ -130,7 +130,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
                     placeholder="Max"
                     value={varMax}
                     onChange={(e) => setVarMax(e.target.value)}
-                    className="bg-background/50 border-border"
+                    className="bg-background/50 rounded-xl border-border"
                   />
                 </div>
                 {/* Sliders */}
@@ -182,7 +182,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
                 placeholder="Any additional compensation details, benefits, equity, etc."
                 value={note} 
                 onChange={(e) => setNote(e.target.value)}
-                className="bg-background/50 border-border min-h-[120px]"
+                className="bg-background/50 rounded-xl border-border min-h-[120px]"
               />
             </div>
           </div>

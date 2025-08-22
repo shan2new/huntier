@@ -29,7 +29,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
       ref={textareaRef}
       data-slot="textarea"
       className={cn(
-        "border-input h-10 placeholder:text-muted-foreground focus-visible:none focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/70 flex min-h-[0.4rem] w-full rounded-md border bg-input px-3 py-2 text-copy-14 shadow-xs transition-[color,box-shadow] outline-none focus-visible:none disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden",
+        "border-input h-10 placeholder:text-muted-foreground focus-visible:none focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input flex min-h-[0.4rem] w-full rounded-md border bg-input px-2 py-1 text-copy-14 shadow-xs transition-[color,box-shadow] outline-none focus-visible:none disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-hidden",
         className
       )}
       rows={1}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Handshake, Phone, Plus, Target, UserPlus } from 'lucide-react'
+import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Gift, Handshake, Phone, Plus, Search, Telescope, UserPlus, Users } from 'lucide-react'
 import { useApi } from '../lib/use-api'
 import type { ApplicationListItem } from '../lib/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -48,9 +48,10 @@ function formatSalary(compensation: any) {
 
 
 const milestoneConfig: Partial<Record<string, { label: string; icon: any }>> = {
-  exploration: { label: 'Exploration', icon: Target },
-  interviewing: { label: 'Interviewing', icon: Calendar },
-  post_interview: { label: 'Post Interview', icon: Award },
+  exploration: { label: 'Exploration', icon: Telescope },
+  screening: { label: 'Screening', icon: Search },
+  interviewing: { label: 'Interviewing', icon: Users },
+  post_interview: { label: 'Offer', icon: Gift },
 }
 
 const sourceConfig: Partial<Record<string, { icon: any; label: string }>> = {
@@ -266,14 +267,18 @@ export function ApplicationsPage() {
                                   {sourceConfig[app.source]?.label}
                                 </Badge>
                                 <Badge className="text-xs font-medium px-2 py-0.5" variant="outline">
-                                  {milestoneConfig[app.milestone]?.label}
+                                  <div className="flex items-center gap-1.5">
+                                    {(() => {
+                                      const config = milestoneConfig[app.milestone]
+                                      if (config) {
+                                        const IconComponent = config.icon
+                                        return <IconComponent className="h-3.5 w-3.5" />
+                                      }
+                                      return null
+                                    })()}
+                                    <span>{app.stage.name}</span>
+                                  </div>
                                 </Badge>
-                                {/* Only show stage if it's not redundant with source */}
-                                {app.stage.id !== app.source && !['applied_self', 'applied_referral', 'recruiter_outreach'].includes(app.stage.id) && (
-                                  <Badge variant="outline" className="text-xs px-2 py-0.5">
-                                    {app.stage.name}
-                                  </Badge>
-                                )}
                               </div>
                               <div className="flex items-center">
                                 <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -321,7 +326,7 @@ export function ApplicationsPage() {
       {selectedAppId && (
         <UpdateApplicationModal
           open={updateModalOpen}
-          onOpenChange={setUpdateModalOpen}
+          onClose={() => setUpdateModalOpen(false)}
           applicationId={selectedAppId}
           onUpdated={(app: ApplicationListItem) => setApps((prev) => prev.map((a) => (a.id === app.id ? app : a)))}
           onDeleted={(id: string) => setApps((prev) => prev.filter((a) => a.id !== id))}

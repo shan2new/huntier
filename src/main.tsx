@@ -13,9 +13,6 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <ClerkProvider 
         publishableKey={clerkKey}
-        tokenCache="memory"
-        // Increase token refresh buffer to prevent timeouts
-        tokenRefreshBuffer={300} // 5 minutes in seconds
       >
         <RouterProvider router={router} />
       </ClerkProvider>

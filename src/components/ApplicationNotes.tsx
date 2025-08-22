@@ -1,16 +1,13 @@
 import { formatDistanceToNow } from 'date-fns'
-import { MessageSquare, Plus, SendHorizonal, Trash2 } from 'lucide-react'
+import { SendHorizonal, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import TextareaAutosize from 'react-textarea-autosize'
 
-import { useAuth } from '@clerk/clerk-react'
-import { useApi } from '@/lib/use-api'
+import { Textarea } from './ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Textarea } from './ui/textarea'
+import { useApi } from '@/lib/use-api'
 
 export interface Note {
   id: string
@@ -267,7 +264,7 @@ export function ApplicationNotes({
       </ScrollArea>
       
       {/* Input Area */}
-      <div className="border-t pt-2 px-2">
+      <div className="border-t py-3 px-2">
         {/* Note input */}
         <div className="flex gap-2 items-end">        
           {/* <TextareaAutosize

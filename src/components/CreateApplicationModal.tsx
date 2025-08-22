@@ -227,8 +227,6 @@ export function CreateApplicationModal({
   }
 
 
-  if (!open) return null
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>

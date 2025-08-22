@@ -300,6 +300,7 @@ export function UpdateApplicationModal({
 
   const handleClose = () => {
     onClose()
+    // Reset form state after a brief delay to allow transition to start
     setTimeout(() => {
       setApp(null)
       setUrl('')
@@ -311,8 +312,6 @@ export function UpdateApplicationModal({
       setError('')
     }, 150)
   }
-
-  if (!open) return null
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -384,7 +383,7 @@ export function UpdateApplicationModal({
                       aria-label="View stage timeline"
                       onClick={() => setStageVisualizationOpen(true)}
                     >
-                      {stageBadgeLabel(stageStatus, app ? app.milestone : undefined)}
+                      {stageBadgeLabel(stageStatus, app.milestone)}
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

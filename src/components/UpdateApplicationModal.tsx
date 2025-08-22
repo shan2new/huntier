@@ -168,7 +168,7 @@ export function UpdateApplicationModal({
         setRole(hydratedApp.role || '')
         setSource(hydratedApp.source || 'applied_self')
         setSelectedPlatformId(hydratedApp.platform_id || null)
-        setStageStatus(hydratedApp.stage ?? { id: 'applied', name: 'Applied', type: 'standard' })
+        setStageStatus(hydratedApp.stage)
 
         // Populate compensation data if available
         if (hydratedApp.compensation) {
@@ -398,7 +398,7 @@ export function UpdateApplicationModal({
                       try {
                         const getTokenStr = async () => (await getToken()) || ''
                         const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, { company_id: c.id })
-                        setApp((prev) => {
+                        setApp((prev: ApplicationListItem | null) => {
                           const merged = { ...(prev ?? {}), ...updated, company: c, company_id: c.id }
                           // reflect derived fields locally
                           setSelectedPlatformId(merged.platform_id || null)

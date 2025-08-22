@@ -452,7 +452,7 @@ export function UpdateApplicationModal({
           {/* Content */}
           <div className="flex-1 overflow-hidden">
             {loading ? (
-              <div className="flex items-center justify-center min-h-[calc(70vh-8rem)]">
+              <div className="flex items-center justify-center min-h-[calc(60vh-8rem)]">
                 <motion.div
                   className="flex items-center space-x-3"
                   initial={{ opacity: 0 }}
@@ -475,7 +475,7 @@ export function UpdateApplicationModal({
                   className="relative grid grid-cols-[4fr_2fr] gap-3 h-full px-2"
                 >
                   {/* Column 1: Core Details */}
-                  <div className="space-y-4 pr-6 overflow-y-auto max-h-[calc(70vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
+                  <div className="space-y-4 pr-6 overflow-y-auto max-h-[calc(60vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
 
                   <Card>
                   <CardContent className="space-y-2 bg-background/30 py-4">
@@ -597,7 +597,7 @@ export function UpdateApplicationModal({
                   </div>
 
                   {/* Column 2: Additional Details */}
-                  <ScrollArea className="space-y-4 pl-4 h-[calc(70vh-8rem)]">
+                  <ScrollArea className="space-y-4 pl-4 h-[calc(60vh-8rem)]">
                   {/* <div className="space-y-4 pl-6 overflow-y-auto max-h-[calc(70vh-8rem)]" style={{ scrollbarWidth: 'thin' }}> */}
                     {/* Compensation */}
                     <Card>

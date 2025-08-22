@@ -73,12 +73,8 @@ function EmptyState({
     case 'initial':
       return (
         <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-muted/40 flex items-center justify-center mb-3">
-            <Search className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <h3 className="text-sm font-medium mb-1">Search for companies</h3>
-          <p className="text-xs text-muted-foreground max-w-48">
-            Start typing to find companies by name, industry, or location
+          <p className="text-xs text-muted-foreground">
+            Search by name, industry, or location
           </p>
         </div>
       )

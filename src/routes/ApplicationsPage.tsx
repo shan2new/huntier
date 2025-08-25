@@ -19,31 +19,32 @@ function formatSalary(compensation: any) {
   
   if (!fixed && !variable) return null
   
-  const parts = []
+  // Clean up decimal places - remove .00 if value ends with .00
+  const formatValue = (val: string) => {
+    if (!val || val === 'N/A') return val
+    return val.endsWith('.00') ? val.slice(0, -3) : val
+  }
   
+  // If it's a fixed amount (min === max)
+  if (fixed && compensation.fixed_min_lpa === compensation.fixed_max_lpa) {
+    const amount = formatValue(compensation.fixed_min_lpa)
+    return `₹${amount} LPA`
+  }
+  
+  // If it's a range
   if (fixed) {
-    const min = compensation.fixed_min_lpa || 'N/A'
-    const max = compensation.fixed_max_lpa || 'N/A'
-    // Clean up decimal places - remove .00 if both min and max end with .00
-    const formatValue = (val: string) => {
-      if (val === 'N/A') return val
-      return val.endsWith('.00') ? val.slice(0, -3) : val
-    }
-    parts.push(`₹${formatValue(min)}-${formatValue(max)} LPA`)
+    const min = formatValue(compensation.fixed_min_lpa)
+    const max = formatValue(compensation.fixed_max_lpa)
+    return `₹${min}-${max} LPA`
   }
   
+  // If it's variable only
   if (variable) {
-    const min = compensation.var_min_lpa || 'N/A'
-    const max = compensation.var_max_lpa || 'N/A'
-    // Clean up decimal places - remove .00 if both min and max end with .00
-    const formatValue = (val: string) => {
-      if (val === 'N/A') return val
-      return val.endsWith('.00') ? val.slice(0, -3) : val
-    }
-    parts.push(`+₹${formatValue(min)}-${formatValue(max)} variable`)
+    const amount = formatValue(compensation.var_min_lpa || compensation.var_max_lpa)
+    return `₹${amount} LPA (Variable)`
   }
   
-  return parts.join(' ')
+  return null
 }
 
 

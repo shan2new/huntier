@@ -582,6 +582,24 @@ export async function updateProfileWithRefresh<T = UserProfile>(
   })
 }
 
+// Roles search (database-first)
+export type RoleSearchItem = {
+  id: string
+  title: string
+  normalized_title: string
+  synonyms?: Array<string> | null
+  group_id?: string | null
+}
+
+export async function searchRolesWithRefresh(
+  getToken: () => Promise<string>,
+  q: string,
+  limit = 20,
+): Promise<Array<RoleSearchItem>> {
+  const query = encodeURIComponent(q)
+  return apiWithTokenRefresh(`/v1/roles/search?q=${query}&limit=${limit}`, getToken)
+}
+
 // Role suggestions
 /** @deprecated Use getRoleSuggestionsWithRefresh instead */
 export async function getRoleSuggestions(

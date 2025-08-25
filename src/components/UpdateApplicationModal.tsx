@@ -11,8 +11,11 @@ import {
   Gift,
   Globe,
   Info,
+  Phone,
   Search,
+  Send,
   Telescope,
+  UserCheck,
   Users,
 } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
@@ -58,9 +61,9 @@ import { StageVisualization } from '@/components/StageVisualization'
 
 
 const sourceOptions = [
-  { value: 'applied_self', label: 'Self', icon: '🎯' },
-  { value: 'applied_referral', label: 'Referral', icon: '🤝' },
-  { value: 'recruiter_outreach', label: 'Recruiter', icon: '📞' },
+  { value: 'applied_self', label: 'Self', icon: Send },
+  { value: 'applied_referral', label: 'Referral', icon: UserCheck },
+  { value: 'recruiter_outreach', label: 'Recruiter', icon: Phone },
 ]
 
 const milestoneConfig = {
@@ -660,21 +663,41 @@ export function UpdateApplicationModal({
                         </div>
 
                         {app?.compensation && (
-                          <div className="text-xs text-muted-foreground space-y-1">
+                          <div className="text-xs text-muted-foreground">
                             <div className="flex justify-between">
-                              <span className="text-xs">Fixed:</span>
+                              <span className="text-xs">Compensation:</span>
                               <span className="text-xs">
-                                ₹{app.compensation.fixed_min_lpa || 'N/A'} - ₹{app.compensation.fixed_max_lpa || 'N/A'}
+                                {(() => {
+                                  const comp = app.compensation
+                                  const fixed = comp.fixed_min_lpa || comp.fixed_max_lpa
+                                  const variable = comp.var_min_lpa || comp.var_max_lpa
+                                  
+                                  if (!fixed && !variable) return 'Not specified'
+                                  
+                                  const formatValue = (val: string | null | undefined) => {
+                                    if (!val || val === 'N/A') return val || 'N/A'
+                                    return val.endsWith('.00') ? val.slice(0, -3) : val
+                                  }
+                                  
+                                  if (fixed && comp.fixed_min_lpa === comp.fixed_max_lpa) {
+                                    return `₹${formatValue(comp.fixed_min_lpa)} LPA`
+                                  }
+                                  
+                                  if (fixed) {
+                                    const min = formatValue(comp.fixed_min_lpa)
+                                    const max = formatValue(comp.fixed_max_lpa)
+                                    return `₹${min}-${max} LPA`
+                                  }
+                                  
+                                  if (variable) {
+                                    const amount = formatValue(comp.var_min_lpa || comp.var_max_lpa)
+                                    return `₹${amount} LPA (Variable)`
+                                  }
+                                  
+                                  return 'Not specified'
+                                })()}
                               </span>
                             </div>
-                            {(app.compensation.var_min_lpa || app.compensation.var_max_lpa) && (
-                              <div className="flex justify-between">
-                                <span className="text-xs">Variable:</span>
-                                <span className="text-xs">
-                                  ₹{app.compensation.var_min_lpa || 'N/A'} - ₹{app.compensation.var_max_lpa || 'N/A'}
-                                </span>
-                              </div>
-                            )}
                           </div>
                         )}
                       </CardContent>
@@ -696,14 +719,17 @@ export function UpdateApplicationModal({
                               <SelectContent>
                                 <SelectGroup>
                                   <SelectLabel>How did you apply?</SelectLabel>
-                                  {sourceOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      <div className="flex items-center gap-2">
-                                        <span>{option.icon}</span>
-                                        <span>{option.label}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
+                                  {sourceOptions.map((option) => {
+                                    const IconComponent = option.icon
+                                    return (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        <div className="flex items-center gap-2">
+                                          <IconComponent className="h-4 w-4" />
+                                          <span>{option.label}</span>
+                                        </div>
+                                      </SelectItem>
+                                    )
+                                  })}
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
@@ -855,6 +881,21 @@ export function UpdateApplicationModal({
         currentStage={stageStatus}
         applicationId={applicationId}
         onStageChange={async (newStageId, reason) => {
+          // Store current state for potential rollback
+          const previousApp = app
+          const previousStageStatus = stageStatus
+          
+          // Optimistic update - immediately update UI
+          const optimisticStage: StageObject = typeof newStageId === 'string' 
+            ? { id: newStageId, name: newStageId, type: 'standard' }
+            : newStageId
+          
+          setStageStatus(optimisticStage)
+          setApp(prev => prev ? {
+            ...prev,
+            stage: optimisticStage
+          } : null)
+          
           // Handle withdrawn with reason via transition endpoint
           if (newStageId === 'withdrawn') {
             try {
@@ -868,14 +909,17 @@ export function UpdateApplicationModal({
                 : updated.stage)
               onUpdated?.(updated)
               setError('')
-              // Close the timeline dialog after successful transition
-              setStageVisualizationOpen(false)
+              // Keep dialog open - removed setStageVisualizationOpen(false)
             } catch (err) {
               console.error('Failed to withdraw application:', err)
+              // Revert optimistic update on error
+              setApp(previousApp)
+              setStageStatus(previousStageStatus)
               setError('Failed to withdraw application')
             }
             return
           }
+          
           // Perform precise stage transition using backend enums
           try {
             const getTokenStr = async () => (await getToken()) || ''
@@ -887,9 +931,12 @@ export function UpdateApplicationModal({
               : updated.stage)
             onUpdated?.(updated)
             setError('')
-            setStageVisualizationOpen(false)
+            // Keep dialog open - removed setStageVisualizationOpen(false)
           } catch (err) {
             console.error('Failed to transition stage:', err)
+            // Revert optimistic update on error
+            setApp(previousApp)
+            setStageStatus(previousStageStatus)
             setError('Failed to transition stage')
           }
         }}

@@ -493,7 +493,7 @@ export function CreateApplicationModal({
                     <div className="space-y-4 pl-6">
                       {/* Compensation */}
                       <Card>
-                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                        <CardContent className="space-y-3 bg-background/30 pt-3">
                           <Label className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4" />
                             Compensation (LPA)
@@ -558,7 +558,7 @@ export function CreateApplicationModal({
 
                       {/* Source & Platform */}
                       <Card>
-                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                        <CardContent className="space-y-3 bg-background/30 pt-3">
                           <Label className="flex items-center gap-2">
                             <Target className="h-4 w-4" />
                             Source & Platform
@@ -598,7 +598,7 @@ export function CreateApplicationModal({
 
                       {/* Contacts */}
                       <Card>
-                        <CardContent className="space-y-3 bg-background/20 pt-3">
+                        <CardContent className="space-y-3 bg-background/30 pt-3">
                           <Label className="flex items-center gap-2">
                             <Users className="h-4 w-4" />
                             Contacts

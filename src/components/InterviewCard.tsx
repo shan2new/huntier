@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Check, Clock, Edit3, Trash2, X } from 'lucide-react'
+import { Check, CheckCircle2, Clock, Edit3, Trash2, X } from 'lucide-react'
 import type { InterviewData, InterviewType } from '@/hooks/useInterviewData'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -119,18 +119,22 @@ export function InterviewCard({
     >
       <Card 
         className={cn(
-          "hover:shadow-sm transition-shadow w-60 rounded-md relative z-10 group",
-          isCompleted && "bg-primary/5 border-primary/20",
-          isActive && "bg-yellow-500/20 border-yellow-500/30 shadow-sm animate-pulse",
-          !isCompleted && !isActive && "bg-muted/30 border-border",
+          "hover:shadow-sm transition-all w-60 rounded-md relative z-10 group",
+          isCompleted && "bg-primary/5 border-primary/20 hover:bg-primary/10",
+          isActive && "bg-yellow-500/20 border-yellow-500/30 shadow-sm animate-pulse hover:bg-yellow-500/30",
+          !isCompleted && !isActive && "bg-muted/30 border-border hover:bg-muted/50",
           !editMode && "cursor-pointer"
         )}
         onClick={!editMode ? onClick : undefined}
       >
         <CardContent className="px-3 py-2 relative">
+          {/* CheckCircle for completed interviews - vertically centered */}
+          {isCompleted && (
+            <CheckCircle2 className="absolute top-1/2 left-2 -translate-y-1/2 h-4 w-4 text-primary z-10" />
+          )}
           <div className="space-y-2">
             {/* Interview name and edit icon */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-1">
               {editingName ? (
                 <Input
                   value={editName}
@@ -145,8 +149,9 @@ export function InterviewCard({
               ) : (
                 <>
                   <h3 className={cn(
-                    "text-sm font-medium",
-                    isCompleted ? "text-primary-foreground" : "text-foreground"
+                    "text-sm font-medium transition-colors group-hover:text-foreground/80",
+                    isCompleted ? "text-primary-foreground" : "text-foreground",
+                    isCompleted && "pl-2" // Add left padding when completed to account for CheckCircle
                   )}>
                     {data?.custom_name || label}
                   </h3>
@@ -156,7 +161,7 @@ export function InterviewCard({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-6 w-6 p-0 opacity-70 hover:opacity-100 transition-opacity"
+                      className="h-6 w-6 p-0 bg-background/80 hover:bg-background border shadow-sm transition-all z-20"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleStartEdit()

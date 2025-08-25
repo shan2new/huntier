@@ -12,14 +12,13 @@ import {
   User,
   X,
 } from 'lucide-react'
-import TextareaAutosize from 'react-textarea-autosize'
-
 import { useApi } from '@/lib/use-api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -325,7 +324,7 @@ export function ApplicationConversations({
       </ScrollArea>
       
       {/* Input Area */}
-      <div className="border-t pt-3 space-y-3">
+      <div className="border-t py-2 space-y-3 px-2">
         
         {/* New Contact Form */}
         {showNewContact && (
@@ -366,7 +365,7 @@ export function ApplicationConversations({
         )}
         
         {/* Message Input */}
-        <div className="flex gap-2 items-end">
+        <div className="flex gap-2 items-center">
           {/* Avatar Dropdown */}
           <div>
             <DropdownMenu>
@@ -468,9 +467,7 @@ export function ApplicationConversations({
             </Select>
           )}
           
-          <TextareaAutosize
-            minRows={1}
-            maxRows={5}
+          <Textarea
             placeholder={
               selectedContact === 'user' 
                 ? "Type your message..." 
@@ -483,7 +480,8 @@ export function ApplicationConversations({
             value={newMessage}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
             disabled={isLoading || (!selectedContact && !showNewContact)}
-            className="flex-1 p-2 text-sm border rounded-md resize-none min-h-[36px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60 focus-visible:ring-offset-1 ring-offset-background"
+            rows={1}
+            className="text-sm h-9 resize-none flex-1"
             onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -499,7 +497,7 @@ export function ApplicationConversations({
               !newMessage.trim() || 
               (!selectedContact && (!showNewContact || !newContactName.trim()))
             }
-            className="h-9 w-9 shrink-0"
+            className="shrink-0"
           >
             <Send className="h-4 w-4" />
           </Button>

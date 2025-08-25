@@ -198,8 +198,11 @@ export function StageVisualization({
                       </div>
                     </div>
                     
-                    {/* Add Interview button after last interview round */}
-                    {isLastInterviewRound && !isOfferStage() && (
+                    {/* Add Interview button - show after hm_shortlist if no interview rounds, or after last interview round */}
+                    {!isOfferStage() && (
+                      (step.id === 'hm_shortlist' && interviewRounds.length === 0) ||
+                      isLastInterviewRound
+                    ) && (
                       <AddInterviewButton onAdd={handleAddInterviewRound} />
                     )}
                   </div>

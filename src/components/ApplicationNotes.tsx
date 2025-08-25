@@ -266,29 +266,14 @@ export function ApplicationNotes({
       {/* Input Area */}
       <div className="border-t py-3 px-2">
         {/* Note input */}
-        <div className="flex gap-2 items-end">        
-          {/* <TextareaAutosize
-            minRows={1}
-            maxRows={5}
-            placeholder="Add a note..."
-            value={newNote}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewNote(e.target.value)}
-            disabled={isLoading}
-            className="flex-1 p-2 text-sm border rounded-md resize-none min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
-            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleAddNote(e)
-              }
-            }}
-          /> */}
-
+        <div className="flex gap-2 items-center">        
           <Textarea
             value={newNote}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewNote(e.target.value)}
             disabled={isLoading}
             rows={1}
-            className="text-sm"
+            placeholder="Add a note..."
+            className="text-sm h-9 resize-none flex-1"
             onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -301,6 +286,7 @@ export function ApplicationNotes({
             size="icon"
             onClick={(e) => handleAddNote(e)}
             disabled={isLoading || !newNote.trim()}
+            className="shrink-0"
           >
             <SendHorizonal />
           </Button>

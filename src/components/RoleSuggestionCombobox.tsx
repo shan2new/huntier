@@ -2,13 +2,12 @@ import { cloneElement, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
 import { Loader2, Search, X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { RoleSuggestion } from '@/lib/api'
-import { getRoleSuggestions } from '@/lib/api'
+import type { RoleSearchItem, RoleSuggestion } from '@/lib/api'
+import { searchRolesWithRefresh } from '@/lib/api'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 
 export type RoleSuggestionComboboxProps = {
   companyId: string
@@ -26,10 +25,10 @@ export type RoleSuggestionComboboxProps = {
 }
 
 export function RoleSuggestionCombobox({
-  companyId,
+  companyId: _companyId,
   onChoose,
-  currentRole,
-  currentCompany,
+  currentRole: _currentRole,
+  currentCompany: _currentCompany,
   className,
   open: openProp,
   onOpenChange,
@@ -43,10 +42,11 @@ export function RoleSuggestionCombobox({
   const [internalOpen, setInternalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
-  const [rows, setRows] = useState<Array<RoleSuggestion>>([])
+  const [rows, setRows] = useState<Array<RoleSearchItem>>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<number | null>(null)
 
   const isControlled = openProp !== undefined
   const isOpen = isControlled ? !!openProp : internalOpen
@@ -55,42 +55,59 @@ export function RoleSuggestionCombobox({
     else setInternalOpen(v)
   }
 
+  // Debounced search against backend DB-first endpoint
   useEffect(() => {
     if (!isOpen) {
-      setSearchQuery('')
+      // In showAsInput mode, do not clear the search query when popover closes,
+      // so typing in the external input can continue to drive search state.
+      if (!showAsInput) {
+        setSearchQuery('')
+      }
+      setRows([])
       setSelectedIndex(-1)
       return
     }
-    let cancelled = false
-    async function run() {
-      setLoading(true)
+    // Only search when 2+ chars
+    if (searchQuery.trim().length < 2) {
+      setRows([])
+      setLoading(false)
       setError('')
-      try {
-        const token = await getToken()
-        if (!token) return
-        const data = await getRoleSuggestions(token, companyId, {
-          current_role: currentRole ?? undefined,
-          current_company: currentCompany ?? undefined,
-        })
-        const list = Array.isArray(data.suggestions) ? data.suggestions : []
-        if (!cancelled) setRows(list)
-      } catch (err) {
-        console.error('Role suggestions load error:', err)
-        if (!cancelled) setError('Failed to load suggestions')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+      return
     }
-    run()
+    setLoading(true)
+    setError('')
+    if (debounceRef.current) window.clearTimeout(debounceRef.current)
+    let cancelled = false
+    const handle = window.setTimeout(async () => {
+      try {
+        // Wrap Clerk getToken to satisfy api signature Promise<string>
+        const tokenFn = async () => {
+          const t = await getToken()
+          if (!t) throw new Error('Missing auth token')
+          return t
+        }
+        const list = await searchRolesWithRefresh(tokenFn, searchQuery.trim(), 20)
+        if (cancelled) return
+        setRows(list)
+      } catch (err) {
+        console.error('Role search error:', err)
+        if (cancelled) return
+        setError('Failed to search roles')
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }, 250)
+    debounceRef.current = handle as unknown as number
     return () => {
       cancelled = true
+      if (debounceRef.current) window.clearTimeout(debounceRef.current)
     }
-  }, [isOpen, getToken, companyId, currentRole, currentCompany])
+  }, [isOpen, searchQuery, getToken])
 
   // Filter suggestions based on search query
-  const filteredRows = rows.filter(role => 
-    role.role.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredRows = rows.filter(r => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -112,7 +129,8 @@ export function RoleSuggestionCombobox({
       case 'Enter':
         e.preventDefault()
         if (selectedIndex >= 0 && filteredRows[selectedIndex]) {
-          onChoose(filteredRows[selectedIndex])
+          const item = filteredRows[selectedIndex]
+          onChoose({ role: item.title })
           setOpen(false)
         } else if (searchQuery.trim()) {
           // If no suggestion is selected but user entered text, use it as custom role
@@ -147,7 +165,13 @@ export function RoleSuggestionCombobox({
           <Input
             ref={inputRef}
             value={inputValue}
-            onChange={(e) => onInputValueChange?.(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value
+              onInputValueChange?.(v)
+              setSearchQuery(v)
+              const shouldOpen = v.trim().length >= 2
+              if (shouldOpen && !isOpen) setOpen(true)
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             className="w-full pr-8"
@@ -174,8 +198,8 @@ export function RoleSuggestionCombobox({
         </Button>
       )
 
-  const empty = !loading && !error && filteredRows.length === 0
-  const noResults = !loading && !error && rows.length > 0 && filteredRows.length === 0
+  const empty = !loading && !error && filteredRows.length === 0 && searchQuery.trim().length < 2
+  const noResults = !loading && !error && searchQuery.trim().length >= 2 && filteredRows.length === 0
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
@@ -216,7 +240,7 @@ export function RoleSuggestionCombobox({
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Finding role suggestions...</span>
+                <span className="text-sm">Searching roles...</span>
               </div>
             </div>
           )}
@@ -224,7 +248,7 @@ export function RoleSuggestionCombobox({
           {error && (
             <div className="flex flex-col items-center justify-center py-4">
               <div className="text-center mb-2">
-                <div className="text-sm text-destructive">Failed to load suggestions</div>
+                <div className="text-sm text-destructive">Failed to search roles</div>
               </div>
               {searchQuery && (
                 <Button
@@ -245,7 +269,7 @@ export function RoleSuggestionCombobox({
           {empty && (
             <div className="flex flex-col items-center justify-center py-4">
               <div className="text-center mb-2">
-                <div className="text-sm font-medium">No suggestions available</div>
+                <div className="text-sm font-medium">Type at least 2 characters to search roles</div>
               </div>
               {searchQuery && (
                 <Button
@@ -287,27 +311,23 @@ export function RoleSuggestionCombobox({
               <div className="p-1">
                 {filteredRows.map((s, idx) => (
                   <button
-                    key={idx}
+                    key={s.id || idx}
                     className={`w-full text-left rounded-md px-3 py-2 text-sm transition-colors border border-transparent ${
                       selectedIndex === idx
                         ? 'bg-accent text-accent-foreground border-border'
                         : 'hover:bg-accent/50 hover:text-accent-foreground'
                     }`}
                     onClick={() => {
-                      onChoose(s)
+                      onChoose({ role: s.title })
                       setOpen(false)
                     }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate text-sm leading-tight">{s.role}</div>
+                        <div className="font-medium truncate text-sm leading-tight">{s.title}</div>
                       </div>
-                      <div className="flex-shrink-0">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
-                          AI
-                        </Badge>
-                      </div>
+                      {/* No AI badge; this is DB-first search */}
                     </div>
                   </button>
                 ))}

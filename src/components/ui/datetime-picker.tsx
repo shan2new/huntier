@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { format } from "date-fns"
+import { Clock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -98,13 +99,16 @@ export function DateTimePicker({
               <div>
                 <Label className="text-xs">Time</Label>
                 <div className="mt-1">
-                  <div className="flex items-center justify-center p-3 rounded-md border bg-card shadow-sm">
-                    <Input
-                      type="time"
-                      value={timeValue}
-                      onChange={(e) => handleTimeChange(e.target.value)}
-                      className="text-center text-base h-10 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
+                  <div className="flex items-center justify-center w-34">
+                    <div className="relative flex items-center w-full">
+                      <Clock className="absolute left-3 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        type="time"
+                        value={timeValue}
+                        className="bg-input/50 border-accent/60 text-base pl-8 [&::-webkit-calendar-picker-indicator]:hidden"
+                        onChange={(e) => handleTimeChange(e.target.value)}                  
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

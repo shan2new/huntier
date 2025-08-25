@@ -216,8 +216,8 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
     <>
       {trigger}
       <Dialog open={isOpen} onOpenChange={setOpen}>
-        <DialogContent hideClose className="sm:max-w-[560px] p-0 overflow-hidden">
-          <div className="p-3 border-b">
+        <DialogContent hideClose className="p-0 bg-card/90 backdrop-blur-sm">
+          <div className="px-3 pt-3">
             <div className="relative">
               <Input
                 autoFocus
@@ -231,9 +231,9 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
               )}
             </div>
           </div>
-          {error && <div className="text-xs text-destructive px-4 py-2">{error}</div>}
-          <ScrollArea className="max-h-[60vh] p-3">
-            <div className="space-y-1">
+          {error && <div className="text-xs text-destructive px-4">{error}</div>}
+          <ScrollArea className="max-h-[30vh] px-3">
+            <div>
               {!loading && !error && filtered.length === 0 && query.trim() && (
                 <div className="text-xs text-muted-foreground px-1">No results</div>
               )}

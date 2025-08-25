@@ -50,10 +50,10 @@ export function StageCard({
   return (
     <div className="relative flex justify-center">
       <Card className={cn(
-        "hover:shadow-sm transition-shadow w-60 rounded-md relative z-10 group cursor-pointer",
-        isCompleted && "bg-primary/5 border-primary/20",
-        isActive && "bg-yellow-500/20 border-yellow-500/30 shadow-sm animate-pulse",
-        !isCompleted && !isActive && "bg-muted/30 border-border"
+        "hover:shadow-sm transition-all w-60 rounded-md relative z-10 group cursor-pointer",
+        isCompleted && "bg-primary/5 border-primary/20 hover:bg-primary/10",
+        isActive && "bg-yellow-500/20 border-yellow-500/30 shadow-sm animate-pulse hover:bg-yellow-500/30",
+        !isCompleted && !isActive && "bg-muted/30 border-border hover:bg-muted/50"
       )} onClick={onClick}>
         <CardContent className="px-3 py-2 relative">
           {/* CheckCircle for completed stages - vertically centered */}
@@ -76,7 +76,7 @@ export function StageCard({
             ) : (
               <div 
                 className={cn(
-                  "text-sm font-medium transition-colors",
+                  "text-sm font-medium transition-colors group-hover:text-foreground/80",
                   isCompleted ? "text-primary-foreground" : "text-foreground",
                   isEditable && editMode && "cursor-pointer hover:text-primary",
                   isCompleted && "pl-2" // Add left padding when completed to account for CheckCircle

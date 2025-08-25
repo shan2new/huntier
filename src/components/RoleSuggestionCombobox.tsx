@@ -143,14 +143,14 @@ export function RoleSuggestionCombobox({
       })
     : showAsInput
     ? (
-        <div className={`relative ${className || ''}`}>
+        <div className={`relative w-full ${className || ''}`}>
           <Input
             ref={inputRef}
             value={inputValue}
             onChange={(e) => onInputValueChange?.(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="pr-8 bg-background border-border"
+            className="w-full pr-8"
           />
           <Button
             variant="ghost"
@@ -195,7 +195,7 @@ export function RoleSuggestionCombobox({
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search roles..."
-              className="pl-9 pr-8 h-8 text-sm bg-background border-border shadow-sm focus:bg-background"
+              className="pl-9 pr-8 h-8 text-sm w-full"
               autoFocus
             />
             {searchQuery && (

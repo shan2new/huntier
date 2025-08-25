@@ -31,7 +31,7 @@ function CompanyItem({ c }: { c: Company }) {
     <div className="flex items-center gap-3">
       {c.logo_url ? (
         <img
-          src={c.logo_url.startsWith('data:') ? c.logo_url : `data:image/png;base64,${c.logo_url}`}
+          src={c.logo_url}
           alt={c.name}
           className="w-8 h-8 rounded-md object-cover border border-border"
         />
@@ -315,7 +315,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
           <div className="flex items-center gap-2 min-w-0">
             {value?.logo_url ? (
               <img
-                src={value.logo_url.startsWith('data:') ? value.logo_url : `data:image/png;base64,${value.logo_url}`}
+                src={value.logo_url}
                 alt={value.name}
                 className="w-4 h-4 rounded-sm object-cover border border-border"
               />

@@ -1,6 +1,6 @@
 import { cloneElement, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { Loader2, Search, Sparkles, X } from 'lucide-react'
+import { Loader2, Search, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { RoleSuggestion } from '@/lib/api'
 import { getRoleSuggestions } from '@/lib/api'
@@ -150,7 +150,7 @@ export function RoleSuggestionCombobox({
             onChange={(e) => onInputValueChange?.(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="pr-8"
+            className="pr-8 bg-background border-border"
           />
           <Button
             variant="ghost"
@@ -158,7 +158,7 @@ export function RoleSuggestionCombobox({
             className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
             onClick={() => setOpen(true)}
           >
-            <Sparkles className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+            <Search className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
           </Button>
         </div>
       )
@@ -169,8 +169,8 @@ export function RoleSuggestionCombobox({
           className={`h-8 px-3 ${className || ''}`}
           onClick={() => setOpen(true)}
         >
-          <Sparkles className="h-3.5 w-3.5 mr-1" />
-          Suggest
+          <Search className="h-3.5 w-3.5 mr-1" />
+          Search
         </Button>
       )
 
@@ -181,7 +181,7 @@ export function RoleSuggestionCombobox({
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0" 
+        className="w-80 p-0 border-border" 
         align="start" 
         sideOffset={4}
         avoidCollisions={true}
@@ -222,11 +222,9 @@ export function RoleSuggestionCombobox({
           )}
           
           {error && (
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="text-center mb-4">
-                <div className="text-sm text-destructive mb-1">Failed to load suggestions</div>
-                <div className="text-xs text-muted-foreground mb-2">{error}</div>
-                <div className="text-xs text-muted-foreground">You can still enter a custom role</div>
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="text-center mb-2">
+                <div className="text-sm text-destructive">Failed to load suggestions</div>
               </div>
               {searchQuery && (
                 <Button
@@ -245,11 +243,9 @@ export function RoleSuggestionCombobox({
           )}
           
           {empty && (
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="text-center mb-4">
-                <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <div className="text-sm font-medium mb-1">No suggestions available</div>
-                <div className="text-xs text-muted-foreground">Use your custom role instead</div>
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="text-center mb-2">
+                <div className="text-sm font-medium">No suggestions available</div>
               </div>
               {searchQuery && (
                 <Button
@@ -268,11 +264,9 @@ export function RoleSuggestionCombobox({
           )}
           
           {noResults && (
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="text-center mb-4">
-                <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <div className="text-sm font-medium mb-1">No matching roles</div>
-                <div className="text-xs text-muted-foreground">Use your custom role instead</div>
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="text-center mb-2">
+                <div className="text-sm font-medium">No matching roles</div>
               </div>
               <Button
                 variant="outline"
@@ -305,17 +299,12 @@ export function RoleSuggestionCombobox({
                     }}
                     onMouseEnter={() => setSelectedIndex(idx)}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate text-sm leading-tight">{s.role}</div>
-                        {s.reason && (
-                          <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                            {s.reason}
-                          </div>
-                        )}
                       </div>
-                      <div className="flex-shrink-0 mt-0.5">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                      <div className="flex-shrink-0">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
                           AI
                         </Badge>
                       </div>
@@ -327,13 +316,6 @@ export function RoleSuggestionCombobox({
           )}
         </div>
         
-        {!loading && !error && filteredRows.length > 0 && (
-          <div className="border-t border-border p-2">
-            <div className="text-xs text-muted-foreground text-center">
-              Use ↑↓ to navigate, Enter to select, Esc to close
-            </div>
-          </div>
-        )}
       </PopoverContent>
     </Popover>
   )

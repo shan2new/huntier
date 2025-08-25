@@ -265,7 +265,7 @@ export function CreateApplicationModal({
                     <div className="flex items-center gap-3 min-w-0">
                       {company.logo_url ? (
                         <img
-                          src={company.logo_url.startsWith('data:') ? company.logo_url : `data:image/png;base64,${company.logo_url}`}
+                          src={company.logo_url}
                           alt={company.name}
                           className="w-10 h-10 rounded-xl object-cover border border-border"
                         />
@@ -373,20 +373,29 @@ export function CreateApplicationModal({
                     <div className="space-y-4 pr-6">
                       {/* Role */}
                       <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
+                        <Label htmlFor="role" className="flex items-center gap-2">
                           <Briefcase className="h-4 w-4" />
                           Role
                         </Label>
-                        <RoleSuggestionCombobox
-                          companyId={company.id}
-                          onChoose={(s) => setRole(s.role)}
-                          currentRole={role}
-                          showAsInput
-                          inputValue={role}
-                          onInputValueChange={setRole}
-                          placeholder="e.g. Senior Software Engineer"
-                          className="w-full"
-                        />
+                        {company.id ? (
+                          <RoleSuggestionCombobox
+                            companyId={company.id}
+                            onChoose={(s) => setRole(s.role)}
+                            showAsInput
+                            inputValue={role}
+                            onInputValueChange={setRole}
+                            placeholder="e.g. Senior Software Engineer"
+                            className="w-full"
+                          />
+                        ) : (
+                          <Input
+                            id="role"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            placeholder="Senior Software Engineer"
+                            className="w-full bg-background border-border"
+                          />
+                        )}
                       </div>
 
                       {/* Job URL */}

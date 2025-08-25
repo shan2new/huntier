@@ -323,7 +323,7 @@ export function UpdateApplicationModal({
               <div className="flex items-center gap-3 min-w-0">
                 {app?.company?.logo_url ? (
                   <img
-                    src={app.company.logo_url.startsWith('data:') ? app.company.logo_url : `data:image/png;base64,${app.company.logo_url}`}
+                    src={app.company.logo_url}
                     alt={app.company.name}
                     className="w-10 h-10 rounded-xl object-cover border border-border"
                   />
@@ -478,7 +478,7 @@ export function UpdateApplicationModal({
                   <div className="space-y-4 pr-6 overflow-y-auto max-h-[calc(60vh-8rem)]" style={{ scrollbarWidth: 'thin' }}>
 
                   <Card>
-                  <CardContent className="space-y-2 bg-background/30 py-4">
+                  <CardContent className="space-y-2 bg-card py-4">
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Briefcase className="h-4 w-4" />
@@ -500,7 +500,7 @@ export function UpdateApplicationModal({
                           value={role}
                           onChange={(e) => setRole(e.target.value)}
                           placeholder="Senior Software Engineer"
-                          className="w-full"
+                          className="w-full bg-background border-border"
                         />
                       )}
                     </div>

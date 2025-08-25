@@ -181,7 +181,7 @@ export function RoleSuggestionCombobox({
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0 border-border" 
+        className="w-[var(--radix-popover-trigger-width)] p-0 border-border" 
         align="start" 
         sideOffset={4}
         avoidCollisions={true}

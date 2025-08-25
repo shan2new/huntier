@@ -181,13 +181,13 @@ export function RoleSuggestionCombobox({
     <Popover open={isOpen} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent 
-        className="w-[var(--radix-popover-trigger-width)] p-0 border-border" 
+        className="w-[var(--radix-popover-trigger-width)] p-0 border-border bg-card" 
         align="start" 
         sideOffset={4}
         avoidCollisions={true}
         collisionPadding={8}
       >
-        <div className="border-b border-border p-3 bg-muted/30">
+        <div className="border-b border-border p-3 bg-card">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -211,7 +211,7 @@ export function RoleSuggestionCombobox({
           </div>
         </div>
         
-        <div className="max-h-60 min-h-[60px] overflow-hidden">
+        <div className="max-h-60 min-h-[60px] overflow-hidden bg-card">
           {loading && (
             <div className="flex items-center justify-center py-8">
               <div className="flex items-center gap-2 text-muted-foreground">

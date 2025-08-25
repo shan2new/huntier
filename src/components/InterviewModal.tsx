@@ -128,10 +128,10 @@ export function InterviewModal({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Interview Type</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
+                <SelectTrigger className="bg-background/50 border">
                   <SelectValue placeholder="Select interview type" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
+                <SelectContent className="bg-background border">
                   {typeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
@@ -149,7 +149,7 @@ export function InterviewModal({
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-between font-normal bg-background/50 border-zinc-200/50 dark:border-zinc-800/50",
+                        "w-full justify-between font-normal bg-background/50 border",
                         !selectedDate && "text-muted-foreground"
                       )}
                     >
@@ -178,7 +178,7 @@ export function InterviewModal({
                   type="time"
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50"
+                  className="bg-background/50 border"
                 />
               </div>
             </div>
@@ -186,10 +186,10 @@ export function InterviewModal({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Mode</Label>
               <Select value={interviewMode} onValueChange={setInterviewMode}>
-                <SelectTrigger className="bg-background/50 border-zinc-200/50 dark:border-zinc-800/50">
+                <SelectTrigger className="bg-background/50 border">
                   <SelectValue placeholder="Select mode" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-zinc-200/50 dark:border-zinc-800/50">
+                <SelectContent className="bg-background border">
                   {modeOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}

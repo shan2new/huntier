@@ -1,23 +1,26 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { UserButton, useAuth } from '@clerk/clerk-react'
-import { useAuthToken } from '@/lib/auth'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Outlet, useNavigate } from '@tanstack/react-router'
+import { useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
-import { ClipboardList, Search, User, Github, Twitter, Linkedin } from 'lucide-react'
+import { Search } from 'lucide-react'
 import type { UserProfile } from '@/lib/api'
+import { useAuthToken } from '@/lib/auth'
+import { getProfileWithRefresh } from '@/lib/api'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { getProfile } from '@/lib/api'
 import { SplashLoader } from '@/components/SplashLoader'
-import logo512 from '/logo512.svg'
+import { ProfileCompletionDialog } from '@/components/ProfileCompletionDialog'
+import { AppSidebar } from '@/components/app-sidebar'
+import { SidebarInset, SidebarProvider, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar'
+import { Separator } from '@/components/ui/separator'
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const searchRef = useRef<HTMLInputElement>(null)
   const [, setTheme] = useState<'light' | 'dark'>('light')
+  const { getToken } = useAuthToken()
+  const [, setProfile] = useState<UserProfile | null>(null)
+  const [showProfileDialog, setShowProfileDialog] = useState(false)
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -30,29 +33,52 @@ export function Layout() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey) && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault()
-        // Show coming soon message since search is disabled
-        alert('Global search coming soon!')
+        // Focus global search input
+        searchRef.current?.focus()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Load theme from profile
+  // Load profile (theme + completeness)
   useEffect(() => {
     ;(async () => {
       try {
         if (!isLoaded || !isSignedIn) return
-        const { getToken } = useAuthToken()
-        const token = await getToken()
-        if (!token) return
-        const profile = await getProfile<UserProfile>(token)
-        const t = (profile.theme as 'light' | 'dark' | undefined) || 'light'
+        const tokenGetter = async () => (await getToken()) || ''
+        const p = await getProfileWithRefresh<UserProfile>(tokenGetter)
+        setProfile(p)
+        const t = (p.theme as 'light' | 'dark' | undefined) || 'light'
         setTheme(t)
         document.documentElement.classList.toggle('dark', t === 'dark')
-      } catch {}
+        // decide if dialog should show
+        const incomplete = isProfileIncomplete(p)
+        setShowProfileDialog(incomplete)
+      } catch {
+        // ignore profile load errors for layout
+      } finally {}
     })()
-  }, [isLoaded, isSignedIn])
+  }, [isLoaded, isSignedIn, getToken])
+
+  const isProfileIncomplete = useMemo(() => {
+    return (p: UserProfile | null) => {
+      if (!p) return true
+      if (!p.persona) return true
+      if (p.persona === 'professional') {
+        const hasRole = !!(p.current_role && p.current_role.trim())
+        const hasCompany = !!p.current_company_id
+        return !(hasRole && hasCompany)
+      }
+      // student/intern
+      const info = (p.persona_info || {}) as any
+      const hasDegree = !!(info.degree && String(info.degree).trim())
+      const hasInstitution = !!(info.institution && String(info.institution).trim())
+      const hasGradYear = !!(info.graduation_year && String(info.graduation_year).trim())
+      const hasMajor = !!(info.major && String(info.major).trim())
+      return !(hasDegree && hasInstitution && hasGradYear && hasMajor)
+    }
+  }, [])
 
   // theme toggling is now handled on Profile page
 
@@ -64,238 +90,50 @@ export function Layout() {
     return null
   }
 
-  const navItems = [
-    { to: '/applications', label: 'Applications', icon: ClipboardList },
-    { to: '/profile', label: 'Profile', icon: User },
-  ]
-
   return (
-    <div className="min-h-screen bg-accent/20 flex flex-col">
-      <motion.header 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="sticky top-0 z-50 glass border-b"
-      >
-        <div className="container mx-auto max-w-7xl px-4 py-2.5">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
+    <SidebarProvider className="bg-accent/20">
+        {/* Blocking profile completion dialog */}
+        <ProfileCompletionDialog
+          open={showProfileDialog}
+          onOpenChange={(v) => setShowProfileDialog(v)}
+          allowSkip={false}
+          onCompleted={(p) => {
+            setProfile(p)
+            setShowProfileDialog(false)
+          }}
+        />
+        {/* Shell: sidebar + content */}
+        <AppSidebar />
+        <SidebarRail />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 data-[orientation=vertical]:h-4"
+              />
+              <div className="relative w-full max-w-md">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+                <Input
+                  ref={searchRef}
+                  placeholder="Search..."
+                  className="pl-8 h-8 text-sm"
+                />
+              </div>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-2.5"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
             >
-              <Link to="/applications" className="flex items-center space-x-2.5 group">
-                <motion.img
-                  whileHover={{ scale: 1.05, rotate: 3 }}
-                  whileTap={{ scale: 0.95 }}
-                  src={logo512}
-                  alt="Huntier logo"
-                  className="h-8 w-8"
-                />
-                <div className="flex flex-col">
-                  <span className="font-bold text-heading-24 tracking-tight group-hover:text-primary transition-colors leading-none">
-                    Huntier
-                  </span>
-                </div>
-              </Link>
+              <Outlet />
             </motion.div>
-
-            {/* Navigation */}
-            <nav className="hidden lg:flex items-center space-x-2">
-              {navItems.map((item, index) => (
-                <NavItem
-                  key={item.to}
-                  to={item.to}
-                  icon={item.icon}
-                  current={location.pathname.startsWith(item.to)}
-                  index={index}
-                >
-                  {item.label}
-                </NavItem>
-              ))}
-            </nav>
-
-            {/* Search & User */}
-            <div className="flex items-center space-x-3">
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="relative hidden md:block"
-              >
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
-                  <Input
-                    ref={searchRef}
-                    placeholder="Search..."
-                    disabled
-                    className="pl-8 pr-24 w-64 h-8 text-sm bg-background/30 border-zinc-200/30 dark:border-zinc-800/30 cursor-not-allowed opacity-60"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                    <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-5 text-[10px] bg-muted/50 text-muted-foreground border-0">
-                      Coming Soon
-                    </Badge>
-                  </div>
-                </div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <UserButton 
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-7 h-7 ring-1 ring-primary/20 hover:ring-primary/40 transition-all"
-                    }
-                  }}
-                />
-              </motion.div>
-            </div>
           </div>
-        </div>
-      </motion.header>
-
-      <motion.main 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="container mx-auto max-w-7xl px-4 py-6 flex-1"
-      >
-        <Outlet />
-      </motion.main>
-
-      <Footer />
-    </div>
+        </SidebarInset>
+    </SidebarProvider>
   )
 }
-
-function Footer() {
-  const currentYear = new Date().getFullYear()
-  
-  const footerLinks = [
-    { label: 'About', href: '#' },
-    { label: 'Contact', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-  ]
-
-  const socialLinks = [
-    { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Github, href: '#', label: 'GitHub' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  ]
-
-  return (
-    <motion.footer
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="border-t bg-background/50 backdrop-blur-sm"
-    >
-      <div className="container mx-auto max-w-7xl px-4 py-2">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Brand */}
-          <div className="flex items-center space-x-2">
-            <img
-              src="/logo512.svg"
-              alt="Huntier logo"
-              className="h-6 w-6"
-            />
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm text-foreground">
-                Huntier
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Modern job hunting platform
-              </span>
-            </div>
-          </div>
-
-          {/* Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
-            {footerLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          {/* Social & Copyright */}
-          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
-            <div className="flex items-center gap-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={social.label}
-                >
-                  <social.icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
-            <div className="hidden md:block w-px h-4 bg-border" />
-            <span className="text-xs text-muted-foreground text-center">
-              © {currentYear} Huntier. All rights reserved.
-            </span>
-          </div>
-        </div>
-      </div>
-    </motion.footer>
-  )
-}
-
-function NavItem({ 
-  to, 
-  current, 
-  children, 
-  icon: Icon,
-  index 
-}: { 
-  to: string
-  current: boolean
-  children: React.ReactNode
-  icon: React.ComponentType<{ className?: string }>
-  index: number
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
-      <Link to={to}>
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className={cn(
-            "relative flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium transition-all duration-200 rounded-lg",
-            current
-              ? "text-primary bg-primary/10 shadow-soft"
-              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-          )}
-        >
-          <Icon className="h-3.5 w-3.5" />
-          <span>{children}</span>
-          {current && (
-            <motion.div
-              layoutId="active-nav"
-              className="absolute inset-0 rounded-lg bg-primary/5 border border-primary/20"
-              transition={{ duration: 0.2 }}
-              style={{ zIndex: -1 }}
-            />
-          )}
-        </motion.div>
-      </Link>
-    </motion.div>
-  )
-}
-
 

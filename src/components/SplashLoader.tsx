@@ -48,7 +48,7 @@ export function SplashLoader() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/20 to-background flex items-center justify-center relative overflow-hidden">
+    <div className="bg-gradient-to-br from-background via-accent/20 to-background flex items-center justify-center relative overflow-hidden">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (

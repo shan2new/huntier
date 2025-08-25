@@ -146,7 +146,7 @@ export function InterviewCard({
                 <>
                   <h3 className={cn(
                     "text-sm font-medium",
-                    isCompleted ? "text-white" : "text-foreground"
+                    isCompleted ? "text-primary-foreground" : "text-foreground"
                   )}>
                     {data?.custom_name || label}
                   </h3>

@@ -37,7 +37,7 @@ export function LandingPage() {
 	}, [mouseX, mouseY])
 
 	return (
-		<div className="min-h-screen flex flex-col relative overflow-hidden">
+		<div className="flex flex-col relative overflow-hidden">
 			{/* Enhanced background layers */}
 			<div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background/95"></div>
 			<ParticleField />

@@ -24,15 +24,14 @@ export type CompanySearchComboboxProps = {
   variant?: 'popover' | 'dialog'
 }
 
-
 function CompanyItem({ c }: { c: Company }) {
   const hq = c.hq ? [c.hq.city, c.hq.country].filter(Boolean).join(', ') : null
   const industry = c.industries?.[0]
   return (
     <div className="flex items-center gap-3">
-      {c.logo_blob_base64 ? (
+      {c.logo_url ? (
         <img
-          src={c.logo_blob_base64.startsWith('data:') ? c.logo_blob_base64 : `data:image/png;base64,${c.logo_blob_base64}`}
+          src={c.logo_url.startsWith('data:') ? c.logo_url : `data:image/png;base64,${c.logo_url}`}
           alt={c.name}
           className="w-8 h-8 rounded-md object-cover border border-border"
         />
@@ -314,9 +313,9 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
           onClick={() => setOpen(true)}
         >
           <div className="flex items-center gap-2 min-w-0">
-            {value?.logo_blob_base64 ? (
+            {value?.logo_url ? (
               <img
-                src={value.logo_blob_base64.startsWith('data:') ? value.logo_blob_base64 : `data:image/png;base64,${value.logo_blob_base64}`}
+                src={value.logo_url.startsWith('data:') ? value.logo_url : `data:image/png;base64,${value.logo_url}`}
                 alt={value.name}
                 className="w-4 h-4 rounded-sm object-cover border border-border"
               />

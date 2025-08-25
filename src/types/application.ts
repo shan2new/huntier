@@ -23,7 +23,7 @@ export interface Application {
     id: string
     name: string
     website_url: string
-    logo_blob_base64?: string
+    logo_url?: string
   }
   role: string
   job_url?: string

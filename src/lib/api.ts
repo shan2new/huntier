@@ -4,7 +4,7 @@ export type Company = {
   id: string
   name: string
   website_url: string
-  logo_blob_base64?: string | null
+  logo_url?: string | null
   // Optional enriched fields
   founded_year?: string | null
   hq?: { city?: string; country?: string } | null
@@ -16,7 +16,7 @@ export type Company = {
 export type RoleSuggestion = { role: string; reason?: string; confidence?: number }
 
 export type RoleSuggestionResponse = { suggestions: Array<RoleSuggestion> }
-export type Platform = { id: string; name: string; url: string; logo_blob_base64?: string | null }
+export type Platform = { id: string; name: string; url: string; logo_url?: string | null }
 export type ApplicationCompensation = {
   fixed_min_lpa?: string | null
   fixed_max_lpa?: string | null
@@ -46,6 +46,19 @@ const BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api
 
 // Track token refresh attempts to prevent infinite loops
 const tokenRefreshAttempts = new Map<string, number>()
+
+// Ensure write payloads never send a full StageObject. We only send the stage id string.
+function normalizeStageForWrite<T extends Record<string, any> | undefined>(payload: T): T {
+  if (!payload || typeof payload !== 'object') return payload
+  const copy: any = { ...(payload as any) }
+  if ('stage' in copy) {
+    const s = copy.stage
+    if (s && typeof s === 'object' && 'id' in s) {
+      copy.stage = s.id
+    }
+  }
+  return copy
+}
 
 export async function apiWithToken<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -171,7 +184,7 @@ export async function getApplicationWithRefresh<T>(getToken: () => Promise<strin
 
 /** @deprecated Use patchApplicationWithRefresh instead */
 export async function patchApplication<T>(token: string, id: string, body: any): Promise<T> {
-  return apiWithToken(`/v1/applications/${id}`, token, { method: 'PATCH', body: JSON.stringify(body) })
+  return apiWithToken(`/v1/applications/${id}`, token, { method: 'PATCH', body: JSON.stringify(normalizeStageForWrite(body)) })
 }
 
 export async function patchApplicationWithRefresh<T>(
@@ -181,7 +194,7 @@ export async function patchApplicationWithRefresh<T>(
 ): Promise<T> {
   return apiWithTokenRefresh(`/v1/applications/${id}`, getToken, { 
     method: 'PATCH', 
-    body: JSON.stringify(body) 
+    body: JSON.stringify(normalizeStageForWrite(body)) 
   })
 }
 
@@ -537,6 +550,7 @@ export type UserProfile = {
   company?: Company | null;
   persona?: 'student' | 'intern' | 'professional' | null;
   persona_info?: Record<string, any> | null;
+  linkedin_url?: string | null;
 }
 
 /** @deprecated Use getProfileWithRefresh instead */
@@ -549,6 +563,9 @@ export async function getProfileWithRefresh<T = UserProfile>(
 ): Promise<T> {
   return apiWithTokenRefresh(`/v1/profile`, getToken)
 }
+
+// Fetch LinkedIn URL from Clerk external accounts (server helper)
+// (Removed LinkedIn Clerk helpers)
 
 /** @deprecated Use updateProfileWithRefresh instead */
 export async function updateProfile<T = UserProfile>(token: string, body: Partial<UserProfile>): Promise<T> {
@@ -587,6 +604,96 @@ export async function getRoleSuggestionsWithRefresh(
     method: 'POST', 
     body: JSON.stringify(body || {})
   })
+}
+
+// Resume API functions
+export async function getResumesWithRefresh(getToken: () => Promise<string>) {
+  return apiWithTokenRefresh('/v1/resumes', getToken)
+}
+
+export async function getResumeWithRefresh(id: string, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}`, getToken)
+}
+
+export async function createResumeWithRefresh(data: any, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh('/v1/resumes', getToken, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function updateResumeWithRefresh(id: string, data: any, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}`, getToken, {
+    method: 'PUT', 
+    body: JSON.stringify(data)
+  })
+}
+
+export async function deleteResumeWithRefresh(id: string, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}`, getToken, {
+    method: 'DELETE'
+  })
+}
+
+export async function duplicateResumeWithRefresh(id: string, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/duplicate`, getToken, {
+    method: 'POST'
+  })
+}
+
+export async function setDefaultResumeWithRefresh(id: string, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/set-default`, getToken, {
+    method: 'PUT'
+  })
+}
+
+// AI helpers
+export async function aiSuggestSummaryWithRefresh(id: string, getToken: () => Promise<string>, body?: { job?: string }) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/ai/suggest-summary`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body || {}),
+  })
+}
+
+export async function aiSuggestBulletsWithRefresh(id: string, getToken: () => Promise<string>, body?: { sectionId?: string; role?: string; jd?: string }) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/ai/suggest-bullets`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body || {}),
+  })
+}
+
+export async function aiKeywordsWithRefresh(id: string, getToken: () => Promise<string>, body: { jd: string }) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/ai/keywords`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+// Import/export
+export async function importLinkedInWithRefresh(getToken: () => Promise<string>, body: { html?: string; url?: string }) {
+  return apiWithTokenRefresh(`/v1/resumes/import/linkedin`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export async function exportResumeWithRefresh(id: string, getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/export`, getToken)
+}
+
+// Resume API object for easier usage
+export const resumeApi = {
+  getAll: getResumesWithRefresh,
+  get: getResumeWithRefresh,
+  create: createResumeWithRefresh,
+  update: updateResumeWithRefresh,
+  delete: deleteResumeWithRefresh,
+  duplicate: duplicateResumeWithRefresh,
+  setDefault: setDefaultResumeWithRefresh
+}
+
+export const api = {
+  resumeApi
 }
 
 

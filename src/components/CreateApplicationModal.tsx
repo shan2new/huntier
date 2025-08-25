@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
-import { addApplicationContactWithRefresh } from '@/lib/api'
+import { addApplicationContactWithRefresh, transitionStageWithRefresh } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
 import { cn, extractHostname } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -47,6 +47,8 @@ interface CreateApplicationModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated?: (app: ApplicationListItem) => void
+  // Optional initial stage to transition the newly created application into
+  defaultStage?: string
 }
 
 const sourceOptions = [
@@ -69,6 +71,7 @@ export function CreateApplicationModal({
   open,
   onOpenChange,
   onCreated,
+  defaultStage,
 }: CreateApplicationModalProps) {
   const { apiCall } = useApi()
   const { getToken } = useAuth()
@@ -159,10 +162,12 @@ export function CreateApplicationModal({
         body: JSON.stringify(applicationData),
       })
 
+      // Helper to fetch token for authenticated calls (transition, contacts)
+      const getTokenStr = async () => (await getToken()) || ''
+
       // Save contacts after application is created
       if (contacts.length) {
         try {
-          const getTokenStr = async () => await getToken() || ''
           await Promise.all(
             contacts.map((c, idx) =>
               addApplicationContactWithRefresh(getTokenStr, application.id, {
@@ -194,8 +199,27 @@ export function CreateApplicationModal({
           // Do not block application creation on notes failure
         }
       }
-      
-      onCreated?.(application)
+
+      // Optionally transition to the desired default stage (e.g., "wishlist")
+      let created = application
+      if (defaultStage) {
+        try {
+          // Only transition if different (case-insensitive compare)
+          const current = (application.stage.name || '').toLowerCase()
+          const desired = defaultStage.toLowerCase()
+          if (current !== desired) {
+            await transitionStageWithRefresh(getTokenStr, application.id, defaultStage)
+          }
+          // Fetch the updated application after transition
+          created = await apiCall<ApplicationListItem>(`/v1/applications/${application.id}`)
+        } catch (e) {
+          console.error('Failed to set default stage:', e)
+          // Non-blocking: fall back to created application
+          created = application
+        }
+      }
+
+      onCreated?.(created)
       handleClose()
     } catch (err) {
       setError('Failed to create application')
@@ -239,9 +263,9 @@ export function CreateApplicationModal({
                   // Show company info when selected
                   <>
                     <div className="flex items-center gap-3 min-w-0">
-                      {company.logo_blob_base64 ? (
+                      {company.logo_url ? (
                         <img
-                          src={company.logo_blob_base64.startsWith('data:') ? company.logo_blob_base64 : `data:image/png;base64,${company.logo_blob_base64}`}
+                          src={company.logo_url.startsWith('data:') ? company.logo_url : `data:image/png;base64,${company.logo_url}`}
                           alt={company.name}
                           className="w-10 h-10 rounded-xl object-cover border border-border"
                         />

@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import * as Stepperize from "@stepperize/react";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -303,7 +303,9 @@ const StepperSeparator = ({
   isLast: boolean;
   state: string;
   disabled?: boolean;
-} & VariantProps<typeof classForSeparator>) => {
+  orientation?: "horizontal" | "vertical"
+  labelOrientation?: "vertical"
+}) => {
   if (isLast) {
     return null;
   }

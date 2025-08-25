@@ -52,6 +52,7 @@ html, body, #app {
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9731 0 0);
   --ring: oklch(0.7 0.02 200);
+  --overlay: oklch(0 0 0);
 
   --radius: 0.5rem;
 
@@ -122,6 +123,7 @@ html, body, #app {
   --border: oklch(0.2809 0 0);
   --input: oklch(0.2603 0 0);
   --ring: oklch(0.380 0 0);
+  --overlay: oklch(0 0 0);
   --chart-1: oklch(0.8003 0.1821 151.7110);
   --chart-2: oklch(0.7137 0.1434 254.6240);
   --chart-3: oklch(0.7090 0.1592 293.5412);
@@ -216,6 +218,10 @@ html, body, #app {
   /* Labels */
   .text-label-20 { font-size: 20px; line-height: 28px; font-weight: 600; }
   .text-label-14 { font-size: 14px; line-height: 20px; font-weight: 600; }
+  /* Custom utilities */
+  .glass { @apply bg-background/70 backdrop-blur-md border border-border/50 shadow-sm; }
+  .shadow-soft { box-shadow: var(--shadow-sm); }
+  .shadow-soft-lg { box-shadow: var(--shadow-lg); }
 }
 
 @theme inline {
@@ -260,6 +266,7 @@ html, body, #app {
   --color-chart-1: var(--chart-1);
   --bg-card: var(--background);
   --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -287,6 +294,15 @@ html, body, #app {
 @layer base {
   * {
     @apply border-border outline-ring/20;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;

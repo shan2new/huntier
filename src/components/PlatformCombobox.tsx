@@ -22,9 +22,9 @@ export type PlatformComboboxProps = {
 function PlatformItem({ p }: { p: Platform }) {
   return (
     <div className="flex items-center gap-3">
-      {p.logo_blob_base64 ? (
+      {p.logo_url ? (
         <img
-          src={p.logo_blob_base64.startsWith('data:') ? p.logo_blob_base64 : `data:image/png;base64,${p.logo_blob_base64}`}
+          src={p.logo_url.startsWith('data:') ? p.logo_url : `data:image/png;base64,${p.logo_url}`}
           alt={p.name}
           className="w-6 h-6 rounded-sm object-cover border border-border"
         />
@@ -188,9 +188,9 @@ export function PlatformCombobox({ value, onChange, placeholder = 'Select platfo
           onClick={() => setOpen(true)}
         >
           <div className="flex items-center gap-2 min-w-0">
-            {value?.logo_blob_base64 ? (
+            {value?.logo_url ? (
               <img
-                src={value.logo_blob_base64.startsWith('data:') ? value.logo_blob_base64 : `data:image/png;base64,${value.logo_blob_base64}`}
+                src={value.logo_url.startsWith('data:') ? value.logo_url : `data:image/png;base64,${value.logo_url}`}
                 alt={value.name}
                 className="w-4 h-4 rounded-sm object-cover border border-border"
               />

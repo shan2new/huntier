@@ -240,7 +240,7 @@ export function UpdateApplicationModal({
         role,
         job_url: includeJobUrl ? url : null,
         source,
-        stage: stageStatus,
+        stage: stageStatus.id,
         platform_id: selectedPlatformId,
       }
       const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, params)
@@ -321,9 +321,9 @@ export function UpdateApplicationModal({
           <DialogHeader className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                {app?.company?.logo_blob_base64 ? (
+                {app?.company?.logo_url ? (
                   <img
-                    src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
+                    src={app.company.logo_url.startsWith('data:') ? app.company.logo_url : `data:image/png;base64,${app.company.logo_url}`}
                     alt={app.company.name}
                     className="w-10 h-10 rounded-xl object-cover border border-border"
                   />
@@ -763,7 +763,7 @@ export function UpdateApplicationModal({
                           <Users className="h-4 w-4" />
                           Contacts
                         </Label>
-                        <div className="text-xs text-muted-foreground text-center py-2 border border-dashed border-border rounded-md">
+                        <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">
                           No contacts available
                         </div>
                       </CardContent>

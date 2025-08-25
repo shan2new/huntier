@@ -77,7 +77,7 @@ export function StageCard({
               <div 
                 className={cn(
                   "text-sm font-medium transition-colors",
-                  isCompleted ? "text-white" : "text-foreground",
+                  isCompleted ? "text-primary-foreground" : "text-foreground",
                   isEditable && editMode && "cursor-pointer hover:text-primary",
                   isCompleted && "pl-2" // Add left padding when completed to account for CheckCircle
                 )}

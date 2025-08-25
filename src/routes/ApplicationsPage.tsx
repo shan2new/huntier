@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, Calendar, ChevronRight, Clock, ExternalLink, Gift, Handshake, Phone, Plus, Search, Telescope, UserPlus, Users } from 'lucide-react'
+import { Activity, Award, Building2, ChevronRight, Clock, ExternalLink, Gift, Handshake, Phone, Plus, Search, Telescope, UserPlus, Users } from 'lucide-react'
 import { useApi } from '../lib/use-api'
 import type { ApplicationListItem } from '../lib/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -83,13 +83,17 @@ export function ApplicationsPage() {
       }
     })()
   }, [search, apiCall])
-
-  const stats = useMemo(() => {
-    const total = apps.length
-    const active = apps.filter(app => app.stage.id === 'applied_self' || app.stage.id === 'applied_referral' || app.stage.id === 'recruiter_outreach').length
-    const interviewing = apps.filter(app => app.milestone === 'interviewing').length
-    const offers = apps.filter(app => app.stage.id === 'offer').length
-    return { total, active, interviewing, offers }
+  const pipelineGroups = useMemo(() => {
+    const inProgress = apps.filter(
+      (app) => app.milestone === 'exploration' || app.milestone === 'screening'
+    )
+    const interviewing = apps.filter((app) => app.milestone === 'interviewing')
+    const completed = apps.filter((app) => app.milestone === 'post_interview')
+    return [
+      { key: 'in_progress', title: 'In-progress', icon: Activity, items: inProgress },
+      { key: 'interviewing', title: 'Interviewing', icon: Users, items: interviewing },
+      { key: 'completed', title: 'Completed', icon: Award, items: completed },
+    ] as Array<{ key: string; title: string; icon: any; items: Array<ApplicationListItem> }>
   }, [apps])
 
   return (
@@ -100,63 +104,71 @@ export function ApplicationsPage() {
       className="relative space-y-8 h-full"
     >
 
-      {/* Enhanced Stats Cards */}
-      <motion.div 
-        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8"
+      {/* Pipeline lanes: In-progress → Interviewing → Completed */}
+      <motion.div
+        className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 mb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
       >
-        {[
-          { 
-            label: 'Total', 
-            value: stats.total, 
-            icon: Building2, 
-            change: '+12%',
-            description: 'Applications this month'
-          },
-          { 
-            label: 'Active', 
-            value: stats.active, 
-            icon: Activity, 
-            change: '+8%',
-            description: 'Currently in progress'
-          },
-          { 
-            label: 'Interviewing', 
-            value: stats.interviewing, 
-            icon: Calendar, 
-            change: '+23%',
-            description: 'Interview scheduled'
-          },
-          { 
-            label: 'Offers', 
-            value: stats.offers, 
-            icon: Award, 
-            change: '+15%',
-            description: 'Success rate improving'
-          },
-        ].map((stat, index) => (
+        {pipelineGroups.map((group, idx) => (
           <motion.div
-            key={stat.label}
+            key={group.key}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.3 + (index * 0.1), ease: "easeOut" }}
-            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.3, delay: 0.3 + idx * 0.1, ease: "easeOut" }}
           >
-            <Card className="relative overflow-hidden border border-border shadow-xs bg-card transition-all duration-200">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
-                    <div className="flex items-baseline space-x-1.5">
-                      <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">{stat.change}</Badge>
+            <Card className="relative overflow-hidden border border-border shadow-xs bg-card">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <group.icon className="h-4 w-4 text-primary" />
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{stat.description}</p>
+                    <div>
+                      <p className="text-sm font-medium">{group.title}</p>
+                      <p className="text-xs text-muted-foreground">{group.items.length} apps</p>
+                    </div>
                   </div>
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <stat.icon className="h-5 w-5 text-primary" />
+                  <Badge variant="secondary" className="text-xs px-2 py-0.5">{group.items.length}</Badge>
+                </div>
+                <div className="-mx-1 overflow-x-auto">
+                  <div className="flex gap-2 px-1 snap-x snap-mandatory">
+                    {group.items.length === 0 ? (
+                      <div className="w-full text-center text-xs text-muted-foreground py-6">No applications</div>
+                    ) : (
+                      group.items.map((app) => (
+                        <button
+                          key={app.id}
+                          className="min-w-[220px] max-w-[240px] snap-start rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors text-left p-3"
+                          onClick={() => {
+                            setSelectedAppId(app.id)
+                            setUpdateModalOpen(true)
+                          }}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            {app.company?.logo_url ? (
+                              <img
+                                src={app.company.logo_url}
+                                alt={app.company.name}
+                                className="h-5 w-5 rounded-sm border border-border object-cover"
+                              />
+                            ) : (
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span className="truncate text-sm font-medium">{app.company?.name ?? app.company_id.slice(0, 8)}</span>
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground">{app.role}</div>
+                          <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span className="truncate">{app.stage.name}</span>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>{formatDateIndian(app.last_activity_at)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -209,9 +221,9 @@ export function ApplicationsPage() {
                             <div className="flex-1 space-y-2 min-w-0">
                               <div className="flex items-center space-x-3">
                                 <div className="flex-shrink-0">
-                                  {app.company?.logo_blob_base64 ? (
+                                  {app.company?.logo_url ? (
                                     <img
-                                      src={app.company.logo_blob_base64.startsWith('data:') ? app.company.logo_blob_base64 : `data:image/png;base64,${app.company.logo_blob_base64}`}
+                                      src={app.company.logo_url}
                                       alt={app.company.name}
                                       className="h-8 w-8 rounded-md border border-border object-cover"
                                     />
@@ -238,9 +250,9 @@ export function ApplicationsPage() {
                                       <>
                                         <span>•</span>
                                         <span className="flex items-center space-x-1">
-                                          {app.platform.logo_blob_base64 ? (
+                                          {app.platform.logo_url ? (
                                             <img
-                                              src={app.platform.logo_blob_base64.startsWith('data:') ? app.platform.logo_blob_base64 : `data:image/png;base64,${app.platform.logo_blob_base64}`}
+                                              src={app.platform.logo_url}
                                               alt={app.platform.name}
                                               className="h-4 w-4 rounded-sm border border-border object-cover"
                                             />

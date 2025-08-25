@@ -388,7 +388,7 @@ export function ApplicationConversations({
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="start" className="min-w-[200px]">
                 <DropdownMenuItem onClick={() => {
                   setSelectedContact('user')
                   setShowNewContact(false)
@@ -403,20 +403,24 @@ export function ApplicationConversations({
                       setSelectedContact(c.contact_id)
                       setShowNewContact(false)
                     }}
+                    className="flex flex-col items-start gap-0.5 px-3 py-2 hover:bg-accent/80"
                   >
-                    {c.contact?.name}
+                    <span className="text-sm font-medium">{c.contact?.name}</span>
                     {c.contact?.title && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({c.contact.title})
+                      <span className="text-xs text-muted-foreground">
+                        {c.contact.title}
                       </span>
                     )}
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuItem onClick={() => {
-                  setSelectedContact(null)
-                  setShowNewContact(true)
-                }}>
-                  <Plus className="h-3 w-3 mr-2" />
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSelectedContact(null)
+                    setShowNewContact(true)
+                  }}
+                  className="text-sm px-3 py-2 hover:bg-accent/80"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-2" />
                   New Contact
                 </DropdownMenuItem>
               </DropdownMenuContent>

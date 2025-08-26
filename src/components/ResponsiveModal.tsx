@@ -1,10 +1,8 @@
 import * as React from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { X } from 'lucide-react'
 import { createContext, useContext } from "react"
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
@@ -230,16 +228,6 @@ export function NestedResponsiveModal({
                   stiffness: 300
                 }}
               >
-                {/* Close button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onOpenChange(false)}
-                  className="absolute right-2 top-2 z-50 h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-
                 <div className="flex-1 min-h-0 pt-12">
                   <ScrollArea className="h-full">
                     <div className={cn("flex flex-col px-2", className)}>

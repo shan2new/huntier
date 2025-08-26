@@ -293,10 +293,18 @@ html, body, #app {
 
 @layer base {
   * {
-    @apply border-border outline-ring/20;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* iOS Safari: prevent input focus zoom by ensuring form controls use at least 16px font-size on touch devices */
+  @supports (-webkit-touch-callout: none) and (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }
 

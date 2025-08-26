@@ -136,7 +136,7 @@ export function UpdateApplicationModalMobile(props: Props) {
             )}
             <div className="min-w-0">
               <ResponsiveModalTitle className="text-md font-semibold tracking-tight truncate text-left">
-                {app?.role || 'Application'}
+                Application
               </ResponsiveModalTitle>
               <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
                 {app?.company?.name && <span className="truncate">{app.company.name}</span>}

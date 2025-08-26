@@ -130,7 +130,7 @@ export function CreateApplicationModalMobile(props: Props) {
                 )}
                 <div className="min-w-0">
                   <ResponsiveModalTitle className="text-base font-semibold tracking-tight truncate text-left">
-                    {role || 'New Application'}
+                    Create Application
                   </ResponsiveModalTitle>
                   <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
                     <span className="truncate">{company.name}</span>

@@ -95,12 +95,14 @@ export function ResponsiveModal({
     <ResponsiveModalContext.Provider value={{ isMobile: false }}>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className={cn("max-w-2xl max-h-[85vh]", contentClassName)}>
-          <ScrollArea className="max-h-[calc(85vh-2rem)]">
-            <div className={className}>
-              {children}
-            </div>
-          </ScrollArea>
+        <DialogContent className={cn("max-w-2xl max-h-[85vh] p-0 flex flex-col", contentClassName)}>
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full">
+              <div className={cn("flex flex-col", className)}>
+                {children}
+              </div>
+            </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </ResponsiveModalContext.Provider>
@@ -251,15 +253,17 @@ export function NestedResponsiveModal({
         <DialogContent 
           className={cn(
             level === 'secondary' ? "max-w-md" : "max-w-2xl",
-            "max-h-[85vh]",
+            "max-h-[85vh] p-0 flex flex-col",
             contentClassName
           )}
         >
-          <ScrollArea className="max-h-[calc(85vh-2rem)]">
-            <div className={className}>
-              {children}
-            </div>
-          </ScrollArea>
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full">
+              <div className={cn("flex flex-col", className)}>
+                {children}
+              </div>
+            </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </ResponsiveModalContext.Provider>

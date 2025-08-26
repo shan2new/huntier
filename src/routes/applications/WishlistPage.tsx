@@ -94,8 +94,6 @@ export function WishlistApplicationsPage() {
                               <Clock className="h-3 w-3" />
                               {formatDateIndian(app.last_activity_at)}
                             </span>
-                            <span>•</span>
-                            <Badge variant="outline" className="text-[11px] px-2 py-0.5">Wishlist</Badge>
                           </div>
                         </div>
                       </div>

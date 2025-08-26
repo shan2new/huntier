@@ -1,0 +1,279 @@
+import * as React from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { X } from 'lucide-react'
+import { createContext, useContext } from "react"
+import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+
+// Context to track mobile mode within ResponsiveModal
+const ResponsiveModalContext = createContext<{ isMobile: boolean }>({ isMobile: false })
+
+interface ResponsiveModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  children: React.ReactNode
+  trigger?: React.ReactNode
+  className?: string
+  contentClassName?: string
+}
+
+export function ResponsiveModal({
+  open,
+  onOpenChange,
+  children,
+  trigger,
+  className,
+  contentClassName,
+}: ResponsiveModalProps) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    return (
+      <ResponsiveModalContext.Provider value={{ isMobile: true }}>
+        {trigger && (
+          <div onClick={() => onOpenChange(true)}>
+            {trigger}
+          </div>
+        )}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50"
+            >
+              {/* Full page backdrop */}
+              <motion.div 
+                className="fixed inset-0 bg-background"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              />
+              
+              {/* Full page content */}
+              <motion.div 
+                className={cn(
+                  "fixed inset-0 flex flex-col bg-background",
+                  contentClassName
+                )}
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ 
+                  type: "spring",
+                  damping: 30,
+                  stiffness: 300
+                }}
+              >                
+                <div className="flex-1 min-h-0 pt-0">
+                  <ScrollArea className="h-full">
+                    <div className={cn("flex flex-col", className)}>
+                      {children}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </ResponsiveModalContext.Provider>
+    )
+  }
+
+  return (
+    <ResponsiveModalContext.Provider value={{ isMobile: false }}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+        <DialogContent className={cn("max-w-2xl max-h-[85vh]", contentClassName)}>
+          <ScrollArea className="max-h-[calc(85vh-2rem)]">
+            <div className={className}>
+              {children}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </ResponsiveModalContext.Provider>
+  )
+}
+
+interface ResponsiveModalHeaderProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function ResponsiveModalHeader({ children, className }: ResponsiveModalHeaderProps) {
+  const { isMobile } = useContext(ResponsiveModalContext)
+  
+  if (isMobile) {
+    return <div className={cn("px-4 pb-4", className)}>{children}</div>
+  }
+  
+  return <DialogHeader className={className}>{children}</DialogHeader>
+}
+
+interface ResponsiveModalTitleProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function ResponsiveModalTitle({ children, className }: ResponsiveModalTitleProps) {
+  const { isMobile } = useContext(ResponsiveModalContext)
+  
+  if (isMobile) {
+    return <h2 className={cn("text-lg font-semibold", className)}>{children}</h2>
+  }
+  
+  return <DialogTitle className={className}>{children}</DialogTitle>
+}
+
+interface ResponsiveModalDescriptionProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function ResponsiveModalDescription({ children, className }: ResponsiveModalDescriptionProps) {
+  const { isMobile } = useContext(ResponsiveModalContext)
+  
+  if (isMobile) {
+    return <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
+  }
+  
+  return <DialogDescription className={className}>{children}</DialogDescription>
+}
+
+interface ResponsiveModalFooterProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export function ResponsiveModalFooter({ children, className }: ResponsiveModalFooterProps) {
+  const { isMobile } = useContext(ResponsiveModalContext)
+  
+  if (isMobile) {
+    return (
+      <div className={cn("px-4 pb-4 flex flex-col gap-2", className)}>
+        {children}
+      </div>
+    )
+  }
+  
+  return <DialogFooter className={className}>{children}</DialogFooter>
+}
+
+// Nested responsive modal for secondary dialogs
+interface NestedResponsiveModalProps extends ResponsiveModalProps {
+  level?: 'primary' | 'secondary'
+}
+
+export function NestedResponsiveModal({
+  open,
+  onOpenChange,
+  children,
+  trigger,
+  className,
+  contentClassName,
+  level = 'secondary',
+}: NestedResponsiveModalProps) {
+  const isMobile = useIsMobile()
+
+  if (isMobile) {
+    // For mobile, secondary modals should also be full page
+    return (
+      <ResponsiveModalContext.Provider value={{ isMobile: true }}>
+        {trigger && (
+          <div onClick={() => onOpenChange(true)}>
+            {trigger}
+          </div>
+        )}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50"
+            >
+              {/* Full page backdrop */}
+              <motion.div 
+                className="fixed inset-0 bg-background"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              />
+              
+              {/* Full page content */}
+              <motion.div 
+                className={cn(
+                  "fixed inset-0 flex flex-col bg-background",
+                  contentClassName
+                )}
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ 
+                  type: "spring",
+                  damping: 30,
+                  stiffness: 300
+                }}
+              >
+                {/* Close button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="absolute right-2 top-2 z-50 h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+
+                <div className="flex-1 min-h-0 pt-12">
+                  <ScrollArea className="h-full">
+                    <div className={cn("flex flex-col px-2", className)}>
+                      {children}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </ResponsiveModalContext.Provider>
+    )
+  }
+
+  // Desktop remains as dialog
+  return (
+    <ResponsiveModalContext.Provider value={{ isMobile: false }}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+        <DialogContent 
+          className={cn(
+            level === 'secondary' ? "max-w-md" : "max-w-2xl",
+            "max-h-[85vh]",
+            contentClassName
+          )}
+        >
+          <ScrollArea className="max-h-[calc(85vh-2rem)]">
+            <div className={className}>
+              {children}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </ResponsiveModalContext.Provider>
+  )
+}

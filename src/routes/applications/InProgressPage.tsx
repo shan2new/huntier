@@ -41,22 +41,6 @@ const STAGE_RESPONSIBILITY: Record<string, 'user' | 'company'> = {
   manager_shortlist: 'company',
 }
 
-const timeSince = (iso: string) => {
-  const d = new Date(iso)
-  const diff = Date.now() - d.getTime()
-  const day = 24 * 60 * 60 * 1000
-  const hour = 60 * 60 * 1000
-  const min = 60 * 1000
-  if (diff >= day) return `${Math.floor(diff / day)}d`
-  if (diff >= hour) return `${Math.floor(diff / hour)}h`
-  return `${Math.max(1, Math.floor(diff / min))}m`
-}
-
-const responsibilityLabelForStage = (stage: { id?: string; name: string }) => {
-  const key = getStageKey(stage)
-  return STAGE_RESPONSIBILITY[key] === 'company' ? 'Company' : 'You'
-}
-
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
 const needsAction = (app: ApplicationListItem) => {
   const key = getStageKey(app.stage)
@@ -161,11 +145,6 @@ export function InProgressApplicationsPage() {
                               <span className="truncate">{app.role}</span>
                               <span>•</span>
                               <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateIndian(app.last_activity_at)}</span>
-                              <span>•</span>
-                              <Badge variant="outline" className="text-[11px] px-2 py-0.5">{getStageTitle(app.stage)}</Badge>
-                              <Badge variant="secondary" className="text-[11px] px-2 py-0.5">
-                                {responsibilityLabelForStage(app.stage)} · {timeSince(app.last_activity_at)}
-                              </Badge>
                               {needsAction(app) ? (
                                 <Badge variant="default" className="text-[11px] px-2 py-0.5">
                                   <AlertCircle className="h-3 w-3 mr-1" />

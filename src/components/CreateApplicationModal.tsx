@@ -1,47 +1,16 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
-import {
-  AlertCircle,
-  Briefcase,
-  Building2,
-  DollarSign,
-  ExternalLink,
-  Globe,
-  Phone,
-  Plus,
-  Send,
-  Target,
-  Trash2,
-  UserCheck,
-  Users,
-} from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import { addApplicationContactWithRefresh, transitionStageWithRefresh } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
-import { cn, extractHostname } from '@/lib/utils'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
+  ResponsiveModal,
+} from '@/components/ResponsiveModal'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { ContactModal } from '@/components/ContactModal'
-import { PlatformCombobox } from '@/components/PlatformCombobox'
-import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
-import { ApplicationNotes } from '@/components/ApplicationNotes'
-import { ApplicationConversations } from '@/components/ApplicationConversations'
+import { CreateApplicationModalMobile } from '@/components/application-form/CreateApplicationModalMobile'
+import { CreateApplicationModalDesktop } from '@/components/application-form/CreateApplicationModalDesktop'
 
 interface CreateApplicationModalProps {
   open: boolean
@@ -51,11 +20,7 @@ interface CreateApplicationModalProps {
   defaultStage?: string
 }
 
-const sourceOptions = [
-  { value: 'applied_self', label: 'Direct', icon: Send },
-  { value: 'applied_referral', label: 'Referral', icon: UserCheck },
-  { value: 'recruiter_outreach', label: 'Recruiter', icon: Phone },
-]
+// source options rendered inside presentational components
 
 
 interface Contact {
@@ -269,484 +234,94 @@ export function CreateApplicationModal({
   }
 
 
+  const isMobile = useIsMobile()
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent hideClose className="max-w-4xl p-0 gap-0 border border-border rounded-xl bg-card">
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <DialogHeader className="px-6 py-4 border-b border-border">
-              <div className="flex items-center justify-between gap-3">
-                {company ? (
-                  // Show company info when selected
-                  <>
-                    <div className="flex items-center gap-3 min-w-0">
-                      {company.logo_url ? (
-                        <img
-                          src={company.logo_url}
-                          alt={company.name}
-                          className="w-10 h-10 rounded-xl object-cover border border-border"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
-                          <Building2 className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <DialogTitle className="text-lg font-semibold tracking-tight truncate">
-                          {role || 'New Application'}
-                        </DialogTitle>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
-                          <span className="truncate">{company.name}</span>
-                          {company.hq && company.hq.city && company.hq.country && (
-                            <>
-                              <span>•</span>
-                              <span>{company.hq.city}, {company.hq.country}</span>
-                            </>
-                          )}
-                          {company.website_url && (
-                            <>
-                              <span>•</span>
-                              <a
-                                className="truncate inline-flex items-center gap-1 text-primary"
-                                href={company.website_url}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink className="h-3 w-3" /> {extractHostname(company.website_url)}
-                              </a>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <CompanySearchCombobox
-                      value={company}
-                      onChange={(c) => {
-                        setCompany(c)
-                        setCompanySearchOpen(false)
-                      }}
-                      open={companySearchOpen}
-                      onOpenChange={setCompanySearchOpen}
-                      variant="dialog"
-                      triggerAsChild={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-3"
-                        >
-                          Change
-                        </Button>
-                      }
-                    />
-                  </>
-                ) : (
-                  // Show create application when no company selected
-                  <>
-                    <DialogTitle className="text-lg font-semibold tracking-tight">
-                      Create Application
-                    </DialogTitle>
-                  </>
-                )}
-              </div>
-            </DialogHeader>
-
-            {/* Content */}
-            <div className="flex-1 overflow-hidden">
-              {!company ? (
-                // Stage 1: Company Search
-                <div className="flex items-center justify-center h-full p-6">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="w-full max-w-md space-y-4"
-                  >
-                    <div className="text-center space-y-2">
-                      <Building2 className="h-12 w-12 text-primary mx-auto" />
-                      <h3 className="text-lg font-medium">Select Company</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Start by searching for the company you're applying to
-                      </p>
-                    </div>
-                    
-                    <CompanySearchCombobox
-                      value={company}
-                      onChange={(c) => setCompany(c)}
-                      placeholder="Search"
-                    />
-                  </motion.div>
-                </div>
-              ) : (
-                // Stage 2: Application Form
-                <div className="flex-1 overflow-y-auto p-4">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="relative grid grid-cols-[3fr_2fr] gap-6 h-full"
-                  >
-                    <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border pointer-events-none" aria-hidden="true"></div>
-                      {/* Column 1: Basic Information */}
-                    <div className="space-y-4 pr-6">
-                      {/* Role */}
-                      <div className="space-y-2">
-                        <Label htmlFor="role" className="flex items-center gap-2">
-                          <Briefcase className="h-4 w-4" />
-                          Role
-                        </Label>
-                        {company.id ? (
-                          <RoleSuggestionCombobox
-                            companyId={company.id}
-                            onChoose={(s) => setRole(s.role)}
-                            showAsInput
-                            inputValue={role}
-                            onInputValueChange={setRole}
-                            placeholder="e.g. Senior Software Engineer"
-                            className="w-full"
-                          />
-                        ) : (
-                          <Input
-                            id="role"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            placeholder="Senior Software Engineer"
-                            className="w-full bg-background border-border"
-                          />
-                        )}
-                      </div>
-
-                      {/* Job URL */}
-                      <div className="space-y-3 w-full">
-                        <div className="flex items-center space-x-2 w-full justify-end">
-                          <Checkbox
-                            id="include-job-url"
-                            checked={includeJobUrl}
-                            onCheckedChange={(checked) => setIncludeJobUrl(!!checked)}
-                          />
-                          <Label htmlFor="include-job-url" className="flex items-center gap-2 text-xs">
-                            Include Job Link
-                          </Label>
-                        </div>
-                        
-                        <AnimatePresence>
-                          {includeJobUrl && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.3, ease: "easeOut" }}
-                              className="space-y-2"
-                            >
-                              <Label className="flex items-center gap-2">
-                                <Globe className="h-4 w-4" />
-                                Job URL
-                              </Label>
-                              <Input
-                                value={jobUrl}
-                                onChange={(e) => setJobUrl(e.target.value)}
-                                placeholder="https://company.com/careers/job-123"
-                                className="w-full"
-                              />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      {/* Notes & Conversations Tabs */}
-                      <Card className="mt-6">
-                        <CardContent className="p-0">
-                          <div className="space-y-3">
-                            <div className="flex gap-2 border-b px-6 pt-6">
-                              <button
-                                onClick={() => setActiveTab('notes')}
-                                className={cn(
-                                  "px-3 py-2 text-sm font-medium transition-colors relative",
-                                  activeTab === 'notes' 
-                                    ? "text-foreground" 
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
-                              >
-                                Notes
-                                {activeTab === 'notes' && (
-                                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setActiveTab('conversations')}
-                                className={cn(
-                                  "px-3 py-2 text-sm font-medium transition-colors relative",
-                                  activeTab === 'conversations' 
-                                    ? "text-foreground" 
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
-                              >
-                                Conversations
-                                {activeTab === 'conversations' && (
-                                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                                )}
-                              </button>
-                            </div>
-                            
-                            <div className="px-6 pb-6">
-                              {activeTab === 'notes' ? (
-                                <ApplicationNotes
-                                  isCreating={true}
-                                  pendingNotes={pendingNotes}
-                                  onAddPendingNote={addPendingNote}
-                                />
-                              ) : (
-                                <ApplicationConversations
-                                  isCreating={true}
-                                  className="h-[400px]"
-                                />
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Column 2: Additional Details */}
-                    <div className="space-y-4 pl-6">
-                      {/* Compensation */}
-                      <Card>
-                        <CardContent className="space-y-3 bg-background/30 pt-3">
-                          <Label className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4" />
-                            Compensation
-                          </Label>
-                          <div className="space-y-3">
-                            {/* Fixed Compensation - Single Input */}
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs text-muted-foreground">Fixed (LPA)</Label>
-                                {fixedMinLpa && fixedMaxLpa && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ₹{fixedMinLpa || '0'} - ₹{fixedMaxLpa}
-                                  </span>
-                                )}
-                              </div>
-                              <Input
-                                value={fixedMinLpa && fixedMaxLpa ? `${fixedMinLpa}-${fixedMaxLpa}` : ''}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  // Allow empty string, numbers, period, and hyphen
-                                  if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
-                                    const parts = value.split('-')
-                                    if (parts.length === 1) {
-                                      setFixedMinLpa(parts[0])
-                                      setFixedMaxLpa(parts[0]) // Same value for both when only one number
-                                    } else if (parts.length === 2) {
-                                      setFixedMinLpa(parts[0])
-                                      setFixedMaxLpa(parts[1])
-                                    }
-                                  }
-                                }}
-                                className="w-full"
-                                placeholder="15-25"
-                              />
-                            </div>
-                            
-                            {/* Variable Compensation - Single Input */}
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs text-muted-foreground">Variable (LPA)</Label>
-                                {varMinLpa && varMaxLpa && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ₹{varMinLpa || '0'} - ₹{varMaxLpa}
-                                  </span>
-                                )}
-                              </div>
-                              <Input
-                                value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  // Allow empty string, numbers, period, and hyphen
-                                  if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
-                                    const parts = value.split('-')
-                                    if (parts.length === 1) {
-                                      setVarMinLpa(parts[0])
-                                      setVarMaxLpa(parts[0]) // Same value for both when only one number
-                                    } else if (parts.length === 2) {
-                                      setVarMinLpa(parts[0])
-                                      setVarMaxLpa(parts[1])
-                                    }
-                                  }
-                                }}
-                                className="w-full"
-                                placeholder="5-10"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Source & Platform */}
-                      <Card>
-                        <CardContent className="space-y-3 bg-background/30 pt-3">
-                          <Label className="flex items-center gap-2">
-                            <Target className="h-4 w-4" />
-                            Source & Platform
-                          </Label>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div>
-                              <Select value={source} onValueChange={setSource}>
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectLabel>How did you apply?</SelectLabel>
-                                    {sourceOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        <div className="flex items-center gap-2">
-                                          <option.icon className="h-4 w-4" />
-                                          <span>{option.label}</span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <PlatformCombobox
-                                value={selectedPlatform}
-                                onChange={setSelectedPlatform}
-                                placeholder="Select platform"
-                                className="w-full"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Contacts */}
-                      <Card>
-                        <CardContent className="space-y-3 bg-background/30 pt-3">
-                          <Label className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Contacts
-                          </Label>
-                          
-                          <div className="space-y-2">
-                            <AnimatePresence>
-                              {contacts.map((contact) => (
-                                <motion.div
-                                  key={contact.id}
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  exit={{ opacity: 0 }}
-                                  transition={{ duration: 0.3, ease: "easeOut" }}
-                                  className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 transition-colors group"
-                                >
-                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-xs font-medium">
-                                      {contact.name.charAt(0).toUpperCase()}
-                                    </span>
-                                  </div>
-                                  <div 
-                                    className="flex-1 min-w-0 cursor-pointer"
-                                    onClick={() => {
-                                      setEditingContact(contact)
-                                      setContactModalOpen(true)
-                                    }}
-                                  >
-                                    <div className="text-xs font-medium truncate">{contact.name}</div>
-                                    <div className="flex items-center gap-1">
-                                      <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                        {contact.role}
-                                      </Badge>
-                                      {contact.is_primary && (
-                                        <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                                          Primary
-                                        </Badge>
-                                      )}
-                                      {contact.isThirdParty && (
-                                        <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                                          3rd Party
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleDeleteContact(contact.id)
-                                    }}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-destructive" />
-                                  </Button>
-                                </motion.div>
-                              ))}
-                            </AnimatePresence>
-                            
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setContactModalOpen(true)}
-                              className="w-full h-8 text-xs"
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add Contact
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                    </div>
-                  </motion.div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-background/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button  size="sm" variant="outline" onClick={handleClose}>Cancel</Button>
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="flex items-center space-x-2 text-destructive text-sm"
-                    >
-                      <AlertCircle className="h-4 w-4" />
-                      <span>{error}</span>
-                    </motion.div>
-                  )}
-                </div>
-                
-                <div className="flex items-center justify-end w-full">
-                  <Button
-                    size="sm" 
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || !role || !company}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="w-4 h-4 mr-2 rounded-full border-2 border-current border-t-transparent"
-                        />
-                        Creating...
-                      </>
-                    ) : (
-                      'Create'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ResponsiveModal
+        open={open}
+        onOpenChange={onOpenChange}
+        contentClassName={cn(
+          'p-0 gap-0',
+          isMobile ? 'bg-background' : 'max-w-4xl border border-border rounded-xl bg-card'
+        )}
+      >
+        {isMobile ? (
+          <CreateApplicationModalMobile
+            company={company}
+            setCompany={setCompany}
+            companySearchOpen={companySearchOpen}
+            setCompanySearchOpen={setCompanySearchOpen}
+            role={role}
+            setRole={setRole}
+            includeJobUrl={includeJobUrl}
+            setIncludeJobUrl={setIncludeJobUrl}
+            jobUrl={jobUrl}
+            setJobUrl={setJobUrl}
+            fixedMinLpa={fixedMinLpa}
+            fixedMaxLpa={fixedMaxLpa}
+            setFixedMinLpa={setFixedMinLpa}
+            setFixedMaxLpa={setFixedMaxLpa}
+            varMinLpa={varMinLpa}
+            varMaxLpa={varMaxLpa}
+            setVarMinLpa={setVarMinLpa}
+            setVarMaxLpa={setVarMaxLpa}
+            source={source}
+            setSource={setSource}
+            selectedPlatform={selectedPlatform}
+            setSelectedPlatform={setSelectedPlatform}
+            contacts={contacts}
+            setContactModalOpen={setContactModalOpen}
+            setEditingContact={setEditingContact}
+            handleDeleteContact={handleDeleteContact}
+            pendingNotes={pendingNotes}
+            addPendingNote={addPendingNote}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isSubmitting={isSubmitting}
+            error={error}
+            handleSubmit={handleSubmit}
+            handleClose={handleClose}
+          />
+        ) : (
+          <CreateApplicationModalDesktop
+            company={company}
+            setCompany={setCompany}
+            companySearchOpen={companySearchOpen}
+            setCompanySearchOpen={setCompanySearchOpen}
+            role={role}
+            setRole={setRole}
+            includeJobUrl={includeJobUrl}
+            setIncludeJobUrl={setIncludeJobUrl}
+            jobUrl={jobUrl}
+            setJobUrl={setJobUrl}
+            fixedMinLpa={fixedMinLpa}
+            fixedMaxLpa={fixedMaxLpa}
+            setFixedMinLpa={setFixedMinLpa}
+            setFixedMaxLpa={setFixedMaxLpa}
+            varMinLpa={varMinLpa}
+            varMaxLpa={varMaxLpa}
+            setVarMinLpa={setVarMinLpa}
+            setVarMaxLpa={setVarMaxLpa}
+            source={source}
+            setSource={setSource}
+            selectedPlatform={selectedPlatform}
+            setSelectedPlatform={setSelectedPlatform}
+            contacts={contacts}
+            setContactModalOpen={setContactModalOpen}
+            setEditingContact={setEditingContact}
+            handleDeleteContact={handleDeleteContact}
+            pendingNotes={pendingNotes}
+            addPendingNote={addPendingNote}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isSubmitting={isSubmitting}
+            error={error}
+            handleSubmit={handleSubmit}
+            handleClose={handleClose}
+          />
+        )}
+      </ResponsiveModal>
 
       {/* Contact Modal */}
       <ContactModal

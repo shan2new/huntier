@@ -12,17 +12,20 @@ import {
   Globe,
   Info,
   Phone,
+  Plus,
   Search,
   Send,
   Telescope,
   UserCheck,
   Users,
 } from 'lucide-react'
-import type { ApplicationListItem, Company, Platform } from '@/lib/api'
+import type { ApplicationContactAddBody, ApplicationListItem, Company, Platform } from '@/lib/api'
 import type { StageObject } from '@/types/application'
 import {
+  addApplicationContactWithRefresh,
   getApplicationWithRefresh,
   getCompanyByIdWithRefresh,
+  listApplicationContactsWithRefresh,
   listPlatformsWithRefresh,
   patchApplicationWithRefresh,
   transitionStageWithRefresh,
@@ -55,6 +58,7 @@ import {
 import { ApplicationNotes } from '@/components/ApplicationNotes'
 import { ApplicationConversations } from '@/components/ApplicationConversations'
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
+import { ContactModal } from '@/components/ContactModal'
 import { PlatformCombobox } from '@/components/PlatformCombobox'
 import { RoleSuggestionCombobox } from '@/components/RoleSuggestionCombobox'
 import { StageVisualization } from '@/components/StageVisualization'
@@ -83,6 +87,16 @@ const normalizeUrl = (str: string) => {
   } catch {
     return str
   }
+}
+
+interface Contact {
+  id: string
+  name: string
+  role: 'recruiter' | 'referrer' | 'interviewer'
+  isThirdParty: boolean
+  description: string
+  avatar?: string
+  is_primary?: boolean
 }
 
 interface UpdateApplicationModalProps {
@@ -125,6 +139,12 @@ export function UpdateApplicationModal({
 
   // Stage visualization state
   const [stageVisualizationOpen, setStageVisualizationOpen] = useState(false)
+
+  // Contact management state
+  const [contacts, setContacts] = useState<Array<Contact>>([])
+  const [contactsLoading, setContactsLoading] = useState(false)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
+  const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   // Compensation fields
   const [fixedMinLpa, setFixedMinLpa] = useState('')
@@ -202,6 +222,9 @@ export function UpdateApplicationModal({
         }
         if (hydratedApp.platform) setSelectedPlatform(hydratedApp.platform)
         setIncludeJobUrl(!!hydratedApp.job_url)
+
+        // Load contacts for this application
+        loadContacts(applicationId)
       } catch (err) {
         setError('Failed to load application')
         console.error('Load error:', err)
@@ -212,6 +235,32 @@ export function UpdateApplicationModal({
 
     loadApplication()
   }, [open, applicationId, getToken])
+
+  // Load application contacts
+  const loadContacts = async (appId: string) => {
+    setContactsLoading(true)
+    try {
+      const getTokenStr = async () => (await getToken()) || ''
+      const contactsData = await listApplicationContactsWithRefresh<Array<any>>(getTokenStr, appId)
+      
+      // Transform API contacts to local contact format
+      const transformedContacts: Array<Contact> = contactsData.map((contact: any) => ({
+        id: contact.id,
+        name: contact.contact?.name || 'Unknown',
+        role: contact.role === 'hiring_manager' || contact.role === 'other' ? 'recruiter' : contact.role || 'recruiter',
+        isThirdParty: false, // This field might not exist in API response
+        description: contact.contact?.title || '',
+        is_primary: contact.is_primary
+      }))
+      
+      setContacts(transformedContacts)
+    } catch (err) {
+      console.error('Failed to load contacts:', err)
+      setContacts([])
+    } finally {
+      setContactsLoading(false)
+    }
+  }
 
   // Load platforms for selection
   useEffect(() => {
@@ -239,13 +288,24 @@ export function UpdateApplicationModal({
 
     try {
       const getTokenStr = async () => (await getToken()) || ''
+      
+      // Prepare compensation data
+      const compensation = {
+        fixed_min_lpa: fixedMinLpa ? parseFloat(fixedMinLpa) || null : null,
+        fixed_max_lpa: fixedMaxLpa ? parseFloat(fixedMaxLpa) || null : null,
+        var_min_lpa: varMinLpa ? parseFloat(varMinLpa) || null : null,
+        var_max_lpa: varMaxLpa ? parseFloat(varMaxLpa) || null : null
+      }
+      
       const params = {
         role,
         job_url: includeJobUrl ? url : null,
         source,
         stage: stageStatus.id,
         platform_id: selectedPlatformId,
+        compensation: Object.values(compensation).some(val => val !== null) ? compensation : null
       }
+      
       const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, params)
 
       setApp((prev: ApplicationListItem | null) => ({ ...(prev ?? {}), ...updated }))
@@ -301,6 +361,38 @@ export function UpdateApplicationModal({
     }
   }
 
+  const handleSaveContact = async (contact: Contact | Omit<Contact, 'id'>) => {
+    if (!app) return
+    
+    try {
+      const getTokenStr = async () => (await getToken()) || ''
+      
+      if (editingContact && 'id' in contact) {
+        // Update existing contact - for now, we'll recreate it since there's no update API
+        // In a real implementation, you'd want an update endpoint
+        console.log('Contact update not implemented yet - would need PATCH endpoint')
+        setContacts(prev => prev.map(c => c.id === editingContact.id ? contact : c))
+      } else {
+        // Add new contact
+        const contactData: ApplicationContactAddBody = {
+          contact: { name: contact.name },
+          role: contact.role,
+          is_primary: contacts.length === 0 // First contact is primary
+        }
+        
+        await addApplicationContactWithRefresh(getTokenStr, app.id, contactData)
+        // Reload contacts to get the updated list with IDs
+        await loadContacts(app.id)
+      }
+      
+      setContactModalOpen(false)
+      setEditingContact(null)
+    } catch (err) {
+      console.error('Failed to save contact:', err)
+      setError('Failed to save contact')
+    }
+  }
+
   const handleClose = () => {
     onClose()
     // Reset form state after a brief delay to allow transition to start
@@ -312,6 +404,9 @@ export function UpdateApplicationModal({
       setIncludeJobUrl(false)
       setSelectedPlatform(null)
       setSelectedPlatformId(null)
+      setContacts([])
+      setContactsLoading(false)
+      setEditingContact(null)
       setError('')
     }, 150)
   }
@@ -610,54 +705,65 @@ export function UpdateApplicationModal({
                           Compensation
                         </Label>
                         <div className="space-y-3">
-                          {/* Fixed */}
-                          <div className="grid grid-cols-2 gap-2">
+                          {/* Fixed Compensation - Single Input */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs text-muted-foreground">Fixed (LPA)</Label>
+                              {fixedMinLpa && fixedMaxLpa && (
+                                <span className="text-xs text-muted-foreground">
+                                  ₹{fixedMinLpa || '0'} - ₹{fixedMaxLpa}
+                                </span>
+                              )}
+                            </div>
                             <Input
-                              value={fixedMinLpa}
+                              value={fixedMinLpa && fixedMaxLpa ? `${fixedMinLpa}-${fixedMaxLpa}` : ''}
                               onChange={(e) => {
                                 const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setFixedMinLpa(value)
+                                // Allow empty string, numbers, period, and hyphen
+                                if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
+                                  const parts = value.split('-')
+                                  if (parts.length === 1) {
+                                    setFixedMinLpa(parts[0])
+                                    setFixedMaxLpa(parts[0]) // Same value for both when only one number
+                                  } else if (parts.length === 2) {
+                                    setFixedMinLpa(parts[0])
+                                    setFixedMaxLpa(parts[1])
+                                  }
                                 }
                               }}
                               className="w-full"
-                              placeholder="Fixed Min (LPA)"
-                            />
-                            <Input
-                              value={fixedMaxLpa}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setFixedMaxLpa(value)
-                                }
-                              }}
-                              className="w-full"
-                              placeholder="Fixed Max (LPA)"
+                              placeholder="15-25"
                             />
                           </div>
-                          {/* Variable */}
-                          <div className="grid grid-cols-2 gap-2">
+                          
+                          {/* Variable Compensation - Single Input */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs text-muted-foreground">Variable (LPA)</Label>
+                              {varMinLpa && varMaxLpa && (
+                                <span className="text-xs text-muted-foreground">
+                                  ₹{varMinLpa || '0'} - ₹{varMaxLpa}
+                                </span>
+                              )}
+                            </div>
                             <Input
-                              value={varMinLpa}
+                              value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''}
                               onChange={(e) => {
                                 const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setVarMinLpa(value)
+                                // Allow empty string, numbers, period, and hyphen
+                                if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
+                                  const parts = value.split('-')
+                                  if (parts.length === 1) {
+                                    setVarMinLpa(parts[0])
+                                    setVarMaxLpa(parts[0]) // Same value for both when only one number
+                                  } else if (parts.length === 2) {
+                                    setVarMinLpa(parts[0])
+                                    setVarMaxLpa(parts[1])
+                                  }
                                 }
                               }}
                               className="w-full"
-                              placeholder="Variable Min (LPA)"
-                            />
-                            <Input
-                              value={varMaxLpa}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                  setVarMaxLpa(value)
-                                }
-                              }}
-                              className="w-full"
-                              placeholder="Variable Max (LPA)"
+                              placeholder="5-10"
                             />
                           </div>
                         </div>
@@ -782,16 +888,85 @@ export function UpdateApplicationModal({
                       </CardContent>
                     </Card>
 
-                    {/* Contacts placeholder */}
+                    {/* Contacts */}
                     <Card>
-                      <CardContent className="space-y-2 bg-background/30 py-4">
+                      <CardContent className="space-y-3 bg-background/30 py-4">
                         <Label className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
                           Contacts
                         </Label>
-                        <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">
-                          No contacts available
-                        </div>
+                        
+                        {contactsLoading ? (
+                          <div className="flex items-center justify-center py-4">
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                              className="w-4 h-4 rounded-full border-2 border-primary/20 border-t-primary"
+                            />
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <AnimatePresence>
+                              {contacts.map((contact) => (
+                                <motion.div
+                                  key={contact.id}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3, ease: "easeOut" }}
+                                  className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 cursor-pointer transition-colors"
+                                  onClick={() => {
+                                    setEditingContact(contact)
+                                    setContactModalOpen(true)
+                                  }}
+                                >
+                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-medium">
+                                      {contact.name.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium truncate">{contact.name}</div>
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">
+                                        {contact.role}
+                                      </Badge>
+                                      {contact.is_primary && (
+                                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">
+                                          Primary
+                                        </Badge>
+                                      )}
+                                      {contact.isThirdParty && (
+                                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">
+                                          3rd Party
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                            
+                            {contacts.length === 0 && (
+                              <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">
+                                No contacts available
+                              </div>
+                            )}
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingContact(null)
+                                setContactModalOpen(true)
+                              }}
+                              className="w-full h-8 text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Contact
+                            </Button>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                     </ScrollArea>
@@ -939,6 +1114,18 @@ export function UpdateApplicationModal({
             setStageStatus(previousStageStatus)
             setError('Failed to transition stage')
           }
+        }}
+      />
+      
+      {/* Contact Modal */}
+      <ContactModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        onSave={handleSaveContact}
+        contact={editingContact}
+        onClose={() => {
+          setContactModalOpen(false)
+          setEditingContact(null)
         }}
       />
     </Dialog >

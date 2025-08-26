@@ -16,7 +16,7 @@ const useStepperProvider = (): Stepper.ConfigProps => {
   return context;
 };
 
-const defineStepper = <const Steps extends Stepperize.Step[]>(
+const defineStepper = <const Steps extends Array<Stepperize.Step>>(
   ...steps: Steps
 ): Stepper.DefineProps<Steps> => {
   const { Scoped, useStepper, ...rest } = Stepperize.defineStepper(...steps);
@@ -489,7 +489,7 @@ namespace Stepper {
     tracking?: boolean;
   };
 
-  export type DefineProps<Steps extends Stepperize.Step[]> = Omit<
+  export type DefineProps<Steps extends Array<Stepperize.Step>> = Omit<
     Stepperize.StepperReturn<Steps>,
     "Scoped"
   > & {

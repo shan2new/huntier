@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { AlertCircle, User } from 'lucide-react'
 import { MotionEffect } from '@/components/animate-ui/effects/motion-effect'
-import { User, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,7 @@ interface Contact {
   isThirdParty: boolean
   description: string
   avatar?: string
+  is_primary?: boolean
 }
 
 interface ContactModalProps {

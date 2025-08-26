@@ -91,7 +91,7 @@ type FireworkType = {
   angle: number;
   vx: number;
   vy: number;
-  trail: { x: number; y: number }[];
+  trail: Array<{ x: number; y: number }>;
   trailLength: number;
   exploded: boolean;
   update: () => boolean;
@@ -108,12 +108,12 @@ function createFirework(
   size: number,
   particleSpeed: { min: number; max: number } | number,
   particleSize: { min: number; max: number } | number,
-  onExplode: (particles: ParticleType[]) => void,
+  onExplode: (particles: Array<ParticleType>) => void,
 ): FireworkType {
   const angle = -Math.PI / 2 + rand(-0.3, 0.3);
   const vx = Math.cos(angle) * speed;
   const vy = Math.sin(angle) * speed;
-  const trail: { x: number; y: number }[] = [];
+  const trail: Array<{ x: number; y: number }> = [];
   const trailLength = randInt(10, 25);
 
   return {
@@ -145,7 +145,7 @@ function createFirework(
     },
     explode() {
       const numParticles = randInt(50, 150);
-      const particles: ParticleType[] = [];
+      const particles: Array<ParticleType> = [];
       for (let i = 0; i < numParticles; i++) {
         const particleAngle = rand(0, Math.PI * 2);
         const localParticleSpeed = getValueByRange(particleSpeed);
@@ -193,7 +193,7 @@ function getValueByRange(range: { min: number; max: number } | number): number {
   return rand(range.min, range.max);
 }
 
-function getColor(color: string | string[] | undefined): string {
+function getColor(color: string | Array<string> | undefined): string {
   if (Array.isArray(color)) {
     return color[randInt(0, color.length)] ?? randColor();
   }
@@ -203,7 +203,7 @@ function getColor(color: string | string[] | undefined): string {
 type FireworksBackgroundProps = Omit<React.ComponentProps<'div'>, 'color'> & {
   canvasProps?: React.ComponentProps<'canvas'>;
   population?: number;
-  color?: string | string[];
+  color?: string | Array<string>;
   fireworkSpeed?: { min: number; max: number } | number;
   fireworkSize?: { min: number; max: number } | number;
   particleSpeed?: { min: number; max: number } | number;
@@ -248,10 +248,10 @@ function FireworksBackground({
     };
     window.addEventListener('resize', setCanvasSize);
 
-    const explosions: ParticleType[] = [];
-    const fireworks: FireworkType[] = [];
+    const explosions: Array<ParticleType> = [];
+    const fireworks: Array<FireworkType> = [];
 
-    const handleExplosion = (particles: ParticleType[]) => {
+    const handleExplosion = (particles: Array<ParticleType>) => {
       explosions.push(...particles);
     };
 

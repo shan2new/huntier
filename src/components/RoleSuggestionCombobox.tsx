@@ -74,37 +74,65 @@ export function RoleSuggestionCombobox({
       setError('')
       return
     }
-    setLoading(true)
-    setError('')
+    
+    // Don't show loading immediately to prevent UI jitter during typing
     if (debounceRef.current) window.clearTimeout(debounceRef.current)
+    
     let cancelled = false
-    const handle = window.setTimeout(async () => {
-      try {
-        // Wrap Clerk getToken to satisfy api signature Promise<string>
-        const tokenFn = async () => {
-          const t = await getToken()
-          if (!t) throw new Error('Missing auth token')
-          return t
-        }
-        const list = await searchRolesWithRefresh(tokenFn, searchQuery.trim(), 20)
-        if (cancelled) return
-        setRows(list)
-      } catch (err) {
-        console.error('Role search error:', err)
-        if (cancelled) return
-        setError('Failed to search roles')
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+    const handle = window.setTimeout(() => {
+      // Only show loading after debounce completes to avoid flicker during typing
+      if (!cancelled) {
+        setLoading(true)
+        setError('')
       }
-    }, 250)
+      
+      // Use requestAnimationFrame to run heavy operations on next frame
+      // This prevents the search from blocking input by giving the browser time to process events
+      window.requestAnimationFrame(() => {
+        // Perform search asynchronously
+        const performSearch = async () => {
+          try {
+            // Wrap Clerk getToken to satisfy api signature Promise<string>
+            const tokenFn = async () => {
+              const t = await getToken()
+              if (!t) throw new Error('Missing auth token')
+              return t
+            }
+            
+            const list = await searchRolesWithRefresh(tokenFn, searchQuery.trim(), 20)
+            
+            // Use microtask to update state after search completes
+            if (!cancelled) {
+              // Update state on next tick to avoid blocking render
+              setTimeout(() => {
+                if (!cancelled) {
+                  setRows(list)
+                  setLoading(false)
+                }
+              }, 0)
+            }
+          } catch (err) {
+            console.error('Role search error:', err)
+            if (!cancelled) {
+              setTimeout(() => {
+                setError('Failed to search roles')
+                setLoading(false)
+              }, 0)
+            }
+          }
+        }
+        
+        performSearch()
+      })
+    }, 500) // Increased debounce time to reduce blocking
+    
     debounceRef.current = handle as unknown as number
+    
     return () => {
       cancelled = true
       if (debounceRef.current) window.clearTimeout(debounceRef.current)
     }
-  }, [isOpen, searchQuery, getToken])
+  }, [isOpen, searchQuery, getToken, showAsInput])
 
   // Filter suggestions based on search query
   const filteredRows = rows.filter(r => r.title.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -167,10 +195,32 @@ export function RoleSuggestionCombobox({
             value={inputValue}
             onChange={(e) => {
               const v = e.target.value
-              onInputValueChange?.(v)
+              
+              // First update the parent component's state
+              if (onInputValueChange) {
+                onInputValueChange(v)
+              }
+              
+              // Then update our internal state
               setSearchQuery(v)
+              
+              // Clear any pending dropdown timer
+              if (debounceRef.current) window.clearTimeout(debounceRef.current)
+              
+              // Only open dropdown after typing at least 2 chars AND pausing
               const shouldOpen = v.trim().length >= 2
-              if (shouldOpen && !isOpen) setOpen(true)
+              
+              if (shouldOpen && !isOpen) {
+                // Delay opening popup to prevent disruption during typing
+                const openTimer = window.setTimeout(() => {
+                  // Only open if we still have enough characters
+                  // (user might have deleted characters during the delay)
+                  if (v.trim().length >= 2) {
+                    setOpen(true)
+                  }
+                }, 500)
+                debounceRef.current = openTimer as unknown as number
+              }
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
@@ -211,29 +261,31 @@ export function RoleSuggestionCombobox({
         avoidCollisions={true}
         collisionPadding={8}
       >
-        <div className="border-b border-border p-3 bg-card">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search roles..."
-              className="pl-9 pr-8 h-8 text-sm w-full"
-              autoFocus
-            />
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
-                onClick={() => setSearchQuery('')}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
+        {!showAsInput && (
+          <div className="border-b border-border p-3 bg-card">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Search roles..."
+                className="pl-9 pr-8 h-8 text-sm w-full"
+                autoFocus
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="max-h-60 min-h-[60px] overflow-hidden bg-card">
           {loading && (

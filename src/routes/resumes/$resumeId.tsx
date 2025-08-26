@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useAuthToken } from '@/lib/auth'
-import { aiSuggestSummaryWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getResumeWithRefresh, updateResumeWithRefresh, getProfileWithRefresh, importLinkedInWithRefresh } from '@/lib/api'
+import { aiSuggestSummaryWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importLinkedInWithRefresh, updateResumeWithRefresh } from '@/lib/api'
 
 export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { getToken } = useAuthToken()
@@ -39,7 +39,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
 
   useEffect(() => {
     setResumeData(prev => {
-      if ((prev.sections as any[]).length > 0) return prev
+      if ((prev.sections).length > 0) return prev
       const seed = [
         { id: 'summary', type: 'summary', title: 'Summary', order: 0, content: { text: prev.summary || '' } },
         { id: 'experience', type: 'experience', title: 'Experience', order: 1, content: (prev.experience || []) },
@@ -98,7 +98,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     ;(async () => {
       try {
         const profile = await getProfileWithRefresh<any>(getToken)
-        const url = (profile as any)?.linkedin_url
+        const url = (profile)?.linkedin_url
         const hasNoExperience = (resumeData.sections || []).every((s: any) => s.type !== 'experience' || (Array.isArray(s.content) && s.content.length === 0))
         if (url && hasNoExperience) {
           await handleImportLinkedIn(url, { silent: true })
@@ -153,7 +153,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
 
   
 
-  const getSection = (type: string) => (resumeData.sections as Array<any>).find(s => s.type === type)
+  const getSection = (type: string) => (resumeData.sections).find(s => s.type === type)
 
   const summarySection = getSection('summary') || { content: { text: resumeData.summary } }
   const experienceSection = getSection('experience') || { content: resumeData.experience }
@@ -166,7 +166,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       setResumeData(prev => ({
         ...prev,
         summary: text,
-        sections: (prev.sections as Array<any>).map((s: any) => s.type === 'summary' ? { ...s, content: { text } } : s),
+        sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text } } : s),
       }))
     } catch (e) {
       console.error('Failed to suggest summary', e)
@@ -177,7 +177,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     try {
       setImporting(true)
       const profile = linkedinUrl ? { linkedin_url: linkedinUrl } : await getProfileWithRefresh<any>(getToken)
-      const url = (profile as any)?.linkedin_url
+      const url = (profile)?.linkedin_url
       if (!url || !String(url).trim()) {
         if (!opts.silent) alert('Add your LinkedIn URL in Profile to import')
         return
@@ -191,7 +191,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       const impSkills = getImported('skills')?.content || r.technologies || null
 
       setResumeData(prev => {
-        let sections = [...(prev.sections as Array<any>)]
+        let sections = [...(prev.sections)]
 
         const ensureSection = (type: string, title: string, content: any) => {
           const idx = sections.findIndex(s => s.type === type)
@@ -407,11 +407,11 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                       <Label htmlFor="summary">Summary</Label>
                       <Textarea
                         id="summary"
-                        value={(summarySection as any).content?.text || resumeData.summary}
+                        value={(summarySection).content?.text || resumeData.summary}
                         onChange={(e) => setResumeData(prev => ({
                           ...prev,
                           summary: e.target.value,
-                          sections: (prev.sections as any[]).map((s: any) => s.type === 'summary' ? { ...s, content: { text: e.target.value } } : s),
+                          sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text: e.target.value } } : s),
                         }))}
                         placeholder="Experienced software engineer with 5+ years of expertise in full-stack development..."
                         className="min-h-[150px]"
@@ -439,7 +439,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                         setResumeData(prev => ({
                           ...prev,
                           experience: [...(prev.experience || []), newExp],
-                          sections: (prev.sections as Array<any>).map((s: any) => 
+                          sections: (prev.sections).map((s: any) => 
                             s.type === 'experience' 
                               ? { ...s, content: [...((s.content as Array<any>) || []), newExp] }
                               : s
@@ -451,7 +451,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                     </Button>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {((experienceSection as any).content || []).map((exp: any, index: number) => (
+                    {((experienceSection).content || []).map((exp: any, index: number) => (
                       <div key={index} className="border rounded-lg p-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -462,10 +462,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  experience: (prev.experience as Array<any>).map((item, i) => 
+                                  experience: (prev.experience).map((item, i) => 
                                     i === index ? { ...item, company: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'experience' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, company: newValue } : item
@@ -485,10 +485,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  experience: (prev.experience as Array<any>).map((item, i) => 
+                                  experience: (prev.experience).map((item, i) => 
                                     i === index ? { ...item, role: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'experience' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, role: newValue } : item
@@ -511,10 +511,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  experience: (prev.experience as Array<any>).map((item, i) => 
+                                  experience: (prev.experience).map((item, i) => 
                                     i === index ? { ...item, startDate: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'experience' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, startDate: newValue } : item
@@ -534,10 +534,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  experience: (prev.experience as Array<any>).map((item, i) => 
+                                  experience: (prev.experience).map((item, i) => 
                                     i === index ? { ...item, endDate: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'experience' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, endDate: newValue } : item
@@ -560,10 +560,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                               onClick={() => {
                                 setResumeData(prev => ({
                                   ...prev,
-                                  experience: (prev.experience as Array<any>).map((item, i) => 
+                                  experience: (prev.experience).map((item, i) => 
                                     i === index ? { ...item, bullets: [...(item.bullets || []), ''] } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'experience' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, bullets: [...(item.bullets || []), ''] } : item
@@ -586,7 +586,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                     const newValue = e.target.value
                                     setResumeData(prev => ({
                                       ...prev,
-                                      experience: (prev.experience as Array<any>).map((item, i) => 
+                                      experience: (prev.experience).map((item, i) => 
                                         i === index 
                                           ? { 
                                               ...item, 
@@ -596,7 +596,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                             } 
                                           : item
                                       ),
-                                      sections: (prev.sections as Array<any>).map((s: any) => 
+                                      sections: (prev.sections).map((s: any) => 
                                         s.type === 'experience' 
                                           ? { 
                                               ...s, 
@@ -626,7 +626,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                   onClick={() => {
                                     setResumeData(prev => ({
                                       ...prev,
-                                      experience: (prev.experience as Array<any>).map((item, i) => 
+                                      experience: (prev.experience).map((item, i) => 
                                         i === index 
                                           ? { 
                                               ...item, 
@@ -634,7 +634,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                             } 
                                           : item
                                       ),
-                                      sections: (prev.sections as Array<any>).map((s: any) => 
+                                      sections: (prev.sections).map((s: any) => 
                                         s.type === 'experience' 
                                           ? { 
                                               ...s, 
@@ -666,8 +666,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                             onClick={() => {
                               setResumeData(prev => ({
                                 ...prev,
-                                experience: (prev.experience as Array<any>).filter((_, i) => i !== index),
-                                sections: (prev.sections as Array<any>).map((s: any) => 
+                                experience: (prev.experience).filter((_, i) => i !== index),
+                                sections: (prev.sections).map((s: any) => 
                                   s.type === 'experience' 
                                     ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) }
                                     : s
@@ -681,7 +681,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                       </div>
                     ))}
                     
-                    {((experienceSection as any).content || []).length === 0 && (
+                    {((experienceSection).content || []).length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         <p>No work experience added yet.</p>
                         <p className="text-sm mt-2">Click "Add Experience" to get started.</p>
@@ -710,13 +710,13 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                         setResumeData(prev => ({
                           ...prev,
                           education: [...(prev.education || []), newEdu],
-                          sections: (prev.sections as Array<any>).some(s => s.type === 'education')
-                            ? (prev.sections as Array<any>).map((s: any) => 
+                          sections: (prev.sections).some(s => s.type === 'education')
+                            ? (prev.sections).map((s: any) => 
                                 s.type === 'education' 
                                   ? { ...s, content: [...((s.content as Array<any>) || []), newEdu] }
                                   : s
                               )
-                            : [...(prev.sections as Array<any>), { id: 'education', type: 'education', title: 'Education', order: prev.sections.length, content: [newEdu] }],
+                            : [...(prev.sections), { id: 'education', type: 'education', title: 'Education', order: prev.sections.length, content: [newEdu] }],
                         }))
                       }}
                     >
@@ -735,10 +735,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  education: (prev.education as Array<any>).map((item, i) => 
+                                  education: (prev.education).map((item, i) => 
                                     i === index ? { ...item, institution: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'education' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, institution: newValue } : item
@@ -758,10 +758,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  education: (prev.education as Array<any>).map((item, i) => 
+                                  education: (prev.education).map((item, i) => 
                                     i === index ? { ...item, degree: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'education' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, degree: newValue } : item
@@ -784,10 +784,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  education: (prev.education as Array<any>).map((item, i) => 
+                                  education: (prev.education).map((item, i) => 
                                     i === index ? { ...item, field: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'education' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, field: newValue } : item
@@ -807,10 +807,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 const newValue = e.target.value
                                 setResumeData(prev => ({
                                   ...prev,
-                                  education: (prev.education as Array<any>).map((item, i) => 
+                                  education: (prev.education).map((item, i) => 
                                     i === index ? { ...item, graduationYear: newValue } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'education' 
                                       ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                           i === index ? { ...item, graduationYear: newValue } : item
@@ -832,10 +832,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                               const newValue = e.target.value
                               setResumeData(prev => ({
                                 ...prev,
-                                education: (prev.education as Array<any>).map((item, i) => 
+                                education: (prev.education).map((item, i) => 
                                   i === index ? { ...item, gpa: newValue } : item
                                 ),
-                                sections: (prev.sections as Array<any>).map((s: any) => 
+                                sections: (prev.sections).map((s: any) => 
                                   s.type === 'education' 
                                     ? { ...s, content: (s.content as Array<any>).map((item, i) => 
                                         i === index ? { ...item, gpa: newValue } : item
@@ -855,8 +855,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                             onClick={() => {
                               setResumeData(prev => ({
                                 ...prev,
-                                education: (prev.education as Array<any>).filter((_, i) => i !== index),
-                                sections: (prev.sections as Array<any>).map((s: any) => 
+                                education: (prev.education).filter((_, i) => i !== index),
+                                sections: (prev.sections).map((s: any) => 
                                   s.type === 'education' 
                                     ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) }
                                     : s
@@ -896,13 +896,13 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                         setResumeData(prev => ({
                           ...prev,
                           technologies: [...(prev.technologies || []), newSkillGroup],
-                          sections: (prev.sections as Array<any>).some(s => s.type === 'skills')
-                            ? (prev.sections as Array<any>).map((s: any) => 
+                          sections: (prev.sections).some(s => s.type === 'skills')
+                            ? (prev.sections).map((s: any) => 
                                 s.type === 'skills' 
                                   ? { ...s, content: { groups: [...((s.content?.groups as Array<any>) || []), newSkillGroup] } }
                                   : s
                               )
-                            : [...(prev.sections as Array<any>), { id: 'skills', type: 'skills', title: 'Skills', order: prev.sections.length, content: { groups: [newSkillGroup] } }],
+                            : [...(prev.sections), { id: 'skills', type: 'skills', title: 'Skills', order: prev.sections.length, content: { groups: [newSkillGroup] } }],
                         }))
                       }}
                     >
@@ -920,10 +920,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                               const newValue = e.target.value
                               setResumeData(prev => ({
                                 ...prev,
-                                technologies: (prev.technologies as Array<any>).map((item, i) => 
+                                technologies: (prev.technologies).map((item, i) => 
                                   i === index ? { ...item, name: newValue } : item
                                 ),
-                                sections: (prev.sections as Array<any>).map((s: any) => 
+                                sections: (prev.sections).map((s: any) => 
                                   s.type === 'skills' 
                                     ? { 
                                         ...s, 
@@ -950,10 +950,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                               onClick={() => {
                                 setResumeData(prev => ({
                                   ...prev,
-                                  technologies: (prev.technologies as Array<any>).map((item, i) => 
+                                  technologies: (prev.technologies).map((item, i) => 
                                     i === index ? { ...item, skills: [...(item.skills || []), ''] } : item
                                   ),
-                                  sections: (prev.sections as Array<any>).map((s: any) => 
+                                  sections: (prev.sections).map((s: any) => 
                                     s.type === 'skills' 
                                       ? { 
                                           ...s, 
@@ -981,7 +981,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                     const newValue = e.target.value
                                     setResumeData(prev => ({
                                       ...prev,
-                                      technologies: (prev.technologies as Array<any>).map((item, i) => 
+                                      technologies: (prev.technologies).map((item, i) => 
                                         i === index 
                                           ? { 
                                               ...item, 
@@ -991,7 +991,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                             } 
                                           : item
                                       ),
-                                      sections: (prev.sections as Array<any>).map((s: any) => 
+                                      sections: (prev.sections).map((s: any) => 
                                         s.type === 'skills' 
                                           ? { 
                                               ...s, 
@@ -1021,7 +1021,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                     onClick={() => {
                                       setResumeData(prev => ({
                                         ...prev,
-                                        technologies: (prev.technologies as Array<any>).map((item, i) => 
+                                        technologies: (prev.technologies).map((item, i) => 
                                           i === index 
                                             ? { 
                                                 ...item, 
@@ -1029,7 +1029,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                               } 
                                             : item
                                         ),
-                                        sections: (prev.sections as Array<any>).map((s: any) => 
+                                        sections: (prev.sections).map((s: any) => 
                                           s.type === 'skills' 
                                             ? { 
                                                 ...s, 
@@ -1064,8 +1064,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                             onClick={() => {
                               setResumeData(prev => ({
                                 ...prev,
-                                technologies: (prev.technologies as Array<any>).filter((_, i) => i !== index),
-                                sections: (prev.sections as Array<any>).map((s: any) => 
+                                technologies: (prev.technologies).filter((_, i) => i !== index),
+                                sections: (prev.sections).map((s: any) => 
                                   s.type === 'skills' 
                                     ? { 
                                         ...s, 
@@ -1114,18 +1114,18 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                     </div>
                   </div>
 
-                  {(summarySection as any).content?.text && (
+                  {(summarySection).content?.text && (
                     <div>
                       <h2 className="text-lg font-semibold mb-2">Professional Summary</h2>
-                      <p className="text-sm text-gray-700">{(summarySection as any).content.text}</p>
+                      <p className="text-sm text-gray-700">{(summarySection).content.text}</p>
                     </div>
                   )}
 
-                  {Array.isArray((experienceSection as any).content) && (experienceSection as any).content.length > 0 && (
+                  {Array.isArray((experienceSection).content) && (experienceSection).content.length > 0 && (
                     <div>
                       <h2 className="text-lg font-semibold mb-2">Work Experience</h2>
                       <div className="space-y-4">
-                        {(experienceSection as any).content.map((exp: any, idx: number) => (
+                        {(experienceSection).content.map((exp: any, idx: number) => (
                           <div key={idx} className="text-sm">
                             {exp.company && exp.role && (
                               <div className="font-medium">

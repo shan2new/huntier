@@ -11,6 +11,7 @@ import {
   Plus,
   Send,
   Target,
+  Trash2,
   UserCheck,
   Users,
 } from 'lucide-react'
@@ -25,7 +26,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Slider } from '@/components/ui/slider'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
@@ -65,6 +65,7 @@ interface Contact {
   isThirdParty: boolean
   description: string
   avatar?: string
+  is_primary?: boolean
 }
 
 export function CreateApplicationModal({
@@ -86,7 +87,11 @@ export function CreateApplicationModal({
   const [role, setRole] = useState('')
   const [includeJobUrl, setIncludeJobUrl] = useState(false)
   const [jobUrl, setJobUrl] = useState('')
-  const [salaryRange, setSalaryRange] = useState([15, 35])
+  // Compensation state variables (separate for fixed and variable)
+  const [fixedMinLpa, setFixedMinLpa] = useState('15')
+  const [fixedMaxLpa, setFixedMaxLpa] = useState('35')
+  const [varMinLpa, setVarMinLpa] = useState('')
+  const [varMaxLpa, setVarMaxLpa] = useState('')
   const [source, setSource] = useState('applied_self')
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
   const [contacts, setContacts] = useState<Array<Contact>>([])
@@ -109,7 +114,10 @@ export function CreateApplicationModal({
       setRole('')
       setIncludeJobUrl(false)
       setJobUrl('')
-      setSalaryRange([15, 35])
+      setFixedMinLpa('15')
+      setFixedMaxLpa('35')
+      setVarMinLpa('')
+      setVarMaxLpa('')
       setSource('applied_self')
       setSelectedPlatform(null)
       setContacts([])
@@ -146,16 +154,21 @@ export function CreateApplicationModal({
       const url = includeJobUrl ? jobUrl : undefined
       const selectedPlatformId = selectedPlatform?.id
 
+      // Prepare compensation data
+      const compensation = {
+        fixed_min_lpa: fixedMinLpa ? parseFloat(fixedMinLpa) || null : null,
+        fixed_max_lpa: fixedMaxLpa ? parseFloat(fixedMaxLpa) || null : null,
+        var_min_lpa: varMinLpa ? parseFloat(varMinLpa) || null : null,
+        var_max_lpa: varMaxLpa ? parseFloat(varMaxLpa) || null : null
+      }
+
       const applicationData = {
         company: { company_id: company.id },
         role,
         job_url: url ? normalizeUrl(url) : undefined,
         platform_id: selectedPlatformId,
         source,
-        compensation: {
-          fixed_min_lpa: salaryRange[0],
-          fixed_max_lpa: salaryRange[1],
-        },
+        compensation: Object.values(compensation).some(val => val !== null) ? compensation : null,
       }
       const application = await apiCall<ApplicationListItem>('/v1/applications', {
         method: 'POST',
@@ -242,12 +255,17 @@ export function CreateApplicationModal({
       // Add new contact with generated ID
       const newContact: Contact = {
         ...contact,
-        id: 'id' in contact ? contact.id : `contact-${Date.now()}`
+        id: 'id' in contact ? contact.id : `contact-${Date.now()}`,
+        is_primary: contacts.length === 0 // First contact is primary
       }
       setContacts(prev => [...prev, newContact])
     }
     setContactModalOpen(false)
     setEditingContact(null)
+  }
+
+  const handleDeleteContact = (contactId: string) => {
+    setContacts(prev => prev.filter(c => c.id !== contactId))
   }
 
 
@@ -496,61 +514,69 @@ export function CreateApplicationModal({
                         <CardContent className="space-y-3 bg-background/30 pt-3">
                           <Label className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4" />
-                            Compensation (LPA)
+                            Compensation
                           </Label>
-                          <div className="space-y-4">
-                            {/* Number inputs above slider */}
-                            <div className="flex justify-between gap-4">
+                          <div className="space-y-3">
+                            {/* Fixed Compensation - Single Input */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground">Fixed (LPA)</Label>
+                                {fixedMinLpa && fixedMaxLpa && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ₹{fixedMinLpa || '0'} - ₹{fixedMaxLpa}
+                                  </span>
+                                )}
+                              </div>
                               <Input
-                                type="text"
-                                value={salaryRange[0] || ''}
+                                value={fixedMinLpa && fixedMaxLpa ? `${fixedMinLpa}-${fixedMaxLpa}` : ''}
                                 onChange={(e) => {
                                   const value = e.target.value
-                                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                    setSalaryRange([value === '' ? 0 : Number(value), salaryRange[1]])
+                                  // Allow empty string, numbers, period, and hyphen
+                                  if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
+                                    const parts = value.split('-')
+                                    if (parts.length === 1) {
+                                      setFixedMinLpa(parts[0])
+                                      setFixedMaxLpa(parts[0]) // Same value for both when only one number
+                                    } else if (parts.length === 2) {
+                                      setFixedMinLpa(parts[0])
+                                      setFixedMaxLpa(parts[1])
+                                    }
                                   }
                                 }}
-                                onBlur={(e) => {
-                                  const value = e.target.value
-                                  const numValue = value === '' ? 10 : Number(value)
-                                  setSalaryRange([numValue, salaryRange[1]])
-                                }}
-                                className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="10"
-                              />
-                              <Input
-                                type="text"
-                                value={salaryRange[1] || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                    setSalaryRange([salaryRange[0], value === '' ? 0 : Number(value)])
-                                  }
-                                }}
-                                onBlur={(e) => {
-                                  const value = e.target.value
-                                  const numValue = value === '' ? 30 : Number(value)
-                                  setSalaryRange([salaryRange[0], numValue])
-                                }}
-                                className="w-20 shrink-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder="30"
-                              />
-                            </div>
-                            
-                            {/* Slider below inputs */}
-                            <div className="px-1">
-                              <Slider
-                                value={salaryRange}
-                                onValueChange={setSalaryRange}
-                                min={0}
-                                max={100}
-                                step={0.5}
                                 className="w-full"
+                                placeholder="15-25"
                               />
                             </div>
                             
-                            <div className="text-xs text-muted-foreground text-center">
-                              ₹{salaryRange[0]} - ₹{salaryRange[1]} LPA
+                            {/* Variable Compensation - Single Input */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs text-muted-foreground">Variable (LPA)</Label>
+                                {varMinLpa && varMaxLpa && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ₹{varMinLpa || '0'} - ₹{varMaxLpa}
+                                  </span>
+                                )}
+                              </div>
+                              <Input
+                                value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  // Allow empty string, numbers, period, and hyphen
+                                  if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
+                                    const parts = value.split('-')
+                                    if (parts.length === 1) {
+                                      setVarMinLpa(parts[0])
+                                      setVarMaxLpa(parts[0]) // Same value for both when only one number
+                                    } else if (parts.length === 2) {
+                                      setVarMinLpa(parts[0])
+                                      setVarMaxLpa(parts[1])
+                                    }
+                                  }
+                                }}
+                                className="w-full"
+                                placeholder="5-10"
+                              />
                             </div>
                           </div>
                         </CardContent>
@@ -613,23 +639,30 @@ export function CreateApplicationModal({
                                   animate={{ opacity: 1 }}
                                   exit={{ opacity: 0 }}
                                   transition={{ duration: 0.3, ease: "easeOut" }}
-                                  className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 cursor-pointer transition-colors"
-                                  onClick={() => {
-                                    setEditingContact(contact)
-                                    setContactModalOpen(true)
-                                  }}
+                                  className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 transition-colors group"
                                 >
                                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                     <span className="text-xs font-medium">
                                       {contact.name.charAt(0).toUpperCase()}
                                     </span>
                                   </div>
-                                  <div className="flex-1 min-w-0">
+                                  <div 
+                                    className="flex-1 min-w-0 cursor-pointer"
+                                    onClick={() => {
+                                      setEditingContact(contact)
+                                      setContactModalOpen(true)
+                                    }}
+                                  >
                                     <div className="text-xs font-medium truncate">{contact.name}</div>
                                     <div className="flex items-center gap-1">
                                       <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
                                         {contact.role}
                                       </Badge>
+                                      {contact.is_primary && (
+                                        <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                                          Primary
+                                        </Badge>
+                                      )}
                                       {contact.isThirdParty && (
                                         <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
                                           3rd Party
@@ -637,6 +670,17 @@ export function CreateApplicationModal({
                                       )}
                                     </div>
                                   </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteContact(contact.id)
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                  </Button>
                                 </motion.div>
                               ))}
                             </AnimatePresence>

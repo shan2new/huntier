@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
+import { DollarSign, Info } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { DollarSign, Info } from 'lucide-react'
 
 export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload: any) => Promise<void> }) {
   const [compensationType, setCompensationType] = useState<'fixed' | 'range' | 'variable'>(
@@ -23,7 +23,7 @@ export function CompensationEditor({ app, onSave }: { app: any; onSave: (payload
   useEffect(() => {
     const timer = setTimeout(() => {
       if (app) {
-        let payload: any = { note: note || null }
+        const payload: any = { note: note || null }
         
         if (compensationType === 'fixed') {
           payload.fixed_min_lpa = fixedAmount ? Number(fixedAmount) : null

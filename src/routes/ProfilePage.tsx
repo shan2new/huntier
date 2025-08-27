@@ -188,7 +188,7 @@ export function ProfilePage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto space-y-8"
+      className="max-w-6xl mx-auto pt-8 space-y-8"
     >
       {/* Header */}
       <div className="flex items-center justify-between">

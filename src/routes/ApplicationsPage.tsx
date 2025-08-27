@@ -104,7 +104,7 @@ export function ApplicationsPage() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="relative space-y-8 h-full"
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto pt-8">
 
       {/* Pipeline lanes: In-progress → Interviewing → Completed */}
       <motion.div

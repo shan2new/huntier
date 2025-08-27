@@ -36,7 +36,7 @@ export function WishlistApplicationsPage() {
   )
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto pt-8">
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-primary/10">

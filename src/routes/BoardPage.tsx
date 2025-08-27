@@ -123,7 +123,7 @@ export function BoardPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="max-w-6xl mx-auto space-y-6"
+      className="max-w-6xl mx-auto pt-8 space-y-6"
     >
       {/* Pipeline Stats */}
       <motion.div

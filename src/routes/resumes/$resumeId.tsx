@@ -3,7 +3,7 @@ import { useUser } from '@clerk/clerk-react'
 import { toast } from '@/components/ui/toaster'
 
 import { useAuthToken } from '@/lib/auth'
-import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, updateResumeWithRefresh } from '@/lib/api'
+import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importResumeFromPdfWithRefresh, updateResumeWithRefresh } from '@/lib/api'
 import { ResumeToolbar } from '@/components/resume/ResumeToolbar'
 import { PersonalInfoSection } from '@/components/resume/PersonalInfoSection'
 import { SummarySection } from '@/components/resume/SummarySection'
@@ -21,6 +21,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { user } = useUser()
   const isNew = resumeId === 'new'
   const [saving, setSaving] = useState(false)
+  const [importing, setImporting] = useState(false)
   // Removed LinkedIn import; importing state no longer used
   const [autoImportAttempted, setAutoImportAttempted] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -558,12 +559,26 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   }
 
   return (
-    <div>
+    <div className="h-full">
 
       {/* Document Viewer Background */}
       <div className="document-viewer">
-        <div className="mx-auto px-8 py-8" style={{ maxWidth: '1200px' }}>
-          <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,794px)_1fr]">
+        {importing && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[360px] text-center">
+              <div className="flex items-center justify-center mb-4">
+                <svg className="animate-spin h-6 w-6 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+              </div>
+              <h3 className="text-base font-medium text-gray-900 mb-1">Analyzing your resume</h3>
+              <p className="text-sm text-gray-500">Extracting details with AI. This may take a few seconds…</p>
+            </div>
+          </div>
+        )}
+        <div className="mx-auto px-8 py-8" style={{ maxWidth: '1600px' }}>
+          <div className="grid gap-8 lg:grid-cols-[minmax(320px,1fr)_minmax(0,794px)_minmax(320px,1fr)]">
             {/* Left Sidebar - Toolbar + Progress & Sections */}
             <div className="hidden lg:block w-80 space-y-4 justify-self-start">
               {/* Toolbar moved into sidebar */}
@@ -574,6 +589,33 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                 onTemplateChange={(template_id) => setResumeData(prev => ({ ...prev, template_id }))}
                 onExportPdf={() => download('pdf')}
                 onExportDocx={() => download('docx')}
+                importing={importing}
+                onImportPdf={async (file) => {
+                  try {
+                    setImporting(true)
+                    const parsed: any = await importResumeFromPdfWithRefresh(getToken, file)
+                    setResumeData(prev => {
+                      const nextSummary = (typeof parsed?.summary === 'string' && parsed.summary) ? parsed.summary : prev.summary
+                      const parsedSections = Array.isArray(parsed?.sections) ? parsed.sections : prev.sections
+                      const sectionsWithSummary = ensureSectionsWithSummary(parsedSections, nextSummary)
+                      const expContent = (sectionsWithSummary.find((s: any) => s.type === 'experience')?.content) || prev.experience
+                      return {
+                        ...prev,
+                        personal_info: { ...prev.personal_info, ...(parsed?.personal_info || {}) },
+                        summary: nextSummary,
+                        experience: Array.isArray(expContent) ? expContent : prev.experience,
+                        education: Array.isArray(parsed?.education) ? parsed.education : prev.education,
+                        technologies: Array.isArray(parsed?.technologies) ? parsed.technologies : prev.technologies,
+                        sections: sectionsWithSummary,
+                      }
+                    })
+                  } catch (e) {
+                    console.error('Failed to import PDF', e)
+                    toast.error('Failed to import PDF', { description: 'Please try another file.' })
+                  } finally {
+                    setImporting(false)
+                  }
+                }}
                 onSave={handleSave}
                 saving={saving}
                 lastSaved={lastSaved}

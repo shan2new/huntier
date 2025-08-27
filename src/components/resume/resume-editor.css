@@ -24,9 +24,11 @@
     color: #111827 !important;
     /* Fixed A4 canvas size on screen */
     width: 794px;
+    /* Allow content to grow vertically for long resumes */
     min-height: 1123px;
-    /* Keep proportions stable */
-    aspect-ratio: 210 / 297;
+    height: auto;
+    /* Remove forced aspect ratio which clipped long content */
+    /* aspect-ratio: 210 / 297; */
   }
   
   /* Responsive fallback for small viewports */

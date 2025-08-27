@@ -1,8 +1,8 @@
 
+import { DownloadIcon, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { DownloadIcon, Settings } from 'lucide-react'
 
 type ResumeToolbarProps = {
   name: string
@@ -11,11 +11,13 @@ type ResumeToolbarProps = {
   onTemplateChange: (templateId: string | null) => void
   onExportPdf: () => void
   onExportDocx: () => void
+  onImportPdf?: (file: File) => void
   onSave: () => void
   saving?: boolean
   lastSaved?: Date | null
   hasUnsavedChanges?: boolean
   variant?: 'bar' | 'card'
+  importing?: boolean
 }
 
 export function ResumeToolbar({
@@ -25,11 +27,13 @@ export function ResumeToolbar({
   onTemplateChange,
   onExportPdf,
   onExportDocx,
+  onImportPdf,
   onSave,
   saving,
   lastSaved,
   hasUnsavedChanges,
   variant = 'bar',
+  importing,
 }: ResumeToolbarProps) {
   const getSaveStatus = () => {
     if (saving) return 'Saving...'
@@ -85,6 +89,24 @@ export function ResumeToolbar({
                   <DropdownMenuItem onClick={onExportDocx}>Word</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center">
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file && onImportPdf) onImportPdf(file)
+                      e.currentTarget.value = ''
+                    }}
+                  />
+                  <Button size="sm" variant="outline" className="text-xs" disabled={!!importing} onClick={(ev) => {
+                    const input = (ev.currentTarget.previousSibling as HTMLInputElement)
+                    input.click()
+                  }}>Import PDF</Button>
+                </label>
+              </div>
               <Button size="sm" className="text-xs" onClick={onSave}>Save</Button>
             </div>
         </div>
@@ -161,6 +183,23 @@ export function ResumeToolbar({
                   Word
                 </button>
               </div>
+            </div>
+            {/* Import PDF */}
+            <div>
+              <input
+                type="file"
+                accept="application/pdf"
+                id="resume-import-pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file && onImportPdf) onImportPdf(file)
+                  e.currentTarget.value = ''
+                }}
+              />
+              <label htmlFor="resume-import-pdf">
+                <Button variant="outline" className="text-sm" disabled={!!importing}>Import PDF</Button>
+              </label>
             </div>
           </div>
         </div>

@@ -707,6 +707,29 @@ export async function aiGenerateResumeFromProfileWithRefresh(getToken: () => Pro
 // Import/export
 // (Removed) LinkedIn import API
 
+// Import resume from PDF (parse and return draft object)
+export async function importResumeFromPdfWithRefresh(
+  getToken: () => Promise<string>,
+  file: File
+): Promise<any> {
+  const form = new FormData()
+  form.append('file', file)
+  const token = await getToken()
+  const url = `${BASE}/v1/resumes/import/pdf?ts=${Date.now()}`
+  console.log('[ResumeImport] uploading file', { name: file.name, size: file.size, type: file.type })
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+    body: form,
+  })
+  console.log('[ResumeImport] response', { status: res.status })
+  if (!res.ok) {
+    throw new Error(`Import failed: ${res.status}`)
+  }
+  return res.json()
+}
+
 export async function exportResumeWithRefresh(id: string, getToken: () => Promise<string>) {
   return apiWithTokenRefresh(`/v1/resumes/${id}/export`, getToken)
 }

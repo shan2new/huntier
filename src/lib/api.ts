@@ -198,6 +198,15 @@ export async function patchApplicationWithRefresh<T>(
   })
 }
 
+export async function deleteApplicationWithRefresh(
+  getToken: () => Promise<string>,
+  id: string
+): Promise<void> {
+  return apiWithTokenRefresh(`/v1/applications/${id}`, getToken, {
+    method: 'DELETE'
+  })
+}
+
 // Conversations
 /** @deprecated Use listConversationsWithRefresh instead */
 export async function listConversations<T>(token: string, appId: string, limit = 50): Promise<T> {
@@ -712,6 +721,71 @@ export const resumeApi = {
 
 export const api = {
   resumeApi
+}
+
+// Upsert a platform by name and url
+export async function upsertPlatformWithRefresh<T = Platform>(
+  getToken: () => Promise<string>,
+  body: { name: string; url: string }
+): Promise<T> {
+  return apiWithTokenRefresh(`/v1/platforms`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+// Drafts
+export type ApplicationDraft = {
+  id: string
+  user_id: string
+  company_id: string | null
+  company?: Company | null
+  role: string | null
+  job_url: string | null
+  platform_id: string | null
+  platform?: Platform | null
+  source: string | null
+  compensation?: ApplicationCompensation | null
+  notes?: Array<string> | null
+}
+
+export async function createApplicationDraftWithRefresh(getToken: () => Promise<string>) {
+  return apiWithTokenRefresh(`/v1/applications/drafts`, getToken, { method: 'POST' })
+}
+
+export async function getApplicationDraftWithRefresh(getToken: () => Promise<string>, id: string) {
+  return apiWithTokenRefresh(`/v1/applications/drafts/${id}`, getToken)
+}
+
+export async function updateApplicationDraftWithRefresh(getToken: () => Promise<string>, id: string, body: Partial<ApplicationDraft>) {
+  return apiWithTokenRefresh(`/v1/applications/drafts/${id}`, getToken, { method: 'PATCH', body: JSON.stringify(body) })
+}
+
+export async function deleteApplicationDraftWithRefresh(getToken: () => Promise<string>, id: string) {
+  return apiWithTokenRefresh(`/v1/applications/drafts/${id}`, getToken, { method: 'DELETE' })
+}
+
+export async function commitApplicationDraftWithRefresh(getToken: () => Promise<string>, id: string) {
+  return apiWithTokenRefresh(`/v1/applications/drafts/${id}/commit`, getToken, { method: 'POST' })
+}
+
+// AI: send images and get a draft id back
+export async function extractApplicationDraftFromImagesWithRefresh(
+  getToken: () => Promise<string>,
+  files: Array<File>
+): Promise<{ draft_id: string }> {
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  const token = await getToken()
+  const res = await fetch(`${BASE}/v1/applications/ai/extract-from-images`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  })
+  if (!res.ok) {
+    throw new Error(`AI draft extract failed: ${res.status}`)
+  }
+  return res.json()
 }
 
 

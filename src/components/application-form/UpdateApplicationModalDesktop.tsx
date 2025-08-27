@@ -1,5 +1,5 @@
 import { motion } from "motion/react"
-import { Building2, DollarSign, ExternalLink, Globe, Info, Loader2, Plus, Users } from "lucide-react"
+import { Building2, ExternalLink, Globe, HelpCircle, Info, Plus, Users } from "lucide-react"
 import type { ApplicationListItem, Company, Platform } from "@/lib/api"
 import type { StageObject } from "@/types/application"
 import { cn, extractHostname, formatDateIndian } from "@/lib/utils"
@@ -14,6 +14,8 @@ import { CompanySearchCombobox } from "@/components/CompanySearchCombobox"
 import { RoleSuggestionCombobox } from "@/components/RoleSuggestionCombobox"
 import { ApplicationConversations } from "@/components/ApplicationConversations"
 import { ApplicationNotes } from "@/components/ApplicationNotes"
+import { CompensationSection } from "@/components/CompensationSection"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PlatformCombobox } from "@/components/PlatformCombobox"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -73,6 +75,7 @@ interface Props {
   contactsLoading: boolean
   contacts: Array<UpdateContact>
   onAddContactClick?: () => void
+  onEditContact?: (c: UpdateContact) => void
 
   // Footer
   error: string
@@ -114,6 +117,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
     contactsLoading,
     contacts,
     onAddContactClick,
+    onEditContact,
     error,
     isSubmitting,
     onClose,
@@ -123,8 +127,9 @@ export function UpdateApplicationModalDesktop(props: Props) {
   } = props
 
   return (
-    <div className="flex flex-col h-full">
-      <ResponsiveModalHeader className="px-2 py-4 border-b border-border">
+    <TooltipProvider>
+      <div className="flex flex-col h-full">
+        <ResponsiveModalHeader className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {app?.company?.logo_url ? (
@@ -262,80 +267,34 @@ export function UpdateApplicationModalDesktop(props: Props) {
         </div>
 
         {/* Right - details */}
-        <div className="col-span-2 border-l border-border px-6 pb-20">
+        <div className="col-span-2 border-l border-border px-6 pb-20 pt-4">
           <div className="space-y-4">
             {/* Compensation */}
-            <Card>
-              <CardContent className="space-y-3 py-4">
-                <Label className="flex items-center gap-2"><DollarSign className="h-4 w-4" />Compensation</Label>
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-muted-foreground">Fixed (LPA)</Label>
-                      {fixedMinLpa && fixedMaxLpa && (<span className="text-xs text-muted-foreground">₹{fixedMinLpa || '0'} - ₹{fixedMaxLpa}</span>)}
-                    </div>
-                    <Input value={fixedMinLpa && fixedMaxLpa ? `${fixedMinLpa}-${fixedMaxLpa}` : ''} onChange={(e) => {
-                      const value = e.target.value
-                      if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
-                        const parts = value.split('-')
-                        if (parts.length === 1) { setFixedMinLpa(parts[0]); setFixedMaxLpa(parts[0]) } else if (parts.length === 2) { setFixedMinLpa(parts[0]); setFixedMaxLpa(parts[1]) }
-                      }
-                    }} className="w-full" placeholder="15-25" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-muted-foreground">Variable (LPA)</Label>
-                      {varMinLpa && varMaxLpa && (<span className="text-xs text-muted-foreground">₹{varMinLpa || '0'} - ₹{varMaxLpa}</span>)}
-                    </div>
-                    <Input value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''} onChange={(e) => {
-                      const value = e.target.value
-                      if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
-                        const parts = value.split('-')
-                        if (parts.length === 1) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[0]) } else if (parts.length === 2) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[1]) }
-                      }
-                    }} className="w-full" placeholder="5-10" />
-                  </div>
-                </div>
-
-                {app?.compensation && (
-                  <div className="text-xs text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span className="text-xs">Compensation:</span>
-                      <span className="text-xs">
-                        {(() => {
-                          const comp = app.compensation
-                          const fixed = comp.fixed_min_lpa || comp.fixed_max_lpa
-                          const variable = comp.var_min_lpa || comp.var_max_lpa
-                          if (!fixed && !variable) return 'Not specified'
-                          const formatValue = (val: string | null | undefined) => {
-                            if (!val || val === 'N/A') return val || 'N/A'
-                            return val.endsWith('.00') ? val.slice(0, -3) : val
-                          }
-                          if (fixed && comp.fixed_min_lpa === comp.fixed_max_lpa) {
-                            return `₹${formatValue(comp.fixed_min_lpa)} LPA`
-                          }
-                          if (fixed) {
-                            const min = formatValue(comp.fixed_min_lpa)
-                            const max = formatValue(comp.fixed_max_lpa)
-                            return `₹${min}-${max} LPA`
-                          }
-                          if (variable) {
-                            const amount = formatValue(comp.var_min_lpa || comp.var_max_lpa)
-                            return `₹${amount} LPA (Variable)`
-                          }
-                          return 'Not specified'
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <CompensationSection
+              fixedMinLpa={fixedMinLpa}
+              fixedMaxLpa={fixedMaxLpa}
+              varMinLpa={varMinLpa}
+              varMaxLpa={varMaxLpa}
+              setFixedMinLpa={setFixedMinLpa}
+              setFixedMaxLpa={setFixedMaxLpa}
+              setVarMinLpa={setVarMinLpa}
+              setVarMaxLpa={setVarMaxLpa}
+            />
 
             {/* Source & Platform */}
             <Card>
               <CardContent className="space-y-3 py-4">
-                <Label className="flex items-center gap-2"><Globe className="h-4 w-4" />Source & Platform</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="flex items-center gap-2"><Globe className="h-4 w-4" />Source & Platform</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-48 text-xs">How you discovered and applied for this role</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Select value={source} onValueChange={setSource}>
@@ -351,7 +310,13 @@ export function UpdateApplicationModalDesktop(props: Props) {
                     </Select>
                   </div>
                   <div>
-                    <PlatformCombobox value={selectedPlatform} onChange={onPlatformChange} placeholder="platform" className="w-full" />
+                    <PlatformCombobox 
+                      value={selectedPlatform} 
+                      onChange={onPlatformChange} 
+                      placeholder="Platform" 
+                      className="w-full h-10" 
+                      variant="popover"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -387,7 +352,17 @@ export function UpdateApplicationModalDesktop(props: Props) {
             {/* Contacts */}
             <Card>
               <CardContent className="space-y-3 py-4">
-                <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-48 text-xs">People you've interacted with during the application process</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 {contactsLoading ? (
                   <div className="flex items-center justify-center py-4">
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} className="w-4 h-4 rounded-full border-2 border-primary/20 border-t-primary" />
@@ -395,7 +370,11 @@ export function UpdateApplicationModalDesktop(props: Props) {
                 ) : (
                   <div className="space-y-2">
                     {contacts.map((contact) => (
-                      <div key={contact.id} className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70">
+                      <div
+                        key={contact.id}
+                        className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 cursor-pointer"
+                        onClick={() => onEditContact && onEditContact(contact)}
+                      >
                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-medium">{contact.name.charAt(0).toUpperCase()}</span>
                         </div>
@@ -425,31 +404,51 @@ export function UpdateApplicationModalDesktop(props: Props) {
       </div>
 
       <ResponsiveModalFooter className="px-6 py-3 bg-background border-t border-border">
-        <div className="flex flex-col gap-3">
-          {error && (
-            <div className="flex items-center space-x-2 text-destructive text-sm">
-              {/* icon kept minimal to avoid extra imports */}
-              <span>{error}</span>
-            </div>
-          )}
-          <div className="flex items-center justify-between w-full">
-            <Button variant="destructive" onClick={onAskDelete} disabled={isSubmitting}>Delete</Button>
-            <div className="flex items-center gap-2">
-              <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>Close</Button>
-              <Button onClick={onSave} disabled={isSubmitting} className="min-w-[100px]">
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save'
-                )}
-              </Button>
-            </div>
+        {error && (
+          <div className="flex items-center gap-2 mb-3 p-2 rounded bg-destructive/10 text-destructive text-sm">
+            <div className="w-1 h-1 rounded-full bg-destructive" />
+            <span>{error}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onAskDelete} 
+            disabled={isSubmitting}
+            className="text-destructive hover:bg-destructive/10"
+          >
+            Delete
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onClose} 
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={onSave} 
+              disabled={isSubmitting} 
+              size="sm"
+              className="min-w-[80px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-current border-r-transparent rounded-full animate-spin mr-1" />
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
+            </Button>
           </div>
         </div>
       </ResponsiveModalFooter>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

@@ -4,6 +4,8 @@ import { Briefcase, Circle, MapPin, Sparkles } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import type { StageObject } from '@/types/application'
 import {
+  addApplicationContactWithRefresh,
+  deleteApplicationWithRefresh,
   getApplicationWithRefresh,
   getCompanyByIdWithRefresh,
   listApplicationContactsWithRefresh,
@@ -15,26 +17,13 @@ import { cn } from '@/lib/utils'
 import {
   NestedResponsiveModal,
   ResponsiveModal,
-  ResponsiveModalFooter,
-  ResponsiveModalHeader,
-  ResponsiveModalTitle,
 } from '@/components/ResponsiveModal'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { StageVisualization } from '@/components/StageVisualization'
 import { UpdateApplicationModalMobile } from '@/components/application-form/UpdateApplicationModalMobile'
 import { UpdateApplicationModalDesktop } from '@/components/application-form/UpdateApplicationModalDesktop'
-
-// Define ApplicationContact type locally
-type ApplicationContact = {
-  id: string
-  name: string
-  role: 'recruiter' | 'referrer' | 'hiring_manager' | 'interviewer' | 'other'
-  title?: string
-  is_primary?: boolean
-  created_at?: string
-  updated_at?: string
-}
+import { ContactModal } from '@/components/ContactModal'
 
 // Child contact shape expected by UpdateApplicationModalMobile/Desktop
 type ChildContact = {
@@ -44,11 +33,11 @@ type ChildContact = {
   is_primary?: boolean
 }
 
-const toChildContacts = (list: Array<ApplicationContact>): Array<ChildContact> =>
+const toChildContacts = (list: Array<Contact>): Array<ChildContact> =>
   list.map((c) => ({
     id: c.id,
     name: c.name,
-    role: c.role === 'hiring_manager' || c.role === 'other' ? 'recruiter' : c.role,
+    role: c.role,
     is_primary: c.is_primary,
   }))
 
@@ -111,8 +100,10 @@ function UpdateApplicationModal({
   const [stageVisualizationOpen, setStageVisualizationOpen] = useState(false)
 
   // Contact management state
-  const [contacts, setContacts] = useState<Array<ApplicationContact>>([])  
+  const [contacts, setContacts] = useState<Array<Contact>>([])
   const [contactsLoading, setContactsLoading] = useState(false)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
+  const [editingContact, setEditingContact] = useState<Contact | null>(null)
 
   // Compensation fields
   const [fixedMinLpa, setFixedMinLpa] = useState('')
@@ -289,20 +280,11 @@ function UpdateApplicationModal({
   }
 
   const handleDelete = async () => {
-    if (!applicationId) return
     setIsSubmitting(true)
     setError('')
     try {
-      const token = await getToken()
-      if (!token) throw new Error('No auth token')
-      const response = await fetch(`/v1/applications/${applicationId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error('Delete failed')
+      const getTokenStr = async () => (await getToken()) || ''
+      await deleteApplicationWithRefresh(getTokenStr, applicationId)
       onDeleted?.(applicationId)
       setShowDeleteConfirm(false)
       onClose()
@@ -327,6 +309,8 @@ function UpdateApplicationModal({
       setSelectedPlatformId(null)
       setContacts([])
       setContactsLoading(false)
+      setContactModalOpen(false)
+      setEditingContact(null)
       setError('')
     }, 150)
   }
@@ -367,10 +351,94 @@ function UpdateApplicationModal({
           'p-0 gap-0',
           isMobile ? 'bg-background' : 'max-w-5xl border border-border rounded-xl bg-card'
         )}
+        hideClose
       >
         {loading ? (
-          <div className="flex items-center justify-center min-h-[40vh] p-8">
-            <span className="text-sm text-muted-foreground">Loading application...</span>
+          <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+            <div className="relative w-16 h-16 mb-6">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+              <div className="relative w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Briefcase className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Loading Application</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-md leading-relaxed">
+              Fetching application details, compensation info, and contact data...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+              <Circle className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-lg font-medium mb-2 text-destructive">Failed to Load Application</h3>
+            <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+              We couldn't load the application details. This might be due to a network issue or the application may no longer exist.
+            </p>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={handleClose}>
+                Close
+              </Button>
+              <Button 
+                onClick={() => {
+                  setError('')
+                  // Trigger reload by changing applicationId dependency
+                  if (applicationId) {
+                    const loadApplication = async () => {
+                      setLoading(true)
+                      try {
+                        const getTokenStr = async () => (await getToken()) || ''
+                        const appData = await getApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId)
+                        // ... rest of loading logic
+                        let company: Company | null = null
+                        if (appData.company) {
+                          company = appData.company
+                        } else if (appData.company_id) {
+                          try {
+                            company = await getCompanyByIdWithRefresh<Company>(getTokenStr, appData.company_id)
+                          } catch {
+                            // ignore if company fetch fails
+                          }
+                        }
+                        const hydratedApp = { ...appData, company }
+                        setApp(hydratedApp)
+                        setUrl(hydratedApp.job_url || '')
+                        setRole(hydratedApp.role || '')
+                        setSource(hydratedApp.source || 'applied_self')
+                        setSelectedPlatformId(hydratedApp.platform_id || null)
+                        setStageStatus(hydratedApp.stage)
+                        if (hydratedApp.compensation) {
+                          setFixedMinLpa(hydratedApp.compensation.fixed_min_lpa?.toString() || '')
+                          setFixedMaxLpa(hydratedApp.compensation.fixed_max_lpa?.toString() || '')
+                          setVarMinLpa(hydratedApp.compensation.var_min_lpa?.toString() || '')
+                          setVarMaxLpa(hydratedApp.compensation.var_max_lpa?.toString() || '')
+                        }
+                        if (hydratedApp.platform) setSelectedPlatform(hydratedApp.platform)
+                        setIncludeJobUrl(!!hydratedApp.job_url)
+                        loadContacts(applicationId)
+                      } catch (err) {
+                        setError('Failed to load application')
+                        console.error('Load error:', err)
+                      } finally {
+                        setLoading(false)
+                      }
+                    }
+                    loadApplication()
+                  }
+                }}
+                className="min-w-[100px]"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
           </div>
         ) : isMobile ? (
           <UpdateApplicationModalMobile
@@ -403,7 +471,12 @@ function UpdateApplicationModal({
             onPlatformChange={(p) => { setSelectedPlatform(p); setSelectedPlatformId(p?.id ?? null) }}
             contactsLoading={contactsLoading}
             contacts={toChildContacts(contacts)}
-            onAddContactClick={() => { /* TODO: open add contact flow */ }}
+            onAddContactClick={() => { setEditingContact(null); setContactModalOpen(true) }}
+            onEditContact={(c: ChildContact) => {
+              const found = contacts.find((x) => x.id === c.id) || null
+              setEditingContact(found)
+              setContactModalOpen(true)
+            }}
             error={error}
             isSubmitting={isSubmitting}
             onClose={handleClose}
@@ -442,7 +515,12 @@ function UpdateApplicationModal({
             onPlatformChange={(p) => { setSelectedPlatform(p); setSelectedPlatformId(p?.id ?? null) }}
             contactsLoading={contactsLoading}
             contacts={toChildContacts(contacts)}
-            onAddContactClick={() => { /* TODO: open add contact flow */ }}
+            onAddContactClick={() => { setEditingContact(null); setContactModalOpen(true) }}
+            onEditContact={(c: ChildContact) => {
+              const found = contacts.find((x) => x.id === c.id) || null
+              setEditingContact(found)
+              setContactModalOpen(true)
+            }}
             error={error}
             isSubmitting={isSubmitting}
             onClose={handleClose}
@@ -455,20 +533,37 @@ function UpdateApplicationModal({
 
       {/* Delete confirmation dialog */}
       <NestedResponsiveModal open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm} level="secondary">
-        <ResponsiveModalHeader>
-            <ResponsiveModalTitle>Delete application?</ResponsiveModalTitle>
-            <p className="text-sm text-muted-foreground mt-2">
-              This action cannot be undone. This will permanently delete the application and related data (contacts, conversations, interviews, history).
-            </p>
-          </ResponsiveModalHeader>
-          <ResponsiveModalFooter className="mt-4">
-            <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)} disabled={isSubmitting}>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+              <Circle className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Delete Application</h3>
+              <p className="text-sm text-muted-foreground">This action cannot be undone</p>
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+            This will permanently delete the application and all related data including contacts, conversations, interviews, and activity history.
+          </p>
+          
+          <div className="flex items-center gap-3 justify-end">
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
-              {isSubmitting ? 'Deleting...' : 'Delete'}
+            <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting} className="min-w-[100px]">
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-r-transparent rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Application'
+              )}
             </Button>
-          </ResponsiveModalFooter>
+          </div>
+        </div>
       </NestedResponsiveModal>
       
       {/* Stage Visualization Dialog */}
@@ -535,6 +630,37 @@ function UpdateApplicationModal({
             setApp(previousApp)
             setStageStatus(previousStageStatus)
             setError('Failed to transition stage')
+          }
+        }}
+      />
+      {/* Contact Add/Edit Modal */}
+      <ContactModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        contact={editingContact || undefined}
+        onClose={() => { setContactModalOpen(false); setEditingContact(null) }}
+        onSave={async (data) => {
+          try {
+            if (editingContact && 'id' in data) {
+              // Local edit only
+              setContacts((prev) => prev.map((c) => (c.id === data.id ? { ...c, ...data } as Contact : c)))
+            } else if (app?.id) {
+              const getTokenStr = async () => (await getToken()) || ''
+              await addApplicationContactWithRefresh(getTokenStr, app.id, {
+                contact: {
+                  name: data.name,
+                  title: 'description' in data ? (data as any).description || undefined : undefined,
+                },
+                role: (data as any).role,
+                is_primary: contacts.length === 0,
+              })
+              await loadContacts(app.id)
+            }
+            setContactModalOpen(false)
+            setEditingContact(null)
+          } catch (err) {
+            console.error('Failed to save contact:', err)
+            setError('Failed to save contact')
           }
         }}
       />

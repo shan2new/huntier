@@ -1,5 +1,5 @@
 import { motion } from "motion/react"
-import { Building2, DollarSign, ExternalLink, Globe, Info, Loader2, Plus, Users } from "lucide-react"
+import { Building2, DollarSign, ExternalLink, Globe, HelpCircle, Info, Plus, Users } from "lucide-react"
 import type { ApplicationListItem, Company, Platform } from "@/lib/api"
 import type { StageObject } from "@/types/application"
 import { cn, extractHostname, formatDateIndian } from "@/lib/utils"
@@ -73,6 +73,7 @@ interface Props {
   contactsLoading: boolean
   contacts: Array<UpdateContact>
   onAddContactClick?: () => void
+  onEditContact?: (c: UpdateContact) => void
 
   // Footer
   error: string
@@ -114,6 +115,7 @@ export function UpdateApplicationModalMobile(props: Props) {
     contactsLoading,
     contacts,
     onAddContactClick,
+    onEditContact,
     error,
     isSubmitting,
     onClose,
@@ -316,7 +318,13 @@ export function UpdateApplicationModalMobile(props: Props) {
                 </Select>
               </div>
               <div>
-                <PlatformCombobox value={selectedPlatform} onChange={onPlatformChange} placeholder="platform" className="w-full" />
+                <PlatformCombobox 
+                  value={selectedPlatform} 
+                  onChange={onPlatformChange} 
+                  placeholder="Platform" 
+                  className="w-full h-10" 
+                  variant="popover"
+                />
               </div>
             </div>
           </CardContent>
@@ -360,7 +368,11 @@ export function UpdateApplicationModalMobile(props: Props) {
             ) : (
               <div className="space-y-2">
                 {contacts.map((contact) => (
-                  <div key={contact.id} className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70">
+                  <div
+                    key={contact.id}
+                    className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 cursor-pointer"
+                    onClick={() => onEditContact && onEditContact(contact)}
+                  >
                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-medium">{contact.name.charAt(0).toUpperCase()}</span>
                     </div>
@@ -383,20 +395,47 @@ export function UpdateApplicationModalMobile(props: Props) {
         </Card>
       </div>
 
-      <ResponsiveModalFooter className="fixed bottom-0 left-0 right-0 px-4 py-3 z-40 bg-background border-t border-border">
-        <div className="flex flex-col gap-2">
-          {error && (
-            <div className="flex items-center space-x-2 text-destructive text-sm">
-              <span>{error}</span>
-            </div>
-          )}
-          <div className="flex items-center w-full gap-2">
-            <Button variant="destructive" size="sm" onClick={onAskDelete} disabled={isSubmitting} className="flex-1">Delete</Button>
-            <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting} className="flex-1">Close</Button>
-            <Button size="sm" disabled={isSubmitting} onClick={onSave} className="flex-1">
-              {isSubmitting ? (<><Loader2 className="animate-spin mr-1 h-3 w-3" />Saving...</>) : ('Save')}
-            </Button>
+      <ResponsiveModalFooter className="px-4 py-3 bg-background border-t border-border">
+        {error && (
+          <div className="flex items-center gap-2 mb-2 p-2 rounded bg-destructive/10 text-destructive text-sm">
+            <div className="w-1 h-1 rounded-full bg-destructive" />
+            <span className="text-xs">{error}</span>
           </div>
+        )}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={onAskDelete} 
+            disabled={isSubmitting}
+            className="text-destructive hover:bg-destructive/10"
+          >
+            Delete
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={onClose} 
+            disabled={isSubmitting}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={onSave} 
+            disabled={isSubmitting} 
+            size="sm"
+            className="flex-[2]"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-3 h-3 border-2 border-current border-r-transparent rounded-full animate-spin mr-1" />
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
+          </Button>
         </div>
       </ResponsiveModalFooter>
     </div>

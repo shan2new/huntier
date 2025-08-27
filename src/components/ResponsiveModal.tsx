@@ -24,6 +24,7 @@ interface ResponsiveModalProps {
   trigger?: React.ReactNode
   className?: string
   contentClassName?: string
+  hideClose?: boolean
 }
 
 export function ResponsiveModal({
@@ -33,6 +34,7 @@ export function ResponsiveModal({
   trigger,
   className,
   contentClassName,
+  hideClose,
 }: ResponsiveModalProps) {
   const isMobile = useIsMobile()
 
@@ -95,7 +97,7 @@ export function ResponsiveModal({
     <ResponsiveModalContext.Provider value={{ isMobile: false }}>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className={cn("max-w-2xl max-h-[85vh] p-0 flex flex-col", contentClassName)}>
+        <DialogContent className={cn("max-w-2xl max-h-[85vh] p-0 flex flex-col", contentClassName)} hideClose={hideClose}>
           <div className="flex-1 min-h-0">
             <ScrollArea className="h-full">
               <div className={cn("flex flex-col", className)}>

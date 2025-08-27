@@ -1,0 +1,9 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+This is a job search intelligence app with a React / Vite / Shadcn frontend. Strictly use Shadcn and TailwindCSS while designing. 
+If the component size grows quite large, break it down into smaller components.
+Always use the best design principles and software design principles.

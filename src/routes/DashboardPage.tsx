@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useApi } from '@/lib/use-api'
 import { useAuthToken } from '@/lib/auth'
-import { getFunnelAnalyticsWithRefresh, getPlatformAnalyticsWithRefresh, listPlatformsWithRefresh, getProfileWithRefresh, getCompanyByIdWithRefresh, getRoleSuggestionsWithRefresh, generateProfileQARehearsalWithRefresh, clearQARehearsalCacheWithRefresh, type FunnelAnalytics, type PlatformAnalyticsItem, type Platform, type Company, type RoleSuggestionResponse, type QARehearsalResponse } from '@/lib/api'
+import { getFunnelAnalyticsWithRefresh, getPlatformAnalyticsWithRefresh, listPlatformsWithRefresh, generateProfileQARehearsalWithRefresh, clearQARehearsalCacheWithRefresh, type FunnelAnalytics, type PlatformAnalyticsItem, type Platform, type QARehearsalResponse } from '@/lib/api'
 import { useUser } from '@clerk/clerk-react'
 
 function StatCard({ title, value, icon: Icon, hint }: { title: string; value: number | string; icon: any; hint?: string }) {
@@ -318,79 +318,7 @@ function QARehearsalWidget() {
   )
 }
 
-function RoleSuggestionsWidget() {
-  const { getToken } = useAuthToken()
-  const [company, setCompany] = useState<Company | null>(null)
-  const [suggestions, setSuggestions] = useState<RoleSuggestionResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      try {
-        const p: any = await getProfileWithRefresh(getToken)
-        const companyId = p?.current_company_id
-        if (!companyId) {
-          setCompany(null)
-          setSuggestions(null)
-          return
-        }
-        const [c, s] = await Promise.all([
-          getCompanyByIdWithRefresh<Company>(getToken, companyId),
-          getRoleSuggestionsWithRefresh(getToken, companyId, { current_role: p?.current_role || null, current_company: p?.current_company || null })
-        ])
-        setCompany(c)
-        setSuggestions(s)
-      } catch {
-        setCompany(null)
-        setSuggestions(null)
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [getToken])
-
-  return (
-    <Card className="shadow-xs">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <div className="text-sm font-medium">AI role suggestions</div>
-              <div className="text-xs text-muted-foreground">Based on your profile{company ? ` • ${company.name}` : ''}</div>
-            </div>
-          </div>
-        </div>
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : !company ? (
-          <div className="text-xs text-muted-foreground py-6">Add your current company in Profile to get tailored role suggestions.</div>
-        ) : !suggestions || !Array.isArray(suggestions.suggestions) || suggestions.suggestions.length === 0 ? (
-          <div className="text-xs text-muted-foreground py-6">No suggestions available.</div>
-        ) : (
-          <div className="space-y-2">
-            {suggestions.suggestions.slice(0, 5).map((s, idx) => (
-              <div key={idx} className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{s.role}</div>
-                  {s.reason && <div className="text-[11px] text-muted-foreground truncate">{s.reason}</div>}
-                </div>
-                {typeof s.confidence === 'number' && (
-                  <Badge variant="outline" className="text-xs px-2 py-0.5">{Math.round(s.confidence * 100)}%</Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
+// RoleSuggestionsWidget removed (unused)
 
 export function DashboardPage() {
   const { user } = useUser()

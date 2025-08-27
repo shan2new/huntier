@@ -4,7 +4,6 @@ import { motion } from 'motion/react'
 import { 
   Briefcase, 
   Building2,
-  Calendar, 
   CheckCircle, 
   ChevronDown,
   Clock, 

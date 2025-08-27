@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { RouterProvider } from '@tanstack/react-router'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { router } from './router'
+import { Toaster } from '@/components/ui/toaster'
 import './index.css'
 
 const rootElement = document.getElementById('app')
@@ -15,6 +16,7 @@ if (rootElement && !rootElement.innerHTML) {
         publishableKey={clerkKey}
       >
         <RouterProvider router={router} />
+        <Toaster />
       </ClerkProvider>
     </StrictMode>,
   )

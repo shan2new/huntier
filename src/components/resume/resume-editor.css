@@ -1,0 +1,371 @@
+/* Resume Editor Styles - Using Theme Variables */
+
+@layer components {
+  /* Toolbar */
+  .resume-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--border));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  /* Document Background */
+  .document-viewer {
+    background-color: hsl(var(--muted));
+    min-height: 100vh;
+  }
+
+  /* A4 Paper Effect */
+  .resume-document {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    background-color: white !important;
+    color: #111827 !important;
+    /* Fixed A4 canvas size on screen */
+    width: 794px;
+    min-height: 1123px;
+    /* Keep proportions stable */
+    aspect-ratio: 210 / 297;
+  }
+  
+  /* Responsive fallback for small viewports */
+  @media (max-width: 820px) {
+    .resume-document {
+      width: 100%;
+      max-width: 794px;
+    }
+  }
+  
+  /* Force high contrast text in resume document */
+  .resume-document * {
+    color: inherit;
+  }
+  
+  .resume-document .text-muted-foreground,
+  .resume-document .text-gray-600,
+  .resume-document .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  
+  .resume-document .text-foreground,
+  .resume-document .text-gray-900,
+  .resume-document .text-gray-800,
+  .resume-document .text-gray-700 {
+    color: #111827 !important;
+  }
+  
+  /* Ensure proper section spacing (tighter for A4 density) */
+  .resume-document > div > div > div {
+    margin-bottom: 1.25rem;
+  }
+  
+  .resume-document > div > div > div:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Inline Editable Enhancements */
+  .resume-editable {
+    position: relative;
+    transition: all 150ms ease-in-out;
+  }
+
+  /* Edit hint on hover */
+  .resume-editable-hint {
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 150ms;
+    pointer-events: none;
+  }
+
+  .resume-editable:hover .resume-editable-hint {
+    opacity: 0.5;
+  }
+
+  .resume-editable:focus {
+    background-color: hsl(var(--primary) / 0.05);
+    outline: 2px solid hsl(var(--primary) / 0.3);
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  .resume-editable:hover:not(:focus) {
+    background-color: hsl(var(--muted) / 0.5);
+    border-radius: calc(var(--radius) - 2px);
+    cursor: text;
+  }
+
+  /* Empty State Styling */
+  .resume-editable:empty::before {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  /* Tab navigation highlight */
+  .resume-editable:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    background-color: hsl(var(--primary) / 0.05);
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  /* Section Headers */
+  .resume-section-header {
+    color: #111827 !important;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Professional Section Styling */
+  .resume-section-divider {
+    height: 1px;
+    background: linear-gradient(to right, hsl(var(--border)), transparent);
+  }
+  
+  .resume-education-item {
+    border-left: 2px solid transparent;
+    padding-left: 1rem;
+    transition: all 200ms;
+  }
+  
+  .resume-education-item:hover {
+    border-left-color: hsl(var(--primary) / 0.3);
+    background: linear-gradient(to right, hsl(var(--primary) / 0.02), transparent);
+  }
+  
+  .resume-achievement-bullet {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  
+  .resume-achievement-bullet::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: hsl(var(--muted-foreground) / 0.4);
+    border-radius: 50%;
+    transition: all 200ms;
+  }
+  
+  .resume-achievement-bullet:hover::before {
+    background-color: hsl(var(--primary));
+    transform: scale(1.2);
+  }
+
+  /* Experience Item Styling */
+  .experience-item {
+    position: relative;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    transition: all 200ms;
+  }
+
+  .experience-item:hover {
+    background-color: hsl(var(--muted) / 0.5);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  /* Bullet Point Styling */
+  .bullet-point {
+    position: relative;
+    padding-left: 1.25rem;
+  }
+
+  .bullet-point::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: hsl(var(--muted-foreground));
+    font-weight: 700;
+  }
+
+  /* Skill Tags */
+  .skill-tag {
+    background-color: hsl(var(--muted));
+    color: hsl(var(--muted-foreground));
+    border: 1px solid transparent;
+    transition: all 150ms;
+  }
+
+  .skill-tag:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border-color: hsl(var(--border));
+    transform: translateY(-0.125rem);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  /* Action Buttons */
+  .resume-action-btn {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 200ms;
+  }
+
+  .group:hover .resume-action-btn {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Multi-page support */
+  .resume-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+    margin-bottom: 2rem;
+  }
+
+  .resume-page:last-child {
+    page-break-after: auto;
+    margin-bottom: 0;
+  }
+
+  /* Section manager styling */
+  .section-manager {
+    margin: 1rem 0;
+    opacity: 0;
+    transition: opacity 200ms;
+  }
+
+  .section-manager:hover {
+    opacity: 1;
+  }
+
+  /* Progress bar animation */
+  .progress-bar {
+    transition: width 600ms ease-out;
+  }
+
+  /* Section transitions */
+  .resume-section {
+    transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
+  }
+
+  .resume-section:hover {
+    transform: translateY(-0.125rem);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  /* Sections Sidebar animations */
+  .sections-sidebar .sections-sidebar-item {
+    animation: fadeIn 200ms ease-out;
+    transition: transform 150ms ease, background-color 150ms ease, opacity 150ms ease;
+  }
+
+  .sections-sidebar .sections-sidebar-item:active {
+    transform: scale(0.98);
+  }
+
+  /* Focus Visible Enhancement */
+  .resume-editable:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Placeholder Improvements */
+  .resume-editable[data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+    pointer-events: none;
+  }
+
+  /* Smooth Scrolling */
+  .resume-content {
+    scroll-behavior: smooth;
+  }
+
+  /* Loading States */
+  .resume-loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  /* Success/Error States */
+  .resume-success {
+    border-color: #10b981;
+    background-color: rgb(16 185 129 / 0.05);
+  }
+
+  .resume-error {
+    border-color: hsl(var(--destructive));
+    background-color: hsl(var(--destructive) / 0.05);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .resume-page {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    page-break-after: always;
+  }
+  
+  .resume-page:last-child {
+    page-break-after: auto;
+  }
+  
+  .resume-action-btn,
+  .resume-toolbar,
+  .section-manager,
+  .slide-in-left,
+  .page-number {
+    display: none;
+  }
+  
+  .resume-editable:hover {
+    background-color: transparent;
+  }
+  
+  .document-viewer {
+    background-color: white;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 300ms ease-out;
+}

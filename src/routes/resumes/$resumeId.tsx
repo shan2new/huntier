@@ -1,22 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/clerk-react'
-import { Briefcase, FileText, Save, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+import { toast } from '@/components/ui/toaster'
+
 import { useAuthToken } from '@/lib/auth'
-import { aiSuggestSummaryWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importLinkedInWithRefresh, updateResumeWithRefresh } from '@/lib/api'
+import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, updateResumeWithRefresh } from '@/lib/api'
+import { ResumeToolbar } from '@/components/resume/ResumeToolbar'
+import { PersonalInfoSection } from '@/components/resume/PersonalInfoSection'
+import { SummarySection } from '@/components/resume/SummarySection'
+import { ExperienceSection } from '@/components/resume/ExperienceSection'
+import { SkillsSection } from '@/components/resume/SkillsSection'
+import { EducationSection } from '@/components/resume/EducationSection'
+import { AchievementsSection } from '@/components/resume/AchievementsSection'
+import { ResumeProgress } from '@/components/resume/ResumeProgress'
+import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
+import { SectionManager } from '@/components/resume/SectionManager'
+import '@/components/resume/resume-editor.css'
 
 export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { getToken } = useAuthToken()
   const { user } = useUser()
   const isNew = resumeId === 'new'
   const [saving, setSaving] = useState(false)
-  const [, setImporting] = useState(false)
+  // Removed LinkedIn import; importing state no longer used
   const [autoImportAttempted, setAutoImportAttempted] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [resumeData, setResumeData] = useState({
     id: undefined as string | undefined,
     name: isNew ? 'Untitled Resume' : 'My Resume',
@@ -40,15 +48,51 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   useEffect(() => {
     setResumeData(prev => {
       if ((prev.sections).length > 0) return prev
-      const seed = [
-        { id: 'summary', type: 'summary', title: 'Summary', order: 0, content: { text: prev.summary || '' } },
-        { id: 'experience', type: 'experience', title: 'Experience', order: 1, content: (prev.experience || []) },
-        { id: 'achievements', type: 'achievements', title: 'Achievements', order: 2, content: (prev.achievements || []) },
-      ]
+      const seed = []
+      let order = 0
+      
+      // Add summary section
+      seed.push({ id: 'summary', type: 'summary', title: 'Summary', order: order++, content: { text: prev.summary || '' } })
+      
+      // Add experience section if there's experience data
+      if (prev.experience.length > 0) {
+        seed.push({ id: 'experience', type: 'experience', title: 'Work Experience', order: order++, content: prev.experience })
+      }
+      
+      // Add education section if there's education data
+      if (prev.education.length > 0) {
+        seed.push({ id: 'education', type: 'education', title: 'Education', order: order++, content: prev.education })
+      }
+      
+      // Add skills section if there are skills
+      if (prev.technologies.length > 0 && prev.technologies[0].skills?.length > 0) {
+        seed.push({ id: 'skills', type: 'skills', title: 'Skills', order: order++, content: { groups: prev.technologies } })
+      }
+      
+      // Add achievements section if there are achievements
+      if (prev.achievements.length > 0) {
+        seed.push({ id: 'achievements', type: 'achievements', title: 'Achievements', order: order++, content: prev.achievements })
+      }
+      
+      // Default sections if empty
+      if (seed.length === 1) {
+        seed.push({ id: 'experience', type: 'experience', title: 'Work Experience', order: order++, content: [] })
+      }
+      
       return { ...prev, sections: seed }
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // Ensure sections array always contains a summary section at the top
+  const ensureSectionsWithSummary = (sections: Array<any>, summaryText: string) => {
+    const withoutSummary = (Array.isArray(sections) ? sections : []).filter((s: any) => s.type !== 'summary')
+    const ordered = withoutSummary.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+    const final = [
+      { id: 'summary', type: 'summary', title: 'Summary', order: 0, content: { text: summaryText || '' } },
+      ...ordered.map((s: any, idx: number) => ({ ...s, order: idx + 1 }))
+    ]
+    return final
+  }
+
 
   useEffect(() => {
     if (isNew) return
@@ -56,6 +100,32 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       try {
         const data = await getResumeWithRefresh(resumeId, getToken)
         const d: any = data || {}
+        const buildSectionsFromData = (src: any) => {
+          const sections: Array<any> = []
+          let order = 0
+          // Always include summary section (even if empty, for guidance)
+          sections.push({ id: 'summary', type: 'summary', title: 'Summary', order: order++, content: { text: src.summary || '' } })
+          // Experience
+          if (Array.isArray(src.experience) && src.experience.length > 0) {
+            sections.push({ id: 'experience', type: 'experience', title: 'Work Experience', order: order++, content: src.experience })
+          }
+          // Education
+          if (Array.isArray(src.education) && src.education.length > 0) {
+            sections.push({ id: 'education', type: 'education', title: 'Education', order: order++, content: src.education })
+          }
+          // Skills
+          if (Array.isArray(src.technologies) && src.technologies.length > 0) {
+            sections.push({ id: 'skills', type: 'skills', title: 'Skills', order: order++, content: { groups: src.technologies } })
+          }
+          // Achievements
+          if (Array.isArray(src.achievements) && src.achievements.length > 0) {
+            sections.push({ id: 'achievements', type: 'achievements', title: 'Achievements', order: order++, content: src.achievements })
+          }
+          if (sections.length === 1) {
+            sections.push({ id: 'experience', type: 'experience', title: 'Work Experience', order: order++, content: [] })
+          }
+          return sections
+        }
         setResumeData({
           id: d.id,
           name: d.name || 'Untitled Resume',
@@ -66,7 +136,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
           leadership: d.leadership || [],
           education: d.education || [],
           technologies: d.technologies || [],
-          sections: Array.isArray(d.sections) ? d.sections : [],
+          sections: (Array.isArray(d.sections) && d.sections.length > 0) ? d.sections : buildSectionsFromData(d),
           template_id: d.template_id || null,
           theme: d.theme || { font: 'Inter', size: 'md', accent: 'zinc' },
         })
@@ -90,7 +160,39 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     }))
   }, [user])
 
-  // Attempt auto-import from LinkedIn URL if creating a new resume and profile has url
+  // Auto-save functionality
+  useEffect(() => {
+    if (!hasUnsavedChanges || !resumeData.id) return
+    
+    const timer = setTimeout(() => {
+      handleSave(false) // Silent save
+    }, 2000) // Auto-save after 2 seconds of inactivity
+    
+    return () => clearTimeout(timer)
+  }, [resumeData, hasUnsavedChanges])
+
+  // Mark as having unsaved changes when data changes
+  useEffect(() => {
+    if (resumeData.id) {
+      setHasUnsavedChanges(true)
+    }
+  }, [resumeData])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Save shortcut: Ctrl/Cmd + S
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [resumeData])
+
+  // Attempt to seed from profile using AI when creating a new resume
   useEffect(() => {
     if (autoImportAttempted) return
     if (!isNew) return
@@ -98,17 +200,30 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     ;(async () => {
       try {
         const profile = await getProfileWithRefresh<any>(getToken)
-        const url = (profile)?.linkedin_url
-        const hasNoExperience = (resumeData.sections || []).every((s: any) => s.type !== 'experience' || (Array.isArray(s.content) && s.content.length === 0))
-        if (url && hasNoExperience) {
-          await handleImportLinkedIn(url, { silent: true })
+        const aiSeed: any = await aiGenerateResumeFromProfileWithRefresh(getToken, profile)
+        if (aiSeed && typeof aiSeed === 'object') {
+          setResumeData(prev => {
+            const nextSummary = (typeof aiSeed.summary === 'string' && aiSeed.summary) ? aiSeed.summary : prev.summary
+            const aiSections = Array.isArray(aiSeed?.sections) && aiSeed.sections.length ? aiSeed.sections : prev.sections
+            const sectionsWithSummary = ensureSectionsWithSummary(aiSections, nextSummary)
+            return {
+              ...prev,
+              personal_info: { ...prev.personal_info, ...(aiSeed?.personal_info || {}) },
+              summary: nextSummary,
+              experience: Array.isArray(aiSeed?.sections)
+                ? ((aiSeed.sections.find((s: any) => s.type === 'experience')?.content) || prev.experience)
+                : prev.experience,
+              education: Array.isArray(aiSeed?.education) ? aiSeed.education : prev.education,
+              technologies: Array.isArray(aiSeed?.technologies) ? aiSeed.technologies : prev.technologies,
+              sections: sectionsWithSummary,
+            }
+          })
         }
       } catch {}
     })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isNew])
 
-  const handleSave = async () => {
+  const handleSave = async (showNotification = true) => {
     try {
       setSaving(true)
       const payload = {
@@ -128,14 +243,20 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       if (isNew) {
         const created = await createResumeWithRefresh(payload, getToken)
         setResumeData((prev) => ({ ...prev, id: (created as any).id }))
-        alert('Resume created')
+        window.history.replaceState({}, '', `/resumes/${(created as any).id}`)
       } else if (resumeData.id) {
         await updateResumeWithRefresh(resumeData.id, payload, getToken)
-        alert('Resume saved')
       }
+      
+      setLastSaved(new Date())
+      setHasUnsavedChanges(false)
     } catch (e) {
       console.error('Failed to save resume', e)
-      alert('Failed to save resume')
+      if (showNotification) {
+        toast.error('Failed to save resume', {
+          description: 'Please check your connection and try again.',
+        })
+      }
     } finally {
       setSaving(false)
     }
@@ -155,101 +276,262 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
 
   const getSection = (type: string) => (resumeData.sections).find(s => s.type === type)
 
-  const summarySection = getSection('summary') || { content: { text: resumeData.summary } }
-  const experienceSection = getSection('experience') || { content: resumeData.experience }
+  const skillsTags = (() => {
+    const groups = (getSection('skills')?.content?.groups || []) as Array<any>
+    if (Array.isArray(groups) && groups.length > 0) {
+      const all = groups.flatMap((g: any) => Array.isArray(g.skills) ? g.skills : [])
+      return Array.from(new Set(all.map((s: string) => String(s).trim()).filter(Boolean)))
+    }
+    const tech = Array.isArray(resumeData.technologies) ? resumeData.technologies : []
+    const all = tech.flatMap((g: any) => Array.isArray(g?.skills) ? g.skills : [])
+    return Array.from(new Set(all.map((s: string) => String(s).trim()).filter(Boolean)))
+  })()
 
-  const suggestSummary = async () => {
+  // Available sections that can be added
+  const availableSections = [
+    { 
+      type: 'education', 
+      title: 'Education',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    },
+    { 
+      type: 'achievements', 
+      title: 'Achievements',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    },
+    { 
+      type: 'skills', 
+      title: 'Skills',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    },
+    { 
+      type: 'leadership', 
+      title: 'Leadership',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    }
+  ]
+
+  const setSkillsFromTags = (tags: Array<string>) => {
+    const unique = Array.from(new Set(tags.map((t) => t.trim()).filter(Boolean)))
+    setResumeData((prev) => ({
+      ...prev,
+      technologies: [{ name: '', skills: unique }],
+      sections: (prev.sections).some((s: any) => s.type === 'skills')
+        ? (prev.sections).map((s: any) => s.type === 'skills' ? { ...s, content: { groups: [{ name: '', skills: unique }] } } : s)
+        : [...(prev.sections), { id: 'skills', type: 'skills', title: 'Skills', order: (prev.sections).length, content: { groups: [{ name: '', skills: unique }] } }],
+    }))
+  }
+  // Skills helpers removed; will reintroduce when skills UI is added back
+
+  // InlineEditable moved to `components/resume/InlineEditable`
+
+  // Helpers to sync edits from preview with sections
+  const setSummaryText = (text: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      summary: text,
+      sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text } } : s),
+    }))
+  }
+
+  const setExperienceField = (index: number, field: 'company' | 'role' | 'startDate' | 'endDate', value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: (prev.experience).map((item, i) => i === index ? { ...item, [field]: value } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'experience'
+        ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, [field]: value } : it) }
+        : s
+      ),
+    }))
+  }
+
+  const setExperienceBullet = (index: number, bulletIndex: number, text: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: (prev.experience).map((item, i) => i === index ? { ...item, bullets: (item.bullets || []).map((b: string, bi: number) => bi === bulletIndex ? text : b) } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'experience'
+        ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, bullets: (it.bullets || []).map((b: string, bi: number) => bi === bulletIndex ? text : b) } : it) }
+        : s
+      ),
+    }))
+  }
+
+  const addExperienceItem = () => {
+    const newExp = { company: '', role: '', startDate: '', endDate: '', bullets: [''] }
+    setResumeData(prev => ({
+      ...prev,
+      experience: [...(prev.experience), newExp],
+      sections: (prev.sections).map((s: any) => s.type === 'experience' ? { ...s, content: [...((s.content as Array<any>)), newExp] } : s),
+    }))
+  }
+
+  const removeExperienceItem = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: (prev.experience).filter((_, i) => i !== index),
+      sections: (prev.sections).map((s: any) => s.type === 'experience' ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) } : s),
+    }))
+  }
+
+  const addExperienceBullet = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: (prev.experience).map((item, i) => i === index ? { ...item, bullets: [...(item.bullets || []), ''] } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'experience' ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, bullets: [...(it.bullets || []), ''] } : it) } : s),
+    }))
+  }
+
+  const removeExperienceBullet = (index: number, bulletIndex: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      experience: (prev.experience).map((item, i) => i === index ? { ...item, bullets: (item.bullets || []).filter((_: string, bi: number) => bi !== bulletIndex) } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'experience' ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, bullets: (it.bullets || []).filter((_: string, bi: number) => bi !== bulletIndex) } : it) } : s),
+    }))
+  }
+
+  // Education section handlers
+  const addEducationItem = () => {
+    const newEdu = { school: '', degree: '', field: '', startDate: '', endDate: '' }
+    setResumeData(prev => ({
+      ...prev,
+      education: [...(prev.education), newEdu],
+      sections: (prev.sections).map((s: any) => s.type === 'education' ? { ...s, content: [...((s.content as Array<any>)), newEdu] } : s),
+    }))
+  }
+
+  const removeEducationItem = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      education: (prev.education).filter((_, i) => i !== index),
+      sections: (prev.sections).map((s: any) => s.type === 'education' ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) } : s),
+    }))
+  }
+
+  const setEducationField = (index: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      education: (prev.education).map((item, i) => i === index ? { ...item, [field]: value } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'education'
+        ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, [field]: value } : it) }
+        : s
+      ),
+    }))
+  }
+
+  // Achievements section handlers
+  const addAchievementItem = () => {
+    const newAchievement = { title: '', description: '', date: '' }
+    setResumeData(prev => ({
+      ...prev,
+      achievements: [...(prev.achievements), newAchievement],
+      sections: (prev.sections).map((s: any) => s.type === 'achievements' ? { ...s, content: [...((s.content as Array<any>)), newAchievement] } : s),
+    }))
+  }
+
+  const removeAchievementItem = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      achievements: (prev.achievements).filter((_, i) => i !== index),
+      sections: (prev.sections).map((s: any) => s.type === 'achievements' ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) } : s),
+    }))
+  }
+
+  const setAchievementField = (index: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      achievements: (prev.achievements).map((item, i) => i === index ? { ...item, [field]: value } : item),
+      sections: (prev.sections).map((s: any) => s.type === 'achievements'
+        ? { ...s, content: (s.content as Array<any>).map((it, i) => i === index ? { ...it, [field]: value } : it) }
+        : s
+      ),
+    }))
+  }
+
+  // Add new section
+  const addSection = (type: string, title: string) => {
+    const newSection = {
+      id: type,
+      type,
+      title,
+      order: resumeData.sections.length,
+      content: type === 'skills' ? { groups: [{ name: '', skills: [] }] } : []
+    }
+    setResumeData(prev => {
+      const updated = { ...prev, sections: [...prev.sections, newSection] }
+      
+      // Initialize the corresponding data array if needed
+      if (type === 'education' && !prev.education.length) {
+        updated.education = []
+      } else if (type === 'achievements' && !prev.achievements.length) {
+        updated.achievements = []
+      } else if (type === 'skills' && !prev.technologies.length) {
+        updated.technologies = [{ name: '', skills: [] }]
+      }
+      
+      return updated
+    })
+  }
+
+  // Remove a section from the resume (keeps underlying data for undoability)
+  const removeSection = (type: string) => {
+    setResumeData(prev => {
+      const filtered = (prev.sections).filter((s: any) => s.type !== type)
+      const reindexed = filtered.map((s: any, i: number) => ({ ...s, order: i }))
+      return { ...prev, sections: reindexed }
+    })
+  }
+
+  // Reorder sections based on indices within the sorted list
+  const reorderSections = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return
+    setResumeData(prev => {
+      const ordered = [...(prev.sections)].sort((a, b) => a.order - b.order)
+      const [moved] = ordered.splice(fromIndex, 1)
+      ordered.splice(toIndex, 0, moved)
+      const withOrder = ordered.map((s, i) => ({ ...s, order: i }))
+      return { ...prev, sections: withOrder }
+    })
+  }
+
+  // Summary AI suggestion temporarily disabled in UI
+
+  const suggestBullets = async (index: number) => {
     try {
       if (!resumeData.id) return
-      const res = await aiSuggestSummaryWithRefresh(resumeData.id, getToken, { job: '' })
-      const text = (res as any)?.summary || ''
+      const experienceSection = getSection('experience') || { content: resumeData.experience }
+      const exp = ((experienceSection).content || [])[index]
+      const res: any = await aiSuggestBulletsWithRefresh(resumeData.id, getToken, { role: exp?.role || '' })
+      const bullets: Array<string> = Array.isArray(res?.bullets)
+        ? res.bullets
+        : (typeof res?.text === 'string' ? res.text.split('\n').map((s: string) => s.replace(/^[-•\s]+/, '')).filter(Boolean) : [])
+      if (!bullets.length) return
       setResumeData(prev => ({
         ...prev,
-        summary: text,
-        sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text } } : s),
+        experience: (prev.experience).map((item, i) => i === index ? { ...item, bullets } : item),
+        sections: (prev.sections).map((s: any) =>
+          s.type === 'experience'
+            ? { ...s, content: (s.content as Array<any>).map((item, i) => i === index ? { ...item, bullets } : item) }
+            : s
+        ),
       }))
     } catch (e) {
-      console.error('Failed to suggest summary', e)
+      console.error('Failed to suggest bullets', e)
     }
   }
 
-  async function handleImportLinkedIn(linkedinUrl?: string | null, opts: { silent?: boolean } = {}) {
-    try {
-      setImporting(true)
-      const profile = linkedinUrl ? { linkedin_url: linkedinUrl } : await getProfileWithRefresh<any>(getToken)
-      const url = (profile)?.linkedin_url
-      if (!url || !String(url).trim()) {
-        if (!opts.silent) alert('Add your LinkedIn URL in Profile to import')
-        return
-      }
-      const result = await importLinkedInWithRefresh(getToken, { url })
-      const r: any = result || {}
-      const importedSections: Array<any> = Array.isArray(r.sections) ? r.sections : []
-      const getImported = (type: string) => importedSections.find((s: any) => s.type === type)
-      const impExp = getImported('experience')?.content || []
-      const impEdu = getImported('education')?.content || r.education || []
-      const impSkills = getImported('skills')?.content || r.technologies || null
+  // ATS checker removed from this view for now
 
-      setResumeData(prev => {
-        let sections = [...(prev.sections)]
+  // Section reordering helpers removed from this simplified builder
 
-        const ensureSection = (type: string, title: string, content: any) => {
-          const idx = sections.findIndex(s => s.type === type)
-          if (idx >= 0) {
-            sections[idx] = { ...sections[idx], content }
-          } else {
-            sections = [...sections, { id: type, type, title, order: sections.length, content }]
-          }
-        }
-
-        // Personal info merge (non-empty wins)
-        const pi = r.personal_info || {}
-        const personal_info = {
-          ...prev.personal_info,
-          fullName: prev.personal_info.fullName || pi.fullName || '',
-          email: prev.personal_info.email || pi.email || '',
-          phone: prev.personal_info.phone || pi.phone || '',
-          location: prev.personal_info.location || pi.location || '',
-        }
-
-        // Summary
-        let summary = prev.summary
-        if (r.summary && (!prev.summary || prev.summary.trim().length === 0)) {
-          summary = r.summary
-          sections = sections.map(s => s.type === 'summary' ? { ...s, content: { text: summary } } : s)
-        }
-
-        // Experience
-        let experience = prev.experience
-        if (Array.isArray(impExp) && impExp.length) {
-          experience = impExp
-          ensureSection('experience', 'Experience', impExp)
-        }
-
-        // Education
-        let education = prev.education
-        if (Array.isArray(impEdu) && impEdu.length) {
-          education = impEdu
-          ensureSection('education', 'Education', impEdu)
-        }
-
-        // Skills/Technologies
-        let technologies = prev.technologies
-        if (impSkills && ((impSkills.groups && Array.isArray(impSkills.groups)) || Array.isArray(impSkills))) {
-          const groups = Array.isArray(impSkills?.groups) ? impSkills.groups : Array.isArray(impSkills) ? impSkills : []
-          technologies = groups
-          ensureSection('skills', 'Skills', { groups })
-        }
-
-        return { ...prev, personal_info, summary, experience, education, technologies, sections }
-      })
-    } catch (e) {
-      console.error('Import LinkedIn failed', e)
-      if (!opts.silent) alert('Failed to import from LinkedIn')
-    } finally {
-      setImporting(false)
-    }
-  }
+  // (Removed) LinkedIn import helper and any automatic LinkedIn imports
 
   const download = async (format: 'pdf' | 'docx') => {
     try {
@@ -276,922 +558,156 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   }
 
   return (
-    <div className="bg-background">
-      <div className="border-b bg-card">
-        <div className="w-full py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <FileText className="h-6 w-6 text-primary" />
-              <Input
-                value={resumeData.name}
-                onChange={(e) => setResumeData(prev => ({ ...prev, name: e.target.value }))}
-                className="text-lg font-semibold bg-transparent border-none focus:ring-1 focus:ring-primary"
-                placeholder="Resume Name"
+    <div>
+
+      {/* Document Viewer Background */}
+      <div className="document-viewer">
+        <div className="mx-auto px-8 py-8" style={{ maxWidth: '1200px' }}>
+          <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,794px)_1fr]">
+            {/* Left Sidebar - Toolbar + Progress & Sections */}
+            <div className="hidden lg:block w-80 space-y-4 justify-self-start">
+              {/* Toolbar moved into sidebar */}
+              <ResumeToolbar
+                name={resumeData.name}
+                onNameChange={(name) => setResumeData(prev => ({ ...prev, name }))}
+                templateId={resumeData.template_id}
+                onTemplateChange={(template_id) => setResumeData(prev => ({ ...prev, template_id }))}
+                onExportPdf={() => download('pdf')}
+                onExportDocx={() => download('docx')}
+                onSave={handleSave}
+                saving={saving}
+                lastSaved={lastSaved}
+                hasUnsavedChanges={hasUnsavedChanges}
+                variant="card"
+              />
+              <div className="slide-in-left" style={{ animationDelay: '100ms' }}>
+                <ResumeProgress
+                  personalInfo={resumeData.personal_info}
+                  summary={resumeData.summary}
+                  experience={resumeData.experience}
+                  skills={skillsTags}
+                />
+              </div>
+              
+              {/* Sections Sidebar */}
+              <SectionsSidebar
+                sections={resumeData.sections}
+                availableSections={availableSections}
+                onAddSection={addSection}
+                onRemoveSection={removeSection}
+                onReorder={reorderSections}
+                onScrollTo={(type) => {
+                  const el = document.querySelector(`[data-section="${type}"]`)
+                  el?.scrollIntoView({ behavior: 'smooth' })
+                }}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={resumeData.template_id || ''}
-                onChange={(e) => setResumeData(prev => ({ ...prev, template_id: e.target.value || null }))}
-                className="h-9 rounded-md border px-2 text-sm bg-background"
-              >
-                <option value="">Default</option>
-                <option value="compact">Compact</option>
-                <option value="elegant">Elegant</option>
-              </select>
-              <select
-                value={resumeData.theme?.size || 'md'}
-                onChange={(e) => setResumeData(prev => ({ ...prev, theme: { ...(prev.theme || {}), size: e.target.value } }))}
-                className="h-9 rounded-md border px-2 text-sm bg-background"
-              >
-                <option value="sm">Small</option>
-                <option value="md">Medium</option>
-                <option value="lg">Large</option>
-              </select>
-              {/* LinkedIn import removed */}
-              <Button onClick={() => download('pdf')} variant="outline">Export PDF</Button>
-              <Button onClick={() => download('docx')} variant="outline">Export DOCX</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="w-full py-6">
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="space-y-6 lg:col-span-2">
-            <Tabs defaultValue="personal">
-              <TabsList className="grid grid-cols-5 w-full">
-                <TabsTrigger value="personal">
-                  <User className="h-4 w-4 mr-2" />
-                  Personal
-                </TabsTrigger>
-                <TabsTrigger value="summary">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Summary
-                </TabsTrigger>
-                <TabsTrigger value="experience">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Experience
-                </TabsTrigger>
-                <TabsTrigger value="education">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Education
-                </TabsTrigger>
-                <TabsTrigger value="skills">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Skills
-                </TabsTrigger>
-              </TabsList>
+            {/* Resume Document - Single Continuous Page */}
+            <div className="lg:col-start-2 justify-self-center">
+              <div className="w-full max-w-[900px]">
+                <div className="relative mb-8 last:mb-0">
+                  <div 
+                    className="resume-document mx-auto"
+                    style={{ 
+                      colorScheme: 'light'
+                    }}
+                  >
+                    <div className="px-16 py-16 space-y-8 resume-content">
+                      <div data-section="personal-info">
+                        <PersonalInfoSection personalInfo={resumeData.personal_info} onChange={(field, value) => updatePersonalInfo(field, value)} />
+                      </div>
 
-              <TabsContent value="personal" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input
-                        id="fullName"
-                        value={resumeData.personal_info.fullName}
-                        onChange={(e) => updatePersonalInfo('fullName', e.target.value)}
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={resumeData.personal_info.email}
-                        onChange={(e) => updatePersonalInfo('email', e.target.value)}
-                        placeholder="john@example.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={resumeData.personal_info.phone}
-                        onChange={(e) => updatePersonalInfo('phone', e.target.value)}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={resumeData.personal_info.location}
-                        onChange={(e) => updatePersonalInfo('location', e.target.value)}
-                        placeholder="San Francisco, CA"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="summary" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Professional Summary</CardTitle>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={suggestSummary}>AI Suggest</Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Label htmlFor="summary">Summary</Label>
-                      <Textarea
-                        id="summary"
-                        value={(summarySection).content?.text || resumeData.summary}
-                        onChange={(e) => setResumeData(prev => ({
-                          ...prev,
-                          summary: e.target.value,
-                          sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text: e.target.value } } : s),
-                        }))}
-                        placeholder="Experienced software engineer with 5+ years of expertise in full-stack development..."
-                        className="min-h-[150px]"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="experience" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Work Experience</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        const newExp = {
-                          company: '',
-                          role: '',
-                          startDate: '',
-                          endDate: '',
-                          bullets: ['']
-                        }
-                        setResumeData(prev => ({
-                          ...prev,
-                          experience: [...(prev.experience || []), newExp],
-                          sections: (prev.sections).map((s: any) => 
-                            s.type === 'experience' 
-                              ? { ...s, content: [...((s.content as Array<any>) || []), newExp] }
-                              : s
-                          ),
-                        }))
-                      }}
-                    >
-                      Add Experience
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {((experienceSection).content || []).map((exp: any, index: number) => (
-                      <div key={index} className="border rounded-lg p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Company Name</Label>
-                            <Input
-                              value={exp.company || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  experience: (prev.experience).map((item, i) => 
-                                    i === index ? { ...item, company: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'experience' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, company: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Company Name"
-                            />
+                      {(!resumeData.personal_info.fullName && !resumeData.summary && resumeData.sections.length <= 1) && (
+                        <div className="text-center py-16">
+                          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
                           </div>
-                          <div className="space-y-2">
-                            <Label>Job Title</Label>
-                            <Input
-                              value={exp.role || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  experience: (prev.experience).map((item, i) => 
-                                    i === index ? { ...item, role: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'experience' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, role: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Software Engineer"
-                            />
-                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">Let's build your resume</h3>
+                          <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+                            Start by clicking on any section below to add your information.
+                          </p>
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Start Date</Label>
-                            <Input
-                              value={exp.startDate || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  experience: (prev.experience).map((item, i) => 
-                                    i === index ? { ...item, startDate: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'experience' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, startDate: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Jan 2022"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>End Date</Label>
-                            <Input
-                              value={exp.endDate || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  experience: (prev.experience).map((item, i) => 
-                                    i === index ? { ...item, endDate: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'experience' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, endDate: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Present"
-                            />
-                          </div>
-                        </div>
+                      )}
 
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label>Key Accomplishments</Label>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  experience: (prev.experience).map((item, i) => 
-                                    i === index ? { ...item, bullets: [...(item.bullets || []), ''] } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'experience' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, bullets: [...(item.bullets || []), ''] } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                            >
-                              + Add Bullet
-                            </Button>
-                          </div>
-                          
-                          {(exp.bullets || ['']).map((bullet: string, bulletIndex: number) => (
-                            <div key={bulletIndex} className="flex gap-2">
-                              <div className="flex-1">
-                                <Textarea
-                                  value={bullet}
-                                  onChange={(e) => {
-                                    const newValue = e.target.value
-                                    setResumeData(prev => ({
-                                      ...prev,
-                                      experience: (prev.experience).map((item, i) => 
-                                        i === index 
-                                          ? { 
-                                              ...item, 
-                                              bullets: (item.bullets as Array<string>).map((b, bi) => 
-                                                bi === bulletIndex ? newValue : b
-                                              ) 
-                                            } 
-                                          : item
-                                      ),
-                                      sections: (prev.sections).map((s: any) => 
-                                        s.type === 'experience' 
-                                          ? { 
-                                              ...s, 
-                                              content: (s.content as Array<any>).map((item, i) => 
-                                                i === index 
-                                                  ? { 
-                                                      ...item, 
-                                                      bullets: (item.bullets as Array<string>).map((b, bi) => 
-                                                        bi === bulletIndex ? newValue : b
-                                                      ) 
-                                                    } 
-                                                  : item
-                                              ) 
-                                            }
-                                          : s
-                                      ),
-                                    }))
-                                  }}
-                                  placeholder="• Achieved 25% increase in user engagement by implementing new features"
-                                  className="min-h-[60px]"
+                      {([...resumeData.sections].sort((a, b) => a.order - b.order)).map((section) => {
+                        switch (section.type) {
+                          case 'summary':
+                            return (
+                              <div key={section.id} data-section="summary">
+                                <SummarySection text={section.content?.text || ''} onChange={setSummaryText} />
+                              </div>
+                            )
+                          case 'experience': {
+                            const expItems = section.content || []
+                            return (
+                              <div key={section.id} data-section="experience">
+                                <ExperienceSection
+                                  items={expItems}
+                                  onAddItem={addExperienceItem}
+                                  onRemoveItem={removeExperienceItem}
+                                  onChangeField={setExperienceField}
+                                  onAddBullet={addExperienceBullet}
+                                  onRemoveBullet={removeExperienceBullet}
+                                  onChangeBullet={setExperienceBullet}
+                                  onSuggestBullets={suggestBullets}
                                 />
                               </div>
-                              {(exp.bullets || []).length > 1 && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setResumeData(prev => ({
-                                      ...prev,
-                                      experience: (prev.experience).map((item, i) => 
-                                        i === index 
-                                          ? { 
-                                              ...item, 
-                                              bullets: (item.bullets as Array<string>).filter((_, bi) => bi !== bulletIndex)
-                                            } 
-                                          : item
-                                      ),
-                                      sections: (prev.sections).map((s: any) => 
-                                        s.type === 'experience' 
-                                          ? { 
-                                              ...s, 
-                                              content: (s.content as Array<any>).map((item, i) => 
-                                                i === index 
-                                                  ? { 
-                                                      ...item, 
-                                                      bullets: (item.bullets as Array<string>).filter((_, bi) => bi !== bulletIndex)
-                                                    } 
-                                                  : item
-                                              ) 
-                                            }
-                                          : s
-                                      ),
-                                    }))
-                                  }}
-                                >
-                                  ×
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setResumeData(prev => ({
-                                ...prev,
-                                experience: (prev.experience).filter((_, i) => i !== index),
-                                sections: (prev.sections).map((s: any) => 
-                                  s.type === 'experience' 
-                                    ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) }
-                                    : s
-                                ),
-                              }))
-                            }}
-                          >
-                            Remove Experience
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {((experienceSection).content || []).length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No work experience added yet.</p>
-                        <p className="text-sm mt-2">Click "Add Experience" to get started.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-
-              <TabsContent value="education" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Education</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        const newEdu = {
-                          institution: '',
-                          degree: '',
-                          field: '',
-                          graduationYear: '',
-                          gpa: ''
-                        }
-                        setResumeData(prev => ({
-                          ...prev,
-                          education: [...(prev.education || []), newEdu],
-                          sections: (prev.sections).some(s => s.type === 'education')
-                            ? (prev.sections).map((s: any) => 
-                                s.type === 'education' 
-                                  ? { ...s, content: [...((s.content as Array<any>) || []), newEdu] }
-                                  : s
-                              )
-                            : [...(prev.sections), { id: 'education', type: 'education', title: 'Education', order: prev.sections.length, content: [newEdu] }],
-                        }))
-                      }}
-                    >
-                      Add Education
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {((getSection('education')?.content || []) as Array<any>).map((edu: any, index: number) => (
-                      <div key={index} className="border rounded-lg p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Institution</Label>
-                            <Input
-                              value={edu.institution || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  education: (prev.education).map((item, i) => 
-                                    i === index ? { ...item, institution: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'education' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, institution: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Stanford University"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Degree</Label>
-                            <Input
-                              value={edu.degree || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  education: (prev.education).map((item, i) => 
-                                    i === index ? { ...item, degree: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'education' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, degree: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Bachelor of Technology"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Field of Study</Label>
-                            <Input
-                              value={edu.field || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  education: (prev.education).map((item, i) => 
-                                    i === index ? { ...item, field: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'education' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, field: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="Computer Science"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Graduation Year</Label>
-                            <Input
-                              value={edu.graduationYear || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  education: (prev.education).map((item, i) => 
-                                    i === index ? { ...item, graduationYear: newValue } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'education' 
-                                      ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                          i === index ? { ...item, graduationYear: newValue } : item
-                                        ) }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                              placeholder="2024"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>GPA (Optional)</Label>
-                          <Input
-                            value={edu.gpa || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value
-                              setResumeData(prev => ({
-                                ...prev,
-                                education: (prev.education).map((item, i) => 
-                                  i === index ? { ...item, gpa: newValue } : item
-                                ),
-                                sections: (prev.sections).map((s: any) => 
-                                  s.type === 'education' 
-                                    ? { ...s, content: (s.content as Array<any>).map((item, i) => 
-                                        i === index ? { ...item, gpa: newValue } : item
-                                      ) }
-                                    : s
-                                ),
-                              }))
-                            }}
-                            placeholder="3.8/4.0"
-                          />
-                        </div>
-
-                        <div className="flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setResumeData(prev => ({
-                                ...prev,
-                                education: (prev.education).filter((_, i) => i !== index),
-                                sections: (prev.sections).map((s: any) => 
-                                  s.type === 'education' 
-                                    ? { ...s, content: (s.content as Array<any>).filter((_, i) => i !== index) }
-                                    : s
-                                ),
-                              }))
-                            }}
-                          >
-                            Remove Education
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {((getSection('education')?.content || []) as Array<any>).length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No education added yet.</p>
-                        <p className="text-sm mt-2">Click "Add Education" to get started.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-
-              <TabsContent value="skills" className="mt-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Skills</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        const newSkillGroup = {
-                          name: '',
-                          skills: ['']
-                        }
-                        setResumeData(prev => ({
-                          ...prev,
-                          technologies: [...(prev.technologies || []), newSkillGroup],
-                          sections: (prev.sections).some(s => s.type === 'skills')
-                            ? (prev.sections).map((s: any) => 
-                                s.type === 'skills' 
-                                  ? { ...s, content: { groups: [...((s.content?.groups as Array<any>) || []), newSkillGroup] } }
-                                  : s
-                              )
-                            : [...(prev.sections), { id: 'skills', type: 'skills', title: 'Skills', order: prev.sections.length, content: { groups: [newSkillGroup] } }],
-                        }))
-                      }}
-                    >
-                      Add Skill Category
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {((getSection('skills')?.content?.groups || []) as Array<any>).map((skillGroup: any, index: number) => (
-                      <div key={index} className="border rounded-lg p-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label>Category Name</Label>
-                          <Input
-                            value={skillGroup.name || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value
-                              setResumeData(prev => ({
-                                ...prev,
-                                technologies: (prev.technologies).map((item, i) => 
-                                  i === index ? { ...item, name: newValue } : item
-                                ),
-                                sections: (prev.sections).map((s: any) => 
-                                  s.type === 'skills' 
-                                    ? { 
-                                        ...s, 
-                                        content: { 
-                                          groups: (s.content?.groups as Array<any>).map((item, i) => 
-                                            i === index ? { ...item, name: newValue } : item
-                                          ) 
-                                        } 
-                                      }
-                                    : s
-                                ),
-                              }))
-                            }}
-                            placeholder="Programming Languages"
-                          />
-                        </div>
-                        
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Label>Skills</Label>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setResumeData(prev => ({
-                                  ...prev,
-                                  technologies: (prev.technologies).map((item, i) => 
-                                    i === index ? { ...item, skills: [...(item.skills || []), ''] } : item
-                                  ),
-                                  sections: (prev.sections).map((s: any) => 
-                                    s.type === 'skills' 
-                                      ? { 
-                                          ...s, 
-                                          content: { 
-                                            groups: (s.content?.groups as Array<any>).map((item, i) => 
-                                              i === index ? { ...item, skills: [...(item.skills || []), ''] } : item
-                                            ) 
-                                          } 
-                                        }
-                                      : s
-                                  ),
-                                }))
-                              }}
-                            >
-                              + Add Skill
-                            </Button>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            {(skillGroup.skills || ['']).map((skill: string, skillIndex: number) => (
-                              <div key={skillIndex} className="flex gap-2">
-                                <Input
-                                  value={skill}
-                                  onChange={(e) => {
-                                    const newValue = e.target.value
-                                    setResumeData(prev => ({
-                                      ...prev,
-                                      technologies: (prev.technologies).map((item, i) => 
-                                        i === index 
-                                          ? { 
-                                              ...item, 
-                                              skills: (item.skills as Array<string>).map((s, si) => 
-                                                si === skillIndex ? newValue : s
-                                              ) 
-                                            } 
-                                          : item
-                                      ),
-                                      sections: (prev.sections).map((s: any) => 
-                                        s.type === 'skills' 
-                                          ? { 
-                                              ...s, 
-                                              content: { 
-                                                groups: (s.content?.groups as Array<any>).map((item, i) => 
-                                                  i === index 
-                                                    ? { 
-                                                        ...item, 
-                                                        skills: (item.skills as Array<string>).map((s, si) => 
-                                                          si === skillIndex ? newValue : s
-                                                        ) 
-                                                      } 
-                                                    : item
-                                                ) 
-                                              } 
-                                            }
-                                          : s
-                                      ),
-                                    }))
-                                  }}
-                                  placeholder="JavaScript"
+                            )
+                          }
+                          case 'education': {
+                            const eduItems = section.content || []
+                            return (
+                              <div key={section.id} data-section="education">
+                                <EducationSection
+                                  items={eduItems}
+                                  onAddItem={addEducationItem}
+                                  onRemoveItem={removeEducationItem}
+                                  onChangeField={(idx, field, value) => setEducationField(idx, field as any, value)}
                                 />
-                                {(skillGroup.skills || []).length > 1 && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setResumeData(prev => ({
-                                        ...prev,
-                                        technologies: (prev.technologies).map((item, i) => 
-                                          i === index 
-                                            ? { 
-                                                ...item, 
-                                                skills: (item.skills as Array<string>).filter((_, si) => si !== skillIndex)
-                                              } 
-                                            : item
-                                        ),
-                                        sections: (prev.sections).map((s: any) => 
-                                          s.type === 'skills' 
-                                            ? { 
-                                                ...s, 
-                                                content: { 
-                                                  groups: (s.content?.groups as Array<any>).map((item, i) => 
-                                                    i === index 
-                                                      ? { 
-                                                          ...item, 
-                                                          skills: (item.skills as Array<string>).filter((_, si) => si !== skillIndex)
-                                                        } 
-                                                      : item
-                                                  ) 
-                                                } 
-                                              }
-                                            : s
-                                        ),
-                                      }))
-                                    }}
-                                  >
-                                    ×
-                                  </Button>
-                                )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
+                            )
+                          }
+                          case 'achievements': {
+                            const achItems = section.content || []
+                            return (
+                              <div key={section.id} data-section="achievements">
+                                <AchievementsSection
+                                  items={achItems}
+                                  onAddItem={addAchievementItem}
+                                  onRemoveItem={removeAchievementItem}
+                                  onChangeField={(idx, field, value) => setAchievementField(idx, field as any, value)}
+                                />
+                              </div>
+                            )
+                          }
+                          case 'skills':
+                            return (
+                              <div key={section.id} data-section="skills">
+                                <SkillsSection
+                                  tags={skillsTags}
+                                  onChange={setSkillsFromTags}
+                                />
+                              </div>
+                            )
+                          default:
+                            return null
+                        }
+                      })}
 
-                        <div className="flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setResumeData(prev => ({
-                                ...prev,
-                                technologies: (prev.technologies).filter((_, i) => i !== index),
-                                sections: (prev.sections).map((s: any) => 
-                                  s.type === 'skills' 
-                                    ? { 
-                                        ...s, 
-                                        content: { 
-                                          groups: (s.content?.groups as Array<any>).filter((_, i) => i !== index) 
-                                        } 
-                                      }
-                                    : s
-                                ),
-                              }))
-                            }}
-                          >
-                            Remove Category
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {((getSection('skills')?.content?.groups || []) as Array<any>).length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No skill categories added yet.</p>
-                        <p className="text-sm mt-2">Click "Add Skill Category" to get started.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center border-b pb-4">
-                    <h1 className="text-2xl font-bold">
-                      {resumeData.personal_info.fullName || 'Your Name'}
-                    </h1>
-                    <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                      {resumeData.personal_info.email && <div>{resumeData.personal_info.email}</div>}
-                      {resumeData.personal_info.phone && <div>{resumeData.personal_info.phone}</div>}
-                      {resumeData.personal_info.location && <div>{resumeData.personal_info.location}</div>}
+                      <SectionManager
+                        key="final-manager"
+                        sections={resumeData.sections}
+                        onAddSection={addSection}
+                        availableSections={availableSections}
+                      />
                     </div>
                   </div>
-
-                  {(summarySection).content?.text && (
-                    <div>
-                      <h2 className="text-lg font-semibold mb-2">Professional Summary</h2>
-                      <p className="text-sm text-gray-700">{(summarySection).content.text}</p>
-                    </div>
-                  )}
-
-                  {Array.isArray((experienceSection).content) && (experienceSection).content.length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-semibold mb-2">Work Experience</h2>
-                      <div className="space-y-4">
-                        {(experienceSection).content.map((exp: any, idx: number) => (
-                          <div key={idx} className="text-sm">
-                            {exp.company && exp.role && (
-                              <div className="font-medium">
-                                {exp.role} at {exp.company}
-                              </div>
-                            )}
-                            {(exp.startDate || exp.endDate) && (
-                              <div className="text-gray-600 text-xs">
-                                {exp.startDate} {exp.endDate && `- ${exp.endDate}`}
-                              </div>
-                            )}
-                            {exp.bullets && exp.bullets.length > 0 && (
-                              <ul className="list-disc pl-5 mt-2 space-y-1">
-                                {exp.bullets.filter((bullet: string) => bullet.trim()).map((bullet: string, bulletIdx: number) => (
-                                  <li key={bulletIdx} className="text-gray-700">{bullet}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {((getSection('education')?.content || []) as Array<any>).length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-semibold mb-2">Education</h2>
-                      <div className="space-y-2">
-                        {((getSection('education')?.content || []) as Array<any>).map((edu: any, idx: number) => (
-                          <div key={idx} className="text-sm">
-                            <div className="font-medium">
-                              {edu.degree && edu.field ? `${edu.degree} in ${edu.field}` : edu.degree || edu.field}
-                            </div>
-                            {edu.institution && (
-                              <div className="text-gray-600">
-                                {edu.institution} {edu.graduationYear && `• ${edu.graduationYear}`} {edu.gpa && `• GPA: ${edu.gpa}`}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {((getSection('skills')?.content?.groups || []) as Array<any>).length > 0 && (
-                    <div>
-                      <h2 className="text-lg font-semibold mb-2">Skills</h2>
-                      <div className="space-y-2">
-                        {((getSection('skills')?.content?.groups || []) as Array<any>).map((group: any, idx: number) => (
-                          <div key={idx} className="text-sm">
-                            {group.name && (
-                              <span className="font-medium">{group.name}: </span>
-                            )}
-                            {group.skills && group.skills.filter((skill: string) => skill.trim()).length > 0 && (
-                              <span className="text-gray-700">
-                                {group.skills.filter((skill: string) => skill.trim()).join(', ')}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

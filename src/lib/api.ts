@@ -696,13 +696,16 @@ export async function aiKeywordsWithRefresh(id: string, getToken: () => Promise<
   })
 }
 
-// Import/export
-export async function importLinkedInWithRefresh(getToken: () => Promise<string>, body: { html?: string; url?: string }) {
-  return apiWithTokenRefresh(`/v1/resumes/import/linkedin`, getToken, {
+// Generate a default resume strictly in schema from the user's profile
+export async function aiGenerateResumeFromProfileWithRefresh(getToken: () => Promise<string>, profile?: any) {
+  return apiWithTokenRefresh(`/v1/resumes/ai/generate-from-profile`, getToken, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify({ profile }),
   })
 }
+
+// Import/export
+// (Removed) LinkedIn import API
 
 export async function exportResumeWithRefresh(id: string, getToken: () => Promise<string>) {
   return apiWithTokenRefresh(`/v1/resumes/${id}/export`, getToken)

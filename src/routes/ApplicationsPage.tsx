@@ -104,10 +104,11 @@ export function ApplicationsPage() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="relative space-y-8 h-full"
     >
+      <div className="max-w-6xl mx-auto">
 
       {/* Pipeline lanes: In-progress → Interviewing → Completed */}
       <motion.div
-        className="mx-4 md:mx-6 space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 mb-6"
+        className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 mb-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
@@ -146,7 +147,7 @@ export function ApplicationsPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
-        <Card className="shadow-xs mx-4 md:mx-6">
+        <Card className="shadow-xs">
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -289,6 +290,8 @@ export function ApplicationsPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      </div>
 
       {/* Create Application Modal */}
       <CreateApplicationModal

@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Edit, FileText, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -88,8 +89,18 @@ export function ResumeList() {
   }
 
   return (
-    <div className="w-full py-8 max-w-6xl mx-auto pt-8">
-      <div className="flex justify-between items-center mb-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="w-full py-8 max-w-6xl mx-auto pt-8"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut', delay: 0.05 }}
+        className="flex justify-between items-center mb-8"
+      >
         <div>
           <h1 className="text-xl font-bold">My Resumes</h1>
           <p className="text-muted-foreground text-sm">
@@ -102,28 +113,43 @@ export function ResumeList() {
             New Resume
           </Button>
         </Link>
-      </div>
+      </motion.div>
 
       {resumes.length === 0 ? (
-        <Card className="border-dashed">
-          <div className="flex flex-col items-center justify-center py-16 px-6">
-            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No resumes yet</h3>
-            <p className="text-muted-foreground text-center mb-6 max-w-md">
-              Get started by creating your first professional resume.
-            </p>
-            <Link to="/resumes/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Resume
-              </Button>
-            </Link>
-          </div>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+        >
+          <Card className="border-dashed">
+            <div className="flex flex-col items-center justify-center py-16 px-6">
+              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No resumes yet</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                Get started by creating your first professional resume.
+              </p>
+              <Link to="/resumes/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Resume
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {resumes.map((resume: Resume) => (
-            <Card key={resume.id} className="group relative overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 border bg-gradient-to-br from-background via-background to-muted/30 aspect-[1.6/1] hover:scale-[1.02]">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <AnimatePresence>
+          {resumes.map((resume: Resume, index: number) => (
+            <motion.div
+              key={resume.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.2 } }}
+              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+              className="flex"
+            >
+            <Card className="group relative overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-shadow duration-300 border bg-gradient-to-br from-background via-background to-muted/30 aspect-[1.6/1] flex-1">
               {/* Business card design */}
               <div className="absolute inset-0 p-6 flex flex-col justify-between">
                 {/* Header with resume name and badge */}
@@ -196,9 +222,11 @@ export function ResumeList() {
                 </div>
               </div>
             </Card>
+            </motion.div>
           ))}
+          </AnimatePresence>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useUser } from '@clerk/clerk-react'
 import { toast } from '@/components/ui/toaster'
 
@@ -660,7 +661,12 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                       </div>
 
                       {(!resumeData.personal_info.fullName && !resumeData.summary && resumeData.sections.length <= 1) && (
-                        <div className="text-center py-16">
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.3, ease: 'easeOut' }}
+                          className="text-center py-16"
+                        >
                           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                             <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -670,21 +676,36 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                           <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
                             Start by clicking on any section below to add your information.
                           </p>
-                        </div>
+                        </motion.div>
                       )}
 
-                      {([...resumeData.sections].sort((a, b) => a.order - b.order)).map((section) => {
+                      <AnimatePresence>
+                      {([...resumeData.sections].sort((a, b) => a.order - b.order)).map((section, index) => {
                         switch (section.type) {
                           case 'summary':
                             return (
-                              <div key={section.id} data-section="summary">
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="summary"
+                              >
                                 <SummarySection text={section.content?.text || ''} onChange={setSummaryText} />
-                              </div>
+                              </motion.div>
                             )
                           case 'experience': {
                             const expItems = section.content || []
                             return (
-                              <div key={section.id} data-section="experience">
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="experience"
+                              >
                                 <ExperienceSection
                                   items={expItems}
                                   onAddItem={addExperienceItem}
@@ -695,48 +716,70 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                   onChangeBullet={setExperienceBullet}
                                   onSuggestBullets={suggestBullets}
                                 />
-                              </div>
+                              </motion.div>
                             )
                           }
                           case 'education': {
                             const eduItems = section.content || []
                             return (
-                              <div key={section.id} data-section="education">
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="education"
+                              >
                                 <EducationSection
                                   items={eduItems}
                                   onAddItem={addEducationItem}
                                   onRemoveItem={removeEducationItem}
                                   onChangeField={(idx, field, value) => setEducationField(idx, field as any, value)}
                                 />
-                              </div>
+                              </motion.div>
                             )
                           }
                           case 'achievements': {
                             const achItems = section.content || []
                             return (
-                              <div key={section.id} data-section="achievements">
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="achievements"
+                              >
                                 <AchievementsSection
                                   items={achItems}
                                   onAddItem={addAchievementItem}
                                   onRemoveItem={removeAchievementItem}
                                   onChangeField={(idx, field, value) => setAchievementField(idx, field as any, value)}
                                 />
-                              </div>
+                              </motion.div>
                             )
                           }
                           case 'skills':
                             return (
-                              <div key={section.id} data-section="skills">
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="skills"
+                              >
                                 <SkillsSection
                                   tags={skillsTags}
                                   onChange={setSkillsFromTags}
                                 />
-                              </div>
+                              </motion.div>
                             )
                           default:
                             return null
                         }
                       })}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>

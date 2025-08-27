@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, Building2, Clock, Plus, Target } from 'lucide-react'
 import type { ApplicationListItem } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
@@ -120,47 +120,67 @@ export function InProgressApplicationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {stageGroups.map((group, gi) => (
-            <Card key={`${group.title}-${gi}`} className="shadow-xs">
-              <CardContent className="p-0">
-                <div className="flex items-center justify-between px-4 md:px-6 pt-3 pb-2">
-                  <div className="text-xs font-medium text-muted-foreground">{group.title}</div>
-                  <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>
-                </div>
-                <div className="divide-y divide-border">
-                  {group.items.map((app) => (
-                    <div key={app.id} className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10" onClick={() => { setSelectedAppId(app.id); setUpdateModalOpen(true) }}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {app.company?.logo_url ? (
-                            <img src={app.company.logo_url} alt={app.company.name} className="h-8 w-8 rounded-md border border-border object-cover" />
-                          ) : (
-                            <Building2 className="h-8 w-8 text-muted-foreground" />
-                          )}
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <h3 className="font-medium text-base truncate">{app.company?.name ?? app.company_id.slice(0, 8)}</h3>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
-                              <span className="truncate">{app.role}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateIndian(app.last_activity_at)}</span>
-                              {needsAction(app) ? (
-                                <Badge variant="default" className="text-[11px] px-2 py-0.5">
-                                  <AlertCircle className="h-3 w-3 mr-1" />
-                                  Take action
-                                </Badge>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+          <AnimatePresence>
+            {stageGroups.map((group, gi) => (
+              <motion.div
+                key={`${group.title}-${gi}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                transition={{ duration: 0.3, delay: 0.2 + gi * 0.05, ease: 'easeOut' }}
+              >
+                <Card className="shadow-xs">
+                  <CardContent className="p-0">
+                    <div className="flex items-center justify-between px-4 md:px-6 pt-3 pb-2">
+                      <div className="text-xs font-medium text-muted-foreground">{group.title}</div>
+                      <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <AnimatePresence>
+                      <div className="divide-y divide-border">
+                        {group.items.map((app, index) => (
+                          <motion.div
+                            key={app.id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                            transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                            className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
+                            onClick={() => { setSelectedAppId(app.id); setUpdateModalOpen(true) }}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                {app.company?.logo_url ? (
+                                  <img src={app.company.logo_url} alt={app.company.name} className="h-8 w-8 rounded-md border border-border object-cover" />
+                                ) : (
+                                  <Building2 className="h-8 w-8 text-muted-foreground" />
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <h3 className="font-medium text-base truncate">{app.company?.name ?? app.company_id.slice(0, 8)}</h3>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+                                    <span className="truncate">{app.role}</span>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateIndian(app.last_activity_at)}</span>
+                                    {needsAction(app) ? (
+                                      <Badge variant="default" className="text-[11px] px-2 py-0.5">
+                                        <AlertCircle className="h-3 w-3 mr-1" />
+                                        Take action
+                                      </Badge>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
           {filtered.length === 0 ? (
             <div className="text-center py-12 text-sm text-muted-foreground">No applications yet</div>
           ) : null}

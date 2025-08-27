@@ -191,7 +191,12 @@ export function ProfilePage() {
       className="max-w-6xl mx-auto pt-8 space-y-8"
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut", delay: 0.05 }}
+        className="flex items-center justify-between"
+      >
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
           <p className="text-muted-foreground">Manage your personal information and recruiter responses</p>
@@ -237,7 +242,7 @@ export function ProfilePage() {
             </Button>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {saveSuccess && (
         <motion.div
@@ -252,7 +257,12 @@ export function ProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - User Info & Basic Settings */}
-        <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 }}
+          className="space-y-6"
+        >
           {/* User Information */}
           <Card>
             <CardHeader>
@@ -553,10 +563,15 @@ export function ProfilePage() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Right Column - Recruiter Q&A */}
-        <div className="lg:col-span-2">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut", delay: 0.15 }}
+          className="lg:col-span-2"
+        >
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -617,7 +632,7 @@ export function ProfilePage() {
               ))}
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   )

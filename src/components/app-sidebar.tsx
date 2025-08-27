@@ -54,10 +54,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        {/* Overview */}
         <SidebarGroup>
-        <SidebarGroupLabel>Navigate</SidebarGroupLabel>
+          <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
-            {/* Dashboard */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
                 <Link to="/dashboard" className="font-medium">
@@ -66,7 +66,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {/* Applications */}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {/* Applications */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Applications</SidebarGroupLabel>
+          <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={location.pathname === "/applications"} tooltip="All applications">
                 <Link to="/applications" className="font-medium">
@@ -75,8 +83,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
-            {/* Wishlist */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/applications/wishlist")} tooltip="Wishlist">
                 <Link to="/applications/wishlist" className="font-medium">
@@ -85,8 +91,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            
-            {/* In-progress */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/applications/in-progress")} tooltip="In-progress">
                 <Link to="/applications/in-progress" className="font-medium">
@@ -95,8 +99,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
-            {/* Interviewing */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/applications/interviewing")} tooltip="Interviewing">
                 <Link to="/applications/interviewing" className="font-medium">
@@ -105,8 +107,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
-            {/* Completed */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/applications/completed")} tooltip="Completed">
                 <Link to="/applications/completed" className="font-medium">
@@ -115,8 +115,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-
-            {/* Board */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/board")} tooltip="Board">
                 <Link to="/board" className="font-medium">
@@ -127,8 +125,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
+
         <SidebarSeparator />
+
+        {/* Personal */}
         <SidebarGroup>
+          <SidebarGroupLabel>Personal</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/resumes")} tooltip="Resumes">

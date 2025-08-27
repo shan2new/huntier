@@ -18,6 +18,7 @@ type ResumeToolbarProps = {
   hasUnsavedChanges?: boolean
   variant?: 'bar' | 'card'
   importing?: boolean
+  exporting?: boolean
 }
 
 export function ResumeToolbar({
@@ -34,6 +35,7 @@ export function ResumeToolbar({
   hasUnsavedChanges,
   variant = 'bar',
   importing,
+  exporting,
 }: ResumeToolbarProps) {
   const getSaveStatus = () => {
     if (saving) return 'Saving...'
@@ -164,6 +166,12 @@ export function ResumeToolbar({
                 variant="ghost"
                 className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               >
+                {exporting && (
+                  <svg className="animate-spin h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                )}
                 Export
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

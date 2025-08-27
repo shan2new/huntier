@@ -304,6 +304,7 @@
 
 /* Print Styles */
 @media print {
+  html, body { background: #ffffff !important; }
   .resume-page {
     box-shadow: none;
     border: none;

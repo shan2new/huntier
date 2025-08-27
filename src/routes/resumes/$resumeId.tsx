@@ -3,7 +3,7 @@ import { useUser } from '@clerk/clerk-react'
 import { toast } from '@/components/ui/toaster'
 
 import { useAuthToken } from '@/lib/auth'
-import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importResumeFromPdfWithRefresh, updateResumeWithRefresh } from '@/lib/api'
+import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeBlobWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importResumeFromPdfWithRefresh, updateResumeWithRefresh } from '@/lib/api'
 import { ResumeToolbar } from '@/components/resume/ResumeToolbar'
 import { PersonalInfoSection } from '@/components/resume/PersonalInfoSection'
 import { SummarySection } from '@/components/resume/SummarySection'
@@ -13,7 +13,6 @@ import { EducationSection } from '@/components/resume/EducationSection'
 import { AchievementsSection } from '@/components/resume/AchievementsSection'
 import { ResumeProgress } from '@/components/resume/ResumeProgress'
 import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
-import { SectionManager } from '@/components/resume/SectionManager'
 import '@/components/resume/resume-editor.css'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -23,6 +22,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const isNew = resumeId === 'new'
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [exporting, setExporting] = useState(false)
   // Removed LinkedIn import; importing state no longer used
   const [autoImportAttempted, setAutoImportAttempted] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -536,26 +536,23 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   // (Removed) LinkedIn import helper and any automatic LinkedIn imports
 
   const download = async (format: 'pdf' | 'docx') => {
+    if (!resumeData.id) return
     try {
-      if (!resumeData.id) return
-      await exportResumeWithRefresh(resumeData.id, async () => {
-        const token = await getToken()
-        return token
-      })
-      // If API is set to return blob via fetch, we need direct fetch in api lib; fallback below silently
-    } catch {}
-    try {
-      const token = await getToken()
-      const url = `${(import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api'}/v1/resumes/${resumeData.id}/export?format=${format}`
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-      const buf = await res.blob()
+      setExporting(true)
+      const blob = await exportResumeBlobWithRefresh(resumeData.id, format, getToken)
       const a = document.createElement('a')
-      a.href = URL.createObjectURL(buf)
-      a.download = `resume.${format}`
+      a.href = URL.createObjectURL(blob)
+      const baseName = (resumeData.name || 'resume').trim()
+      const hasResumeWord = /\bresume\b/i.test(baseName)
+      const finalName = hasResumeWord ? baseName : `${baseName}_resume`
+      a.download = `${finalName}.${format}`
       a.click()
       URL.revokeObjectURL(a.href)
     } catch (e) {
       console.error('Failed to download', e)
+      toast.error('Failed to export', { description: 'Please try again.' })
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -590,6 +587,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                 onExportPdf={() => download('pdf')}
                 onExportDocx={() => download('docx')}
                 importing={importing}
+                exporting={exporting}
                 onImportPdf={async (file) => {
                   try {
                     setImporting(true)
@@ -739,13 +737,6 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                             return null
                         }
                       })}
-
-                      <SectionManager
-                        key="final-manager"
-                        sections={resumeData.sections}
-                        onAddSection={addSection}
-                        availableSections={availableSections}
-                      />
                     </div>
                   </div>
                 </div>

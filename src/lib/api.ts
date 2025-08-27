@@ -734,6 +734,23 @@ export async function exportResumeWithRefresh(id: string, getToken: () => Promis
   return apiWithTokenRefresh(`/v1/resumes/${id}/export`, getToken)
 }
 
+// Binary export for resume (PDF/DOCX)
+export async function exportResumeBlobWithRefresh(
+  id: string,
+  format: 'pdf' | 'docx',
+  getToken: () => Promise<string>
+): Promise<Blob> {
+  const token = await getToken()
+  const url = `${BASE}/v1/resumes/${id}/export?format=${encodeURIComponent(format)}&ts=${Date.now()}`
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    throw new Error(`Export failed: ${res.status}`)
+  }
+  return res.blob()
+}
+
 // Resume API object for easier usage
 export const resumeApi = {
   getAll: getResumesWithRefresh,

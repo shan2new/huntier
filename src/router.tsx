@@ -17,6 +17,7 @@ import { ProfilePage } from './routes/ProfilePage'
 import { ResumeList } from './routes/resumes/index'
 import { ResumeBuilder } from './routes/resumes/$resumeId'
 import { DashboardPage } from './routes/DashboardPage'
+import ResumePrintPage from './routes/resumes/ResumePrintPage'
 
 // Single root for the app
 const rootRoute = createRootRoute()
@@ -30,6 +31,10 @@ const publicLayout = createRoute({
 
 const landing = createRoute({ getParentRoute: () => publicLayout, path: '/', component: LandingPage })
 const auth = createRoute({ getParentRoute: () => publicLayout, path: '/auth', component: AuthPage })
+const resumePrintRoute = createRoute({ getParentRoute: () => publicLayout, path: '/p/resumes/$resumeId', component: () => {
+	const { resumeId } = resumePrintRoute.useParams()
+	return <ResumePrintPage resumeId={resumeId} />
+} })
 
 // App (protected via Clerk in main.tsx, but organized under an app layout)
 const appLayout = createRoute({
@@ -62,7 +67,7 @@ const resumeBuilderRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-	publicLayout.addChildren([landing, auth]),
+	publicLayout.addChildren([landing, auth, resumePrintRoute]),
 	appLayout.addChildren([
 		dashboardRoute,
 		appsRoute,

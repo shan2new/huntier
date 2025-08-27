@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Target, User } from "lucide-react"
+import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -12,6 +12,9 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
@@ -82,6 +85,44 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span>All</span>
                 </Link>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            {/* Milestones sub-navigation */}
+            <SidebarMenuItem>
+              <div className="px-2 text-xs text-muted-foreground mt-1">Milestones</div>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/wishlist")}>
+                    <Link to="/applications/wishlist" className="flex items-center gap-2">
+                      <Star size={14} />
+                      <span>Wishlist</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/in-progress")}>
+                    <Link to="/applications/in-progress" className="flex items-center gap-2">
+                      <Target size={14} />
+                      <span>In-progress</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/interviewing")}>
+                    <Link to="/applications/interviewing" className="flex items-center gap-2">
+                      <Calendar size={14} />
+                      <span>Interviewing</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/completed")}>
+                    <Link to="/applications/completed" className="flex items-center gap-2">
+                      <Trophy size={14} />
+                      <span>Completed</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/board")} tooltip="Board">

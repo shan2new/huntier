@@ -133,45 +133,7 @@ export function ApplicationsPage() {
                   </div>
                   <Badge variant="secondary" className="text-xs px-2 py-0.5">{group.items.length}</Badge>
                 </div>
-                <div className="-mx-1 overflow-x-auto">
-                  <div className="flex gap-2 px-1 snap-x snap-mandatory">
-                    {group.items.length === 0 ? (
-                      <div className="w-full text-center text-xs text-muted-foreground py-6">No applications</div>
-                    ) : (
-                      group.items.map((app) => (
-                        <button
-                          key={app.id}
-                          className="min-w-[220px] max-w-[240px] snap-start rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors text-left p-3"
-                          onClick={() => {
-                            setSelectedAppId(app.id)
-                            setUpdateModalOpen(true)
-                          }}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            {app.company?.logo_url ? (
-                              <img
-                                src={app.company.logo_url}
-                                alt={app.company.name}
-                                className="h-5 w-5 rounded-sm border border-border object-cover"
-                              />
-                            ) : (
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <span className="truncate text-sm font-medium">{app.company?.name ?? app.company_id.slice(0, 8)}</span>
-                          </div>
-                          <div className="truncate text-xs text-muted-foreground">{app.role}</div>
-                          <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
-                            <span className="truncate">{app.stage.name}</span>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatDateIndian(app.last_activity_at)}</span>
-                            </div>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
+                {/* Removed inline application previews from summary cards for a cleaner overview */}
               </CardContent>
             </Card>
           </motion.div>

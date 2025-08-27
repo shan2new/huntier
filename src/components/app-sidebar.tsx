@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, ChevronsUpDown, ClipboardList, FileText, LogOut, Star, Target, Trophy, User } from "lucide-react"
+import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Huntier">
-              <Link to="/applications">
+              <Link to="/dashboard">
                 <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <img src="/logo512.svg" alt="Huntier" />
                 </div>
@@ -55,8 +55,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-        <SidebarGroupLabel>Applications</SidebarGroupLabel>
+        <SidebarGroupLabel>Navigate</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
+            {/* Dashboard */}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
+                <Link to="/dashboard" className="font-medium">
+                  <Home className="mr-2" size={16} />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             {/* Applications */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={location.pathname === "/applications"} tooltip="All applications">

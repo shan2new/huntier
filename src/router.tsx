@@ -16,6 +16,7 @@ import { ReferrersPage } from './routes/ReferrersPage'
 import { ProfilePage } from './routes/ProfilePage'
 import { ResumeList } from './routes/resumes/index'
 import { ResumeBuilder } from './routes/resumes/$resumeId'
+import { DashboardPage } from './routes/DashboardPage'
 
 // Single root for the app
 const rootRoute = createRootRoute()
@@ -38,6 +39,7 @@ const appLayout = createRoute({
 })
 
 const appsRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications', component: ApplicationsPage })
+const dashboardRoute = createRoute({ getParentRoute: () => appLayout, path: '/dashboard', component: DashboardPage })
 const appsInProgressRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/in-progress', component: InProgressApplicationsPage })
 const appsInterviewingRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/interviewing', component: InterviewingApplicationsPage })
 const appsCompletedRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/completed', component: CompletedApplicationsPage })
@@ -62,6 +64,7 @@ const resumeBuilderRoute = createRoute({
 const routeTree = rootRoute.addChildren([
 	publicLayout.addChildren([landing, auth]),
 	appLayout.addChildren([
+		dashboardRoute,
 		appsRoute,
 		appsWishlistRoute,
 		appsInProgressRoute,

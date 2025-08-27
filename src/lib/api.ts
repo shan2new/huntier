@@ -734,6 +734,91 @@ export async function upsertPlatformWithRefresh<T = Platform>(
   })
 }
 
+// Analytics
+export type FunnelAnalytics = { exploration: number; interviewing: number; post_interview: number }
+export type AgingAnalyticsItem = { id: string; stage: string; time_in_stage_days: number }
+export type PlatformAnalyticsItem = {
+  platform_id: string
+  totals: number
+  offers: number
+  rejects: number
+  in_progress: number
+  // Additional fields may be present from the API; we keep them flexible
+  [key: string]: any
+}
+
+export type QARehearsalResponse = {
+  responses: {
+    current_ctc?: string
+    expected_ctc?: string
+    notice_period?: string
+    reason_leaving?: string
+    past_reasons?: string
+  }
+  pitch: string
+  note?: string
+}
+
+export async function getFunnelAnalyticsWithRefresh(
+  getToken: () => Promise<string>,
+  opts?: { window_start?: string; window_end?: string }
+): Promise<FunnelAnalytics> {
+  const qs = new URLSearchParams()
+  if (opts?.window_start) qs.set('window_start', opts.window_start)
+  if (opts?.window_end) qs.set('window_end', opts.window_end)
+  const query = qs.toString()
+  return apiWithTokenRefresh(`/v1/analytics/funnel${query ? `?${query}` : ''}`, getToken)
+}
+
+export async function getAgingAnalyticsWithRefresh(
+  getToken: () => Promise<string>,
+  opts?: { stage?: string; gt_days?: number; window_start?: string; window_end?: string }
+): Promise<Array<AgingAnalyticsItem>> {
+  const qs = new URLSearchParams()
+  if (opts?.stage) qs.set('stage', opts.stage)
+  if (typeof opts?.gt_days === 'number') qs.set('gt_days', String(opts.gt_days))
+  if (opts?.window_start) qs.set('window_start', opts.window_start)
+  if (opts?.window_end) qs.set('window_end', opts.window_end)
+  const query = qs.toString()
+  return apiWithTokenRefresh(`/v1/analytics/aging${query ? `?${query}` : ''}`, getToken)
+}
+
+export async function getPlatformAnalyticsWithRefresh(
+  getToken: () => Promise<string>,
+  opts?: { window_start?: string; window_end?: string }
+): Promise<Array<PlatformAnalyticsItem>> {
+  const qs = new URLSearchParams()
+  if (opts?.window_start) qs.set('window_start', opts.window_start)
+  if (opts?.window_end) qs.set('window_end', opts.window_end)
+  const query = qs.toString()
+  return apiWithTokenRefresh(`/v1/analytics/platforms${query ? `?${query}` : ''}`, getToken)
+}
+
+export async function generateQARehearsalWithRefresh(
+  getToken: () => Promise<string>,
+  applicationId: string
+): Promise<QARehearsalResponse> {
+  return apiWithTokenRefresh(`/v1/applications/${applicationId}/qa-rehearsal`, getToken, {
+    method: 'POST'
+  })
+}
+
+export async function generateProfileQARehearsalWithRefresh(
+  getToken: () => Promise<string>
+): Promise<QARehearsalResponse> {
+  return apiWithTokenRefresh(`/v1/recruiter-qa/rehearsal`, getToken, {
+    method: 'POST'
+  })
+}
+
+export async function clearQARehearsalCacheWithRefresh(
+  getToken: () => Promise<string>
+): Promise<{ message: string }> {
+  return apiWithTokenRefresh(`/v1/recruiter-qa/rehearsal/clear-cache`, getToken, {
+    method: 'POST'
+  })
+}
+
 // Drafts
 export type ApplicationDraft = {
   id: string

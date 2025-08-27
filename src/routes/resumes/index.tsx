@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Edit, FileText, Plus } from 'lucide-react'
+import { Edit, FileText, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { useAuthToken } from '@/lib/auth'
-import { getResumesWithRefresh } from '@/lib/api'
+import { deleteResumeWithRefresh, getResumesWithRefresh } from '@/lib/api'
 
 interface Resume {
   id: string
@@ -12,12 +12,17 @@ interface Resume {
   is_default: boolean
   created_at: string
   updated_at: string
+  // Optional resume data used for card display
+  personal_info?: { fullName?: string } | null
+  sections?: Array<any>
+  experience?: Array<any>
 }
 
 export function ResumeList() {
   const [resumes, setResumes] = useState<Array<Resume>>([])
   const [isLoading, setIsLoading] = useState(true)
   const { getToken } = useAuthToken()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -38,6 +43,40 @@ export function ResumeList() {
       month: 'short',
       day: 'numeric'
     })
+  }
+
+  const getResumeOwnerName = (resume: Resume) => {
+    return (resume.personal_info?.fullName && resume.personal_info.fullName.trim())
+      ? resume.personal_info.fullName
+      : (resume.name || 'Untitled Resume')
+  }
+
+  const getLatestRole = (resume: Resume) => {
+    const fromSections: Array<any> = Array.isArray(resume.sections)
+      ? (resume.sections.find((s: any) => s?.type === 'experience')?.content || [])
+      : []
+    const fromRoot: Array<any> = Array.isArray(resume.experience) ? resume.experience : []
+    const all: Array<any> = [...fromSections, ...fromRoot].filter(Boolean)
+    if (all.length === 0) return ''
+
+    const parseDateVal = (val?: string) => {
+      if (!val) return 0
+      const s = String(val)
+      if (/present/i.test(s)) return Date.now() + 1e12
+      const t = Date.parse(s)
+      return Number.isNaN(t) ? 0 : t
+    }
+
+    let latest = all[0]
+    let best = Math.max(parseDateVal(all[0]?.endDate), parseDateVal(all[0]?.startDate))
+    for (let i = 1; i < all.length; i++) {
+      const score = Math.max(parseDateVal(all[i]?.endDate), parseDateVal(all[i]?.startDate))
+      if (score > best) {
+        latest = all[i]
+        best = score
+      }
+    }
+    return (latest?.role && String(latest.role).trim()) || ''
   }
 
   if (isLoading) {
@@ -67,7 +106,7 @@ export function ResumeList() {
 
       {resumes.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
+          <div className="flex flex-col items-center justify-center py-16 px-6">
             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No resumes yet</h3>
             <p className="text-muted-foreground text-center mb-6 max-w-md">
@@ -79,41 +118,83 @@ export function ResumeList() {
                 Create Your First Resume
               </Button>
             </Link>
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {resumes.map((resume: Resume) => (
-            <Card key={resume.id} className="group hover:shadow-md transition-all border-border/80 bg-card/60 backdrop-blur-sm">
-              <CardHeader className="pb-0">
+            <Card key={resume.id} className="group relative overflow-hidden hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 border bg-gradient-to-br from-background via-background to-muted/30 aspect-[1.6/1] hover:scale-[1.02]">
+              {/* Business card design */}
+              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                {/* Header with resume name and badge */}
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base font-semibold tracking-tight group-hover:text-primary transition-colors">{resume.name}</CardTitle>
-                    <CardDescription className="text-xs mt-0.5">Updated {formatDate(resume.updated_at)}</CardDescription>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg tracking-tight leading-tight truncate text-foreground">
+                      {resume.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Updated {formatDate(resume.updated_at)}
+                    </p>
                   </div>
                   {resume.is_default && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Default</span>
+                    <div className="ml-3 shrink-0">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-medium bg-primary text-primary-foreground">
+                        Default
+                      </span>
+                    </div>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent className="pt-3">
-                {/* miniature preview */}
-                <div className="relative rounded-md border border-border/80 bg-gradient-to-br from-muted/40 to-background h-24 overflow-hidden">
-                  <div className="absolute inset-0 grid grid-rows-3 grid-cols-6 gap-1 opacity-60 p-2">
-                    <div className="col-span-4 h-2 bg-muted rounded" />
-                    <div className="col-span-2 h-2 bg-muted/70 rounded" />
-                    <div className="col-span-6 h-1 bg-muted/50 rounded" />
-                    <div className="col-span-3 h-1 bg-muted/50 rounded" />
-                    <div className="col-span-5 h-1 bg-muted/50 rounded" />
+
+                {/* Owner name and latest role from resume (no avatar) */}
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-semibold tracking-tight text-foreground truncate">
+                      {getResumeOwnerName(resume)}
+                    </div>
+                    {getLatestRole(resume) && (
+                      <div className="text-sm text-muted-foreground mt-0.5 truncate">
+                        {getLatestRole(resume)}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <Link to={`/resumes/${resume.id}`}>
-                  <Button variant="outline" className="w-full mt-3">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Resume
+
+                {/* Decorative bottom accent */}
+                <div className="absolute bottom-0 left-6 right-6 h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent rounded-full" />
+              </div>
+
+              {/* Hover overlay with actions */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <Link to={`/resumes/${resume.id}`} className="inline-flex">
+                    <Button variant="secondary" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Resume
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                    disabled={deletingId === resume.id}
+                    onClick={async (e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (!confirm('Delete this resume?')) return
+                      setDeletingId(resume.id)
+                      try {
+                        await deleteResumeWithRefresh(resume.id, getToken)
+                        setResumes((prev) => prev.filter((r) => r.id !== resume.id))
+                      } finally {
+                        setDeletingId(null)
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
                   </Button>
-                </Link>
-              </CardContent>
+                </div>
+              </div>
             </Card>
           ))}
         </div>

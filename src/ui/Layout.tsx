@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input'
 import { SplashLoader } from '@/components/SplashLoader'
 import { ProfileCompletionDialog } from '@/components/ProfileCompletionDialog'
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarInset, SidebarProvider, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar'
-import { Separator } from '@/components/ui/separator'
+import { SidebarInset, SidebarProvider, SidebarRail } from '@/components/ui/sidebar'
+
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -154,12 +154,6 @@ export function Layout() {
         <SidebarRail />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center">
-            {/* Left rail: sidebar trigger */}
-            <div className="w-16 flex items-center px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="ml-2 data-[orientation=vertical]:h-4" />
-            </div>
-
             {/* Center: search (fixed width, centered) */}
             <div className="flex-1 flex justify-center px-2">
               <motion.div 

@@ -49,11 +49,11 @@ export function ResumeList() {
   }
 
   return (
-    <div className="w-full py-8">
+    <div className="w-full py-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">My Resumes</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold">My Resumes</h1>
+          <p className="text-muted-foreground text-sm">
             Create and manage your professional resumes
           </p>
         </div>

@@ -324,7 +324,7 @@ export function DashboardPage() {
   const { user } = useUser()
   const firstName = user?.firstName || ''
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="space-y-3">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto space-y-3">
       {/* Top row: Welcome (prominent) + Funnel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Card className="shadow-xs">

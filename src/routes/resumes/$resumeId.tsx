@@ -15,6 +15,7 @@ import { ResumeProgress } from '@/components/resume/ResumeProgress'
 import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
 import { SectionManager } from '@/components/resume/SectionManager'
 import '@/components/resume/resume-editor.css'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { getToken } = useAuthToken()
@@ -560,7 +561,6 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
 
   return (
     <div className="h-full">
-
       {/* Document Viewer Background */}
       <div className="document-viewer">
         {importing && (
@@ -578,7 +578,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
           </div>
         )}
         <div className="mx-auto px-8 py-8" style={{ maxWidth: '1600px' }}>
-          <div className="grid gap-8 lg:grid-cols-[minmax(320px,1fr)_minmax(0,794px)_minmax(320px,1fr)]">
+          <div className="flex flex-row gap-8 h-full">
             {/* Left Sidebar - Toolbar + Progress & Sections */}
             <div className="hidden lg:block w-80 space-y-4 justify-self-start">
               {/* Toolbar moved into sidebar */}
@@ -646,6 +646,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             </div>
 
             {/* Resume Document - Single Continuous Page */}
+            <ScrollArea className="h-[calc(100vh-100px)]">
             <div className="lg:col-start-2 justify-self-center">
               <div className="w-full max-w-[900px]">
                 <div className="relative mb-8 last:mb-0">
@@ -750,6 +751,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                 </div>
               </div>
             </div>
+            </ScrollArea>
           </div>
         </div>
       </div>

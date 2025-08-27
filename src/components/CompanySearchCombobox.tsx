@@ -157,7 +157,8 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
       if (q.length < 2) {
         if (!cancelled) {
           setResults([])
-          setOpen(false)
+          // Don't auto-close when typing - let user see the minimum character message
+          // setOpen(false) 
         }
         return
       }
@@ -168,12 +169,8 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
         const rows = await searchCompaniesByName<Array<Company>>(token!, q)
         if (!cancelled) {
           setResults(rows)
-          // Only open dropdown when we have results, close when empty
-          if (rows.length > 0) {
-            setOpen(true)
-          } else {
-            setOpen(false)
-          }
+          // Always keep dropdown open when user is searching
+          setOpen(true)
           // Restore focus to input if it was lost during search
           if (inputRef.current && document.activeElement !== inputRef.current) {
             inputRef.current.focus()
@@ -215,6 +212,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
                     setOpen(true)
                   }
                 }}
+                onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && results.length > 0) {
                     onChange(results[0])
@@ -357,6 +355,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
                     setOpen(false)
                   }
                 }}
+                onClick={(e) => e.stopPropagation()}
                 placeholder="Type a company name..."
                 className="bg-input/70 pr-8"
               />

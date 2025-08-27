@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
+import { ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Target, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="mx-0" />
 
         {/* Applications */}
         <SidebarGroup>
@@ -84,38 +84,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/applications/wishlist")} tooltip="Wishlist">
-                <Link to="/applications/wishlist" className="font-medium">
-                  <Star className="mr-2" size={16} />
-                  <span>Wishlist</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/applications/in-progress")} tooltip="In-progress">
-                <Link to="/applications/in-progress" className="font-medium">
-                  <Target className="mr-2" size={16} />
-                  <span>In-progress</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/applications/interviewing")} tooltip="Interviewing">
-                <Link to="/applications/interviewing" className="font-medium">
-                  <Calendar className="mr-2" size={16} />
-                  <span>Interviewing</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/applications/completed")} tooltip="Completed">
-                <Link to="/applications/completed" className="font-medium">
-                  <Trophy className="mr-2" size={16} />
-                  <span>Completed</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={appsActive("/board")} tooltip="Board">
                 <Link to="/board" className="font-medium">
                   <Target className="mr-2" size={16} />
@@ -126,7 +94,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <SidebarSeparator className="mx-0" />
 
         {/* Personal */}
         <SidebarGroup>
@@ -137,14 +105,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Link to="/resumes" className="font-medium">
                   <FileText className="mr-2" size={16} />
                   <span>Resumes</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/profile")} tooltip="Profile">
-                <Link to="/profile" className="font-medium">
-                  <User className="mr-2" size={16} />
-                  <span>Profile</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

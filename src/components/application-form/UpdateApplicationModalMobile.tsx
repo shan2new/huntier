@@ -1,5 +1,5 @@
 import { motion } from "motion/react"
-import { Building2, DollarSign, ExternalLink, Globe, HelpCircle, Info, Plus, Users } from "lucide-react"
+import { Building2, DollarSign, ExternalLink, Globe, Info, Plus, Users } from "lucide-react"
 import type { ApplicationListItem, Company, Platform } from "@/lib/api"
 import type { StageObject } from "@/types/application"
 import { cn, extractHostname, formatDateIndian } from "@/lib/utils"

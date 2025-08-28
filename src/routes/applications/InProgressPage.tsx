@@ -131,7 +131,7 @@ export function InProgressApplicationsPage() {
               >
                 <div className="flex items-center justify-between pt-3 pb-2">
                   <div className="text-xs font-medium text-muted-foreground">{group.title}</div>
-                  <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0">{group.items.length}</Badge>
                 </div>
                 <Card className="shadow-xs">
                   <CardContent className="p-0">

@@ -696,6 +696,18 @@ export async function aiKeywordsWithRefresh(id: string, getToken: () => Promise<
   })
 }
 
+// Enhance a small text snippet (summary, bullet, paragraph) using HybridFallback via OpenRouter
+export async function aiEnhanceTextWithRefresh(
+  id: string,
+  getToken: () => Promise<string>,
+  body: { text: string; mode?: 'rewrite' | 'proofread'; contentType?: 'summary' | 'bullet' | 'paragraph' | 'role' | 'company' | 'achievement' | 'educationField'; tone?: 'professional' | 'confident' | 'friendly' | 'concise'; field?: string; resume?: any }
+) {
+  return apiWithTokenRefresh(`/v1/resumes/${id}/ai/enhance-text`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 // Generate a default resume strictly in schema from the user's profile
 export async function aiGenerateResumeFromProfileWithRefresh(getToken: () => Promise<string>, profile?: any) {
   return apiWithTokenRefresh(`/v1/resumes/ai/generate-from-profile`, getToken, {

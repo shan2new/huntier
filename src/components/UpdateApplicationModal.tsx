@@ -530,9 +530,10 @@ function UpdateApplicationModal({
             onAskDelete={() => setShowDeleteConfirm(true)}
             onStageVizOpen={() => setStageVisualizationOpen(true)}
             onActivity={(occurredAt) => {
-              // Update local app state and notify parent
               setApp(prev => prev ? { ...prev, last_activity_at: occurredAt } : prev)
-              onUpdated?.(prev => ({ ...(prev as any), last_activity_at: occurredAt } as any) as any)
+              // Also update stage badge/derived UI – parent gets the updated app from server on next fetch,
+              // but we optimistically propagate locally.
+              onUpdated?.({ ...(app as any), last_activity_at: occurredAt } as ApplicationListItem)
             }}
           />
         )}

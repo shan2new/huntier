@@ -14,7 +14,6 @@ const loadingMessages = [
 ]
 
 export function SplashLoader() {
-  const [currentTextIndex, setCurrentTextIndex] = useState(0)
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
   const [showSecondary, setShowSecondary] = useState(false)
 

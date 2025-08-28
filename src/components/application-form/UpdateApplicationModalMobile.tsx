@@ -82,6 +82,7 @@ interface Props {
   onSave: () => void
   onAskDelete: () => void
   onStageVizOpen: () => void
+  onActivity?: (occurredAtIso: string) => void
 }
 
 export function UpdateApplicationModalMobile(props: Props) {
@@ -224,7 +225,10 @@ export function UpdateApplicationModalMobile(props: Props) {
                 {activeTab === 'notes' ? (
                   <ApplicationNotes applicationId={app?.id || ''} />
                 ) : (
-                  <ApplicationConversations applicationId={app?.id || ''} />
+                  <ApplicationConversations 
+                    applicationId={app?.id || ''} 
+                    onActivity={props.onActivity}
+                  />
                 )}
               </div>
             </div>

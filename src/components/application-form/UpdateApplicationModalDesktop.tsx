@@ -257,15 +257,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
                     ) : (
                       <ApplicationConversations 
                         applicationId={app?.id || ''}
-                        onActivity={(occurredAt) => {
-                          // Optimistically update last activity in the modal header and details
-                          if (!app) return
-                          const updated = { ...app, last_activity_at: occurredAt }
-                          // Update local view only; parent will refresh via onUpdated if needed
-                          ;(updated as any).progress_updated_at = (updated as any).progress_updated_at
-                          // Replace app reference
-                          ;(props as any).app = updated
-                        }}
+                        onActivity={props.onActivity}
                       />
                     )}
                   </div>

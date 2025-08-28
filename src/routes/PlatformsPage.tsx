@@ -98,7 +98,7 @@ export function PlatformsPage() {
             description: 'Applications to offers'
           },
           { 
-            label: 'In Progress', 
+            label: 'Pre-interview', 
             value: totalInProgress, 
             icon: Clock, 
             gradient: 'from-amber-500 to-orange-600',

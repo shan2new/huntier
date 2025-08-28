@@ -107,7 +107,7 @@ export function InProgressApplicationsPage() {
             <Target className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h2 className="text-base font-semibold">In-progress</h2>
+            <h2 className="text-base font-semibold">Pre-interview</h2>
             <p className="text-xs text-muted-foreground">Exploration and Screening</p>
           </div>
         </div>
@@ -119,7 +119,7 @@ export function InProgressApplicationsPage() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-8">
           <AnimatePresence>
             {stageGroups.map((group, gi) => (
               <motion.div
@@ -129,12 +129,12 @@ export function InProgressApplicationsPage() {
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={{ duration: 0.3, delay: 0.2 + gi * 0.05, ease: 'easeOut' }}
               >
+                <div className="flex items-center justify-between pt-3 pb-2">
+                  <div className="text-xs font-medium text-muted-foreground">{group.title}</div>
+                  <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>
+                </div>
                 <Card className="shadow-xs">
                   <CardContent className="p-0">
-                    <div className="flex items-center justify-between px-4 md:px-6 pt-3 pb-2">
-                      <div className="text-xs font-medium text-muted-foreground">{group.title}</div>
-                      <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>
-                    </div>
                     <AnimatePresence>
                       <div className="divide-y divide-border">
                         {group.items.map((app, index) => (

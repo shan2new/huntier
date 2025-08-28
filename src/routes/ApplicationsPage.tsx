@@ -91,7 +91,7 @@ export function ApplicationsPage() {
     const interviewing = apps.filter((app) => app.milestone === 'interviewing')
     const completed = apps.filter((app) => app.milestone === 'post_interview')
     return [
-      { key: 'in_progress', title: 'In-progress', icon: Activity, items: inProgress },
+      { key: 'in_progress', title: 'Pre-interview', icon: Activity, items: inProgress },
       { key: 'interviewing', title: 'Interviewing', icon: Users, items: interviewing },
       { key: 'completed', title: 'Completed', icon: Award, items: completed },
     ] as Array<{ key: string; title: string; icon: any; items: Array<ApplicationListItem> }>
@@ -106,7 +106,7 @@ export function ApplicationsPage() {
     >
       <div className="max-w-6xl mx-auto pt-8">
 
-      {/* Pipeline lanes: In-progress → Interviewing → Completed */}
+      {/* Pipeline lanes: Pre-interview → Interviewing → Completed */}
       <motion.div
         className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 mb-6"
         initial={{ opacity: 0 }}

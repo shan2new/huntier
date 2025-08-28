@@ -12,10 +12,10 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
+  SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -102,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuSubButton asChild isActive={appsActive("/applications/in-progress")}>
                     <Link to="/applications/in-progress" className="flex items-center gap-2">
                       <Target size={14} />
-                      <span>In-progress</span>
+                      <span>Pre-interview</span>
                     </Link>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>

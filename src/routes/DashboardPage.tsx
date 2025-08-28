@@ -72,11 +72,13 @@ function FunnelWidget() {
           <div className="flex items-center justify-center py-8">
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent" />
           </div>
+        ) : !data ? (
+          <div className="text-xs text-muted-foreground py-6">No data available</div>
         ) : (
           <div className="grid grid-cols-3 gap-3">
             {items.map((i, idx) => (
               <motion.div key={i.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * idx }}>
-                <StatCard title={i.label} value={Number(data?.[i.key] ?? 0)} icon={Activity} />
+                <StatCard title={i.label} value={Number((data as any)?.[i.key] ?? 0)} icon={Activity} />
               </motion.div>
             ))}
           </div>
@@ -163,7 +165,7 @@ function PlatformPerformanceWidget() {
                   </div>
                   <div className="flex items-center gap-2 text-xs">
                     <Badge variant="secondary" className="px-2 py-0.5">{r.totals} total</Badge>
-                    <Badge variant="outline" className="px-2 py-0.5">{r.in_progress} in-progress</Badge>
+                    <Badge variant="outline" className="px-2 py-0.5">{r.in_progress} Screening</Badge>
                     <Badge variant="outline" className="px-2 py-0.5">{r.offers} offers</Badge>
                   </div>
                 </motion.div>
@@ -366,7 +368,7 @@ export function DashboardPage() {
   const { user } = useUser()
   const firstName = user?.firstName || ''
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto pt-8 space-y-3">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="mx-auto pt-8 space-y-3 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]">
       {/* Top row: Welcome (prominent) + Funnel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch auto-rows-fr">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.05 }} className="flex">

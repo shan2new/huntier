@@ -220,7 +220,7 @@ export function UpdateApplicationModalMobile(props: Props) {
                 <button onClick={() => setActiveTab('notes')} className={cn('px-3 py-2 text-sm font-medium transition-colors relative', activeTab === 'notes' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>Notes{activeTab === 'notes' && (<div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />)}</button>
                 <button onClick={() => setActiveTab('conversations')} className={cn('px-3 py-2 text-sm font-medium transition-colors relative', activeTab === 'conversations' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>Conversations{activeTab === 'conversations' && (<div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />)}</button>
               </div>
-              <div className="px-2 pb-4">
+              <div className="px-2 py-2">
                 {activeTab === 'notes' ? (
                   <ApplicationNotes applicationId={app?.id || ''} />
                 ) : (
@@ -254,13 +254,28 @@ export function UpdateApplicationModalMobile(props: Props) {
                   <Label className="text-xs text-muted-foreground">Variable (LPA)</Label>
                   {varMinLpa && varMaxLpa && (<span className="text-xs text-muted-foreground">₹{varMinLpa || '0'} - ₹{varMaxLpa}</span>)}
                 </div>
-                <Input value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''} onChange={(e) => {
-                  const value = e.target.value
-                  if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
-                    const parts = value.split('-')
-                    if (parts.length === 1) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[0]) } else if (parts.length === 2) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[1]) }
-                  }
-                }} className="w-full" placeholder="5-10" />
+                <div className="flex items-center gap-2">
+                  <input
+                    id="include-variable-comp-mobile"
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={!!(varMinLpa && varMaxLpa)}
+                    onChange={(e) => {
+                      const next = e.currentTarget.checked
+                      if (!next) { setVarMinLpa(''); setVarMaxLpa('') }
+                    }}
+                  />
+                  <Label htmlFor="include-variable-comp-mobile" className="text-xs text-muted-foreground">Include</Label>
+                </div>
+                {!!(varMinLpa || varMaxLpa) && (
+                  <Input value={varMinLpa && varMaxLpa ? `${varMinLpa}-${varMaxLpa}` : ''} onChange={(e) => {
+                    const value = e.target.value
+                    if (value === '' || /^\d*\.?\d*(-\d*\.?\d*)?$/.test(value)) {
+                      const parts = value.split('-')
+                      if (parts.length === 1) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[0]) } else if (parts.length === 2) { setVarMinLpa(parts[0]); setVarMaxLpa(parts[1]) }
+                    }
+                  }} className="w-full" placeholder="5-10" />
+                )}
               </div>
             </div>
 
@@ -341,12 +356,12 @@ export function UpdateApplicationModalMobile(props: Props) {
                   <span>{formatDateIndian(new Date(app.created_at))}</span>
                 </div>
               )}
-              {app?.last_activity_at && (
+              {app && ((app as any).progress_updated_at || app.last_activity_at) ? (
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Last Activity</span>
-                  <span>{formatDateIndian(new Date(app.last_activity_at))}</span>
+                  <span>{formatDateIndian(new Date(((app as any).progress_updated_at || app.last_activity_at) as string))}</span>
                 </div>
-              )}
+              ) : null}
               {app?.created_at && (
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Days Active</span>
@@ -367,24 +382,28 @@ export function UpdateApplicationModalMobile(props: Props) {
               </div>
             ) : (
               <div className="space-y-2">
-                {contacts.map((contact) => (
-                  <div
-                    key={contact.id}
-                    className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 cursor-pointer"
-                    onClick={() => onEditContact && onEditContact(contact)}
-                  >
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium">{contact.name.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium truncate">{contact.name}</div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">{contact.role}</Badge>
-                        {contact.is_primary && (<Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">Primary</Badge>)}
+                <div className="flex flex-wrap gap-2">
+                  {contacts.map((contact) => (
+                    <button
+                      key={contact.id}
+                      className="flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-input/70 hover:bg-muted/50 cursor-pointer"
+                      onClick={() => onEditContact && onEditContact(contact)}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold">{contact.name.charAt(0).toUpperCase()}</span>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="text-xs font-medium truncate">
+                          <span className="truncate capitalize">{contact.name}</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground truncate capitalize">{contact.role}</div>
+                      </div>
+                      {contact.is_primary && (
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary ml-2" />
+                      )}
+                    </button>
+                  ))}
+                </div>
                 {contacts.length === 0 && (
                   <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">No contacts available</div>
                 )}

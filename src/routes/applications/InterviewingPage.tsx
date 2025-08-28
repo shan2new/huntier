@@ -33,7 +33,7 @@ export function InterviewingApplicationsPage() {
   const filtered = useMemo(() => apps.filter(a => a.milestone === 'interviewing'), [apps])
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="max-w-6xl mx-auto pt-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} className="mx-auto pt-8 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]">
       <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-primary/10">
@@ -80,7 +80,7 @@ export function InterviewingApplicationsPage() {
                           <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
                             <span className="truncate">{app.role}</span>
                             <span>•</span>
-                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateIndian(app.last_activity_at)}</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}</span>
                             <span>•</span>
                             <Badge variant="outline" className="text-[11px] px-2 py-0.5">{app.stage.name}</Badge>
                           </div>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
+import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User, BarChart3, Globe } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -90,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <div className="px-2 text-xs text-muted-foreground mt-1">Milestones</div>
               <SidebarMenuSub>
-                <SidebarMenuSubItem>
+                <SidebarMenuSubItem className="mt-2">
                   <SidebarMenuSubButton asChild isActive={appsActive("/applications/wishlist")}>
                     <Link to="/applications/wishlist" className="flex items-center gap-2">
                       <Star size={14} />
@@ -102,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuSubButton asChild isActive={appsActive("/applications/in-progress")}>
                     <Link to="/applications/in-progress" className="flex items-center gap-2">
                       <Target size={14} />
-                      <span>Pre-interview</span>
+                      <span>Screening</span>
                     </Link>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
@@ -129,6 +129,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Link to="/board" className="font-medium">
                   <Target className="mr-2" size={16} />
                   <span>Board</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-0" />
+
+        {/* Insights */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Insights</SidebarGroupLabel>
+          <SidebarMenu className="gap-1">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/platforms")} tooltip="Platforms">
+                <Link to="/platforms" className="font-medium">
+                  <Globe className="mr-2" size={16} />
+                  <span>Platforms</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/dashboard")} tooltip="Analytics">
+                <Link to="/dashboard" className="font-medium">
+                  <BarChart3 className="mr-2" size={16} />
+                  <span>Analytics</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

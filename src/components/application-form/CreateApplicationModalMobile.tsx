@@ -141,10 +141,30 @@ export function CreateApplicationModalMobile(props: Props) {
         const fxMax = draft.compensation.fixed_max_lpa ?? null
         const vrMin = draft.compensation.var_min_lpa ?? null
         const vrMax = draft.compensation.var_max_lpa ?? null
-        if (fxMin != null) setFixedMinLpa(String(fxMin))
-        if (fxMax != null) setFixedMaxLpa(String(fxMax))
-        if (vrMin != null) setVarMinLpa(String(vrMin))
-        if (vrMax != null) setVarMaxLpa(String(vrMax))
+
+        const toLpa = (v: any): number | null => {
+          if (v == null) return null
+          let n = Number(v)
+          if (!isFinite(n)) return null
+          if (n >= 1000) return 30
+          if (n < 10 || n > 90) return 30
+          return n
+        }
+
+        let nMin = toLpa(fxMin)
+        let nMax = toLpa(fxMax)
+        const nVarMin = toLpa(vrMin)
+        const nVarMax = toLpa(vrMax)
+
+        if (nMin != null && nMax == null) {
+          nMax = Math.min(90, nMin + 5)
+        } else if (nMax != null && nMin == null) {
+          nMin = Math.max(10, nMax - 5)
+        }
+        if (nMin != null) setFixedMinLpa(String(nMin))
+        if (nMax != null) setFixedMaxLpa(String(nMax))
+        if (nVarMin != null) setVarMinLpa(String(nVarMin))
+        if (nVarMax != null) setVarMaxLpa(String(nVarMax))
       }
       if (Array.isArray(draft?.notes) && draft.notes.length) {
         draft.notes.slice(0, 3).forEach((n: string) => addPendingNote(n))
@@ -308,10 +328,26 @@ export function CreateApplicationModalMobile(props: Props) {
                         const fxMax = draft.compensation.fixed_max_lpa ?? null
                         const vrMin = draft.compensation.var_min_lpa ?? null
                         const vrMax = draft.compensation.var_max_lpa ?? null
-                        if (fxMin != null) setFixedMinLpa(String(fxMin))
-                        if (fxMax != null) setFixedMaxLpa(String(fxMax))
-                        if (vrMin != null) setVarMinLpa(String(vrMin))
-                        if (vrMax != null) setVarMaxLpa(String(vrMax))
+
+                        const toLpa = (v: any): number | null => {
+                          if (v == null) return null
+                          let n = Number(v)
+                          if (!isFinite(n)) return null
+                          if (n >= 1000) return 30
+                          if (n < 10 || n > 90) return 30
+                          return n
+                        }
+
+                        let nMin = toLpa(fxMin)
+                        let nMax = toLpa(fxMax)
+                        const nVarMin = toLpa(vrMin)
+                        const nVarMax = toLpa(vrMax)
+                        if (nMin != null && nMax == null) nMax = Math.min(90, nMin + 5)
+                        else if (nMax != null && nMin == null) nMin = Math.max(10, nMax - 5)
+                        if (nMin != null) setFixedMinLpa(String(nMin))
+                        if (nMax != null) setFixedMaxLpa(String(nMax))
+                        if (nVarMin != null) setVarMinLpa(String(nVarMin))
+                        if (nVarMax != null) setVarMaxLpa(String(nVarMax))
                       }
                       if (Array.isArray(draft?.notes) && draft.notes.length) {
                         draft.notes.slice(0, 3).forEach((n: string) => addPendingNote(n))

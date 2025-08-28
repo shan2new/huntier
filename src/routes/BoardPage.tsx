@@ -141,7 +141,7 @@ export function BoardPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="max-w-6xl mx-auto pt-8 space-y-6"
+      className="mx-auto pt-8 space-y-6 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]"
     >
       {/* Toolbar + Stats */}
       <div className="flex flex-col gap-3">
@@ -298,7 +298,7 @@ export function BoardPage() {
                                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/50">
                                   <div className="flex items-center space-x-1">
                                     <Clock className="h-2.5 w-2.5" />
-                                    <span>{formatDateIndian(app.last_activity_at)}</span>
+                                    <span>{formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}</span>
                                   </div>
                                   <Building2 className="h-2.5 w-2.5" />
                                 </div>

@@ -1,10 +1,11 @@
 import { useState } from "react"
-import { DollarSign, HelpCircle } from "lucide-react"
+import { DollarSign, HelpCircle, Wallet2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 
 interface CompensationSectionProps {
@@ -18,6 +19,8 @@ interface CompensationSectionProps {
   setVarMaxLpa: (v: string) => void
   className?: string
   variant?: 'default' | 'compact'
+  variableEnabled?: boolean
+  setVariableEnabled?: (v: boolean) => void
 }
 
 const PRESET_RANGES = [
@@ -39,7 +42,9 @@ export function CompensationSection({
   setVarMinLpa,
   setVarMaxLpa,
   className,
-  variant = 'default'
+  variant = 'default',
+  variableEnabled,
+  setVariableEnabled,
 }: CompensationSectionProps) {
   const [activeField, setActiveField] = useState<string | null>(null)
   
@@ -67,6 +72,7 @@ export function CompensationSection({
 
   const hasFixedComp = fixedMinLpa || fixedMaxLpa
   const hasVarComp = varMinLpa || varMaxLpa
+  const variableOn = typeof variableEnabled === 'boolean' ? variableEnabled : !!hasVarComp
   const fixedRangeValid = validateRange(fixedMinLpa, fixedMaxLpa)
   const varRangeValid = validateRange(varMinLpa, varMaxLpa)
 
@@ -77,7 +83,7 @@ export function CompensationSection({
           {/* Header */}
           <div className="flex items-center gap-2">
             <Label className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
+              <Wallet2 className="h-4 w-4" />
               Compensation
             </Label>
             <Tooltip>
@@ -144,53 +150,74 @@ export function CompensationSection({
 
           {/* Variable Compensation */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Variable/Bonus</Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-48 text-xs">Performance-based bonus, equity, or commission in Lakhs per annum</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-
-            <div className={cn("grid gap-2", isCompact ? "grid-cols-2" : "grid-cols-2")}>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Minimum</Label>
-                <Input
-                  value={varMinLpa}
-                  onChange={(e) => handleNumberInput(e.target.value, setVarMinLpa)}
-                  onFocus={() => setActiveField('varMin')}
-                  onBlur={() => setActiveField(null)}
-                  placeholder="5"
-                  className={cn(
-                    "text-center transition-all duration-200",
-                    activeField === 'varMin' && "border-primary/60 bg-primary/5 shadow-sm",
-                    !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
-                  )}
-                />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium">Variable/Bonus</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-48 text-xs">Performance-based bonus, equity, or commission in Lakhs per annum</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Maximum</Label>
-                <Input
-                  value={varMaxLpa}
-                  onChange={(e) => handleNumberInput(e.target.value, setVarMaxLpa)}
-                  onFocus={() => setActiveField('varMax')}
-                  onBlur={() => setActiveField(null)}
-                  placeholder="10"
-                  className={cn(
-                    "text-center transition-all duration-200",
-                    activeField === 'varMax' && "border-primary/60 bg-primary/5 shadow-sm",
-                    !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
-                  )}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="include-variable-comp"
+                  checked={variableOn}
+                  onCheckedChange={(v) => {
+                    const next = !!v
+                    if (typeof setVariableEnabled === 'function') setVariableEnabled(next)
+                    if (!next) {
+                      setVarMinLpa('')
+                      setVarMaxLpa('')
+                    }
+                  }}
                 />
+                <Label htmlFor="include-variable-comp" className="text-xs text-muted-foreground">Include</Label>
               </div>
             </div>
 
-            {!varRangeValid && varMinLpa && varMaxLpa && (
-              <p className="text-xs text-destructive">Maximum should be greater than or equal to minimum</p>
+            {variableOn && (
+              <>
+                <div className={cn("grid gap-2", isCompact ? "grid-cols-2" : "grid-cols-2")}>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Minimum</Label>
+                    <Input
+                      value={varMinLpa}
+                      onChange={(e) => handleNumberInput(e.target.value, setVarMinLpa)}
+                      onFocus={() => setActiveField('varMin')}
+                      onBlur={() => setActiveField(null)}
+                      placeholder="5"
+                      className={cn(
+                        "text-center transition-all duration-200",
+                        activeField === 'varMin' && "border-primary/60 bg-primary/5 shadow-sm",
+                        !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Maximum</Label>
+                    <Input
+                      value={varMaxLpa}
+                      onChange={(e) => handleNumberInput(e.target.value, setVarMaxLpa)}
+                      onFocus={() => setActiveField('varMax')}
+                      onBlur={() => setActiveField(null)}
+                      placeholder="10"
+                      className={cn(
+                        "text-center transition-all duration-200",
+                        activeField === 'varMax' && "border-primary/60 bg-primary/5 shadow-sm",
+                        !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {!varRangeValid && varMinLpa && varMaxLpa && (
+                  <p className="text-xs text-destructive">Maximum should be greater than or equal to minimum</p>
+                )}
+              </>
             )}
           </div>
 
@@ -203,8 +230,8 @@ export function CompensationSection({
                   {(() => {
                     const fixedMin = parseFloat(fixedMinLpa) || 0
                     const fixedMax = parseFloat(fixedMaxLpa) || 0
-                    const varMin = parseFloat(varMinLpa) || 0
-                    const varMax = parseFloat(varMaxLpa) || 0
+                    const varMin = variableOn ? (parseFloat(varMinLpa) || 0) : 0
+                    const varMax = variableOn ? (parseFloat(varMaxLpa) || 0) : 0
                     
                     const totalMin = fixedMin + varMin
                     const totalMax = fixedMax + varMax

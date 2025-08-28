@@ -264,7 +264,7 @@ export function ApplicationNotes({
       </ScrollArea>
       
       {/* Input Area */}
-      <div className="border-t py-3 px-2">
+      <div className="border-t py-2 px-2">
         {/* Note input */}
         <div className="flex gap-2 items-center">        
           <Textarea

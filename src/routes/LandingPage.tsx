@@ -21,7 +21,7 @@ export function LandingPage() {
 
 	useEffect(() => {
 		if (isSignedIn) {
-			navigate({ to: '/applications' })
+			navigate({ to: '/dashboard' })
 		}
 	}, [isSignedIn, navigate])
 

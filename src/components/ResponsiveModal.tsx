@@ -97,7 +97,7 @@ export function ResponsiveModal({
     <ResponsiveModalContext.Provider value={{ isMobile: false }}>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-        <DialogContent className={cn("max-w-2xl max-h-[85vh] p-0 flex flex-col shadow-soft-lg", contentClassName)} hideClose={hideClose}>
+        <DialogContent className={cn("max-w-2xl max-h-[85vh] md:max-h-[75vh] p-0 flex flex-col shadow-2xl", contentClassName)} hideClose={hideClose}>
           <div className="flex-1 min-h-0">
             <ScrollArea className="h-full">
               <div className={cn("flex flex-col", className)}>
@@ -255,7 +255,7 @@ export function NestedResponsiveModal({
         <DialogContent 
           className={cn(
             level === 'secondary' ? "max-w-md" : "max-w-2xl",
-            "max-h-[85vh] p-0 flex flex-col shadow-soft-lg",
+            "max-h-[85vh] md:max-h-[75vh] p-0 flex flex-col shadow-2xl",
             contentClassName
           )}
         >

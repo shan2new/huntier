@@ -349,7 +349,9 @@ function UpdateApplicationModal({
         onOpenChange={onClose}
         contentClassName={cn(
           'p-0 gap-0',
-          isMobile ? 'bg-background' : 'max-w-5xl border border-border rounded-xl bg-card'
+          isMobile 
+            ? 'bg-background' 
+            : 'max-w-5xl rounded-xl bg-neutral-950/95 border border-white/10 shadow-2xl'
         )}
         hideClose
       >
@@ -527,6 +529,11 @@ function UpdateApplicationModal({
             onSave={() => void handleSave()}
             onAskDelete={() => setShowDeleteConfirm(true)}
             onStageVizOpen={() => setStageVisualizationOpen(true)}
+            onActivity={(occurredAt) => {
+              // Update local app state and notify parent
+              setApp(prev => prev ? { ...prev, last_activity_at: occurredAt } : prev)
+              onUpdated?.(prev => ({ ...(prev as any), last_activity_at: occurredAt } as any) as any)
+            }}
           />
         )}
       </ResponsiveModal>

@@ -1,12 +1,14 @@
 import { motion } from "motion/react"
-import { Building2, ExternalLink, Target, Trash2, Users, ImagePlus, X, Loader2, HelpCircle } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { useAuth } from "@clerk/clerk-react"
+import { Building2, ExternalLink, HelpCircle, ImagePlus, Loader2, Target, Trash2, Users, X } from "lucide-react"
 import type { Company, Platform } from "@/lib/api"
 import { cn, extractHostname } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SourceCombobox } from "@/components/SourceCombobox"
 import { PlatformCombobox } from "@/components/PlatformCombobox"
 import { ResponsiveModalFooter, ResponsiveModalHeader, ResponsiveModalTitle } from "@/components/ResponsiveModal"
 import { ApplicationNotes } from "@/components/ApplicationNotes"
@@ -17,8 +19,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { RoleField } from "@/components/application-form/RoleField"
 import { JobUrlToggleField } from "@/components/application-form/JobUrlToggleField"
 import { extractApplicationDraftFromImagesWithRefresh, getApplicationDraftWithRefresh } from "@/lib/api"
-import { useAuth } from "@clerk/clerk-react"
-import { useEffect, useRef, useState } from "react"
 
 // Keep local Contact shape to match parent state
 export type Contact = {
@@ -76,11 +76,9 @@ interface Props {
   handleClose: () => void
 }
 
-const sourceOptions = [
-  { value: 'applied_self', label: 'Direct' },
-  { value: 'applied_referral', label: 'Referral' },
-  { value: 'recruiter_outreach', label: 'Recruiter' },
-]
+// deprecated: left for backwards compatibility in case of future revert
+// deprecated: source options moved to SourceCombobox
+// (intentionally empty and unused)
 
 export function CreateApplicationModalDesktop(props: Props) {
   const {
@@ -147,10 +145,33 @@ export function CreateApplicationModalDesktop(props: Props) {
         const fxMax = draft.compensation.fixed_max_lpa ?? null
         const vrMin = draft.compensation.var_min_lpa ?? null
         const vrMax = draft.compensation.var_max_lpa ?? null
-        if (fxMin != null) setFixedMinLpa(String(fxMin))
-        if (fxMax != null) setFixedMaxLpa(String(fxMax))
-        if (vrMin != null) setVarMinLpa(String(vrMin))
-        if (vrMax != null) setVarMaxLpa(String(vrMax))
+
+        // Normalize to LPA; treat large rupee values like 1200000 as 12 and clamp to [10, 90]
+        const toLpa = (v: any): number | null => {
+          if (v == null) return null
+          const n = Number(v)
+          if (!isFinite(n)) return null
+          // If value looks like rupees (e.g., 1200000), prefer a safe default rather than converting
+          if (n >= 1000) return 30
+          if (n < 10 || n > 90) return 30 // fallback sensible default
+          return n
+        }
+
+        let nMin = toLpa(fxMin)
+        let nMax = toLpa(fxMax)
+        const nVarMin = toLpa(vrMin)
+        const nVarMax = toLpa(vrMax)
+
+        // If only one bound is present, guess a tight range within [10,90]
+        if (nMin != null && nMax == null) {
+          nMax = Math.min(90, nMin + 5)
+        } else if (nMax != null && nMin == null) {
+          nMin = Math.max(10, nMax - 5)
+        }
+        if (nMin != null) setFixedMinLpa(String(nMin))
+        if (nMax != null) setFixedMaxLpa(String(nMax))
+        if (nVarMin != null) setVarMinLpa(String(nVarMin))
+        if (nVarMax != null) setVarMaxLpa(String(nVarMax))
       }
       if (Array.isArray(draft?.notes) && draft.notes.length) {
         draft.notes.slice(0, 3).forEach((n: string) => addPendingNote(n))
@@ -178,7 +199,7 @@ export function CreateApplicationModalDesktop(props: Props) {
   return (
     <TooltipProvider>
       <div className="flex flex-col">
-        <ResponsiveModalHeader className="px-6 py-4 border-b border-border">
+        <ResponsiveModalHeader className="px-6 py-4 border-b border-white/10 bg-neutral-950/60 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           {company ? (
             <>
@@ -230,7 +251,7 @@ export function CreateApplicationModalDesktop(props: Props) {
 
         {company ? (
           <div className="p-6 relative grid grid-cols-5 gap-6">
-            <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border pointer-events-none" aria-hidden="true" />
+            <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-white/10 pointer-events-none" aria-hidden="true" />
 
             {/* Left Column */}
             <div className="col-span-3 pr-6 space-y-4">
@@ -245,10 +266,10 @@ export function CreateApplicationModalDesktop(props: Props) {
               </div>
               <JobUrlToggleField include={includeJobUrl} onIncludeChange={setIncludeJobUrl} url={jobUrl} onUrlChange={setJobUrl} />
 
-              <Card className="mt-2">
+              <Card className="mt-2 bg-neutral-900/80 border-white/10">
                 <CardContent className="p-0">
                   <div className="space-y-3">
-                    <div className="flex gap-2 border-b px-6 pt-6">
+                    <div className="flex gap-2 border-b border-white/10 px-6 pt-6">
                       <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                       <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                     </div>
@@ -279,7 +300,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               />
 
               {/* Source & Platform */}
-              <Card>
+              <Card className="bg-neutral-900/80 border-white/10">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Target className="h-4 w-4" />Source & Platform</Label>
@@ -293,19 +314,7 @@ export function CreateApplicationModalDesktop(props: Props) {
                     </Tooltip>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <Select value={source} onValueChange={setSource}>
-                        <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>How did you apply?</SelectLabel>
-                            {sourceOptions.map(o => (
-                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <SourceCombobox value={source} onChange={setSource} className="w-full h-10" variant="popover" />
                     <div>
                       <PlatformCombobox value={selectedPlatform} onChange={setSelectedPlatform} placeholder="platform" className="w-full" />
                     </div>
@@ -314,7 +323,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               </Card>
 
               {/* Contacts */}
-              <Card>
+              <Card className="bg-neutral-900/80 border-white/10">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
@@ -365,10 +374,10 @@ export function CreateApplicationModalDesktop(props: Props) {
                 <div
                   className="mt-4 p-6 rounded-xl border border-dashed border-border text-center bg-muted/20 hover:bg-muted/30 transition-colors"
                   onDragOver={(e) => { e.preventDefault() }}
-                  onDrop={(e) => { e.preventDefault(); onFilesAdded(Array.from(e.dataTransfer.files || [])) }}
+                  onDrop={(e) => { e.preventDefault(); onFilesAdded(Array.from(e.dataTransfer.files)) }}
                   onPaste={(e) => {
-                    const files = Array.from(e.clipboardData?.files || [])
-                    if (files.length) onFilesAdded(files)
+                    const files = Array.from(e.clipboardData.files)
+                    if (files.length > 0) onFilesAdded(files)
                   }}
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -408,7 +417,7 @@ export function CreateApplicationModalDesktop(props: Props) {
           </div>
         )}
 
-        <ResponsiveModalFooter className="px-6 py-3 border-t border-border">
+        <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t border-white/10">
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center text-destructive text-sm min-h-[1.25rem]">
               {error && (

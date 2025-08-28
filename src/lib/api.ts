@@ -17,6 +17,7 @@ export type RoleSuggestion = { role: string; reason?: string; confidence?: numbe
 
 export type RoleSuggestionResponse = { suggestions: Array<RoleSuggestion> }
 export type Platform = { id: string; name: string; url: string; logo_url?: string | null }
+export type UserPlatform = { id: string; user_id: string; platform_id: string; platform?: Platform; rating?: number | null; notes?: string | null; created_at: string; updated_at: string }
 export type ApplicationCompensation = {
   fixed_min_lpa?: string | null
   fixed_max_lpa?: string | null
@@ -38,6 +39,7 @@ export type ApplicationListItem = {
   milestone: string
   created_at: string
   last_activity_at: string
+  progress_updated_at?: string
   notes?: string | null
   compensation?: ApplicationCompensation | null
 }
@@ -478,6 +480,30 @@ export async function searchPlatformsByNameWithRefresh<T>(
     method: 'POST',
     body: JSON.stringify({ query }),
   })
+}
+
+// --- User platforms ---
+export async function listMyPlatformsWithRefresh(getToken: () => Promise<string>): Promise<Array<UserPlatform>> {
+  return apiWithTokenRefresh(`/v1/platforms/me`, getToken)
+}
+
+export async function addMyPlatformWithRefresh(
+  getToken: () => Promise<string>,
+  body: { platform_id: string; rating?: number | null; notes?: string | null }
+): Promise<UserPlatform> {
+  return apiWithTokenRefresh(`/v1/platforms/me`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function updateMyPlatformWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  body: { rating?: number | null; notes?: string | null }
+): Promise<UserPlatform> {
+  return apiWithTokenRefresh(`/v1/platforms/me/${id}`, getToken, { method: 'PUT', body: JSON.stringify(body) })
+}
+
+export async function deleteMyPlatformWithRefresh(getToken: () => Promise<string>, id: string): Promise<{ success: boolean }> {
+  return apiWithTokenRefresh(`/v1/platforms/me/${id}`, getToken, { method: 'DELETE' })
 }
 
 // Companies

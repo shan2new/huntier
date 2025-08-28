@@ -17,7 +17,7 @@ import { ApplicationNotes } from "@/components/ApplicationNotes"
 import { CompensationSection } from "@/components/CompensationSection"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PlatformCombobox } from "@/components/PlatformCombobox"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SourceCombobox } from "@/components/SourceCombobox"
 
 export type UpdateContact = {
   id: string
@@ -26,11 +26,7 @@ export type UpdateContact = {
   is_primary?: boolean
 }
 
-const sourceOptions = [
-  { value: 'applied_self', label: 'Direct' },
-  { value: 'applied_referral', label: 'Referral' },
-  { value: 'recruiter_outreach', label: 'Recruiter' },
-]
+// deprecated: source options moved to SourceCombobox
 
 interface Props {
   app: ApplicationListItem | null
@@ -84,6 +80,7 @@ interface Props {
   onSave: () => void
   onAskDelete: () => void
   onStageVizOpen: () => void
+  onActivity?: (occurredAtIso: string) => void
 }
 
 export function UpdateApplicationModalDesktop(props: Props) {
@@ -129,7 +126,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full">
-        <ResponsiveModalHeader className="px-6 py-4 border-b border-border">
+        <ResponsiveModalHeader className="px-6 py-4 border-b border-white/10 bg-neutral-950/60 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {app?.company?.logo_url ? (
@@ -159,12 +156,12 @@ export function UpdateApplicationModalDesktop(props: Props) {
                     </a>
                   </>
                 )}
-                {app?.last_activity_at && (
+                {app && ((app as any).progress_updated_at || app.last_activity_at) ? (
                   <>
                     <span>•</span>
-                    <span>Updated {formatDateIndian(new Date(app.last_activity_at))}</span>
+                    <span>Updated {formatDateIndian(new Date(((app as any).progress_updated_at || app.last_activity_at) as string))}</span>
                   </>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -201,11 +198,12 @@ export function UpdateApplicationModalDesktop(props: Props) {
         </div>
       </ResponsiveModalHeader>
 
-      <div className="grid grid-cols-5 gap-4">
+      <div className="relative grid grid-cols-5 gap-0">
+        <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-white/10 pointer-events-none" aria-hidden="true" />
         {/* Left - main content */}
         <div className="col-span-3 px-6 pb-20 pt-4">
           <div className="space-y-4">
-            <Card>
+            <Card className="bg-neutral-900/80 border-white/10">
               <CardContent className="space-y-2 py-4">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
@@ -246,18 +244,29 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Notes & Conversations */}
-            <Card className="mt-6">
+            <Card className="mt-6 bg-neutral-900/80 border-white/10">
               <CardContent className="p-0">
                 <div className="space-y-3">
-                  <div className="flex gap-2 border-b px-2 pt-0">
+                  <div className="flex gap-2 border-b border-white/10 px-2 pt-0">
                     <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                     <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                   </div>
-                  <div className="px-2 pb-4">
+                  <div className="px-2 py-2">
                     {activeTab === 'notes' ? (
                       <ApplicationNotes applicationId={app?.id || ''} />
                     ) : (
-                      <ApplicationConversations applicationId={app?.id || ''} />
+                      <ApplicationConversations 
+                        applicationId={app?.id || ''}
+                        onActivity={(occurredAt) => {
+                          // Optimistically update last activity in the modal header and details
+                          if (!app) return
+                          const updated = { ...app, last_activity_at: occurredAt }
+                          // Update local view only; parent will refresh via onUpdated if needed
+                          ;(updated as any).progress_updated_at = (updated as any).progress_updated_at
+                          // Replace app reference
+                          ;(props as any).app = updated
+                        }}
+                      />
                     )}
                   </div>
                 </div>
@@ -267,7 +276,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
         </div>
 
         {/* Right - details */}
-        <div className="col-span-2 border-l border-border px-6 pb-20 pt-4">
+        <div className="col-span-2 px-6 pb-20 pt-4">
           <div className="space-y-4">
             {/* Compensation */}
             <CompensationSection
@@ -279,13 +288,15 @@ export function UpdateApplicationModalDesktop(props: Props) {
               setFixedMaxLpa={setFixedMaxLpa}
               setVarMinLpa={setVarMinLpa}
               setVarMaxLpa={setVarMaxLpa}
+              variableEnabled={!!(varMinLpa || varMaxLpa)}
+              setVariableEnabled={(v) => { if (!v) { setVarMinLpa(''); setVarMaxLpa('') } }}
             />
 
             {/* Source & Platform */}
-            <Card>
+            <Card className="bg-neutral-900/80 border-white/10">
               <CardContent className="space-y-3 py-4">
                 <div className="flex items-center gap-2">
-                  <Label className="flex items-center gap-2"><Globe className="h-4 w-4" />Source & Platform</Label>
+                  <Label className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Source & Platform</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
@@ -296,19 +307,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
                   </Tooltip>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Select value={source} onValueChange={setSource}>
-                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>How did you apply?</SelectLabel>
-                          {sourceOptions.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <SourceCombobox value={source} onChange={setSource} className="w-full h-10" variant="popover" />
                   <div>
                     <PlatformCombobox 
                       value={selectedPlatform} 
@@ -323,7 +322,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Details */}
-            <Card>
+            <Card className="bg-neutral-900/80 border-white/10">
               <CardContent className="space-y-2 py-4">
                 <Label className="flex items-center gap-2"><Info className="h-4 w-4" />Details</Label>
                 <div className="space-y-2 text-sm">
@@ -350,7 +349,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Contacts */}
-            <Card>
+            <Card className="bg-neutral-900/80 border-white/10">
               <CardContent className="space-y-3 py-4">
                 <div className="flex items-center gap-2">
                   <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
@@ -369,24 +368,28 @@ export function UpdateApplicationModalDesktop(props: Props) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {contacts.map((contact) => (
-                      <div
-                        key={contact.id}
-                        className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 cursor-pointer"
-                        onClick={() => onEditContact && onEditContact(contact)}
-                      >
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-medium">{contact.name.charAt(0).toUpperCase()}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">{contact.name}</div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">{contact.role}</Badge>
-                            {contact.is_primary && (<Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 h-auto font-normal">Primary</Badge>)}
+                    <div className="flex flex-wrap gap-2">
+                      {contacts.map((contact) => (
+                        <button
+                          key={contact.id}
+                          className="flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-input/70 hover:bg-muted/50 cursor-pointer"
+                          onClick={() => onEditContact && onEditContact(contact)}
+                        >
+                          <div className="w-7 h-7 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-semibold">{contact.name.charAt(0).toUpperCase()}</span>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="text-xs font-medium truncate">
+                              <span className="truncate capitalize">{contact.name}</span>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground truncate capitalize">{contact.role}</div>
+                          </div>
+                          {contact.is_primary && (
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary ml-2" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                     {contacts.length === 0 && (
                       <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">
                         No contacts available
@@ -403,7 +406,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
         </div>
       </div>
 
-      <ResponsiveModalFooter className="px-6 py-3 bg-background border-t border-border">
+      <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t border-white/10">
         {error && (
           <div className="flex items-center gap-2 mb-3 p-2 rounded bg-destructive/10 text-destructive text-sm">
             <div className="w-1 h-1 rounded-full bg-destructive" />

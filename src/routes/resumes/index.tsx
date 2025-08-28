@@ -93,7 +93,7 @@ export function ResumeList() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="w-full py-8 max-w-6xl mx-auto pt-8"
+      className="w-full py-8 mx-auto pt-8 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]"
     >
       <motion.div
         initial={{ opacity: 0, y: -6 }}

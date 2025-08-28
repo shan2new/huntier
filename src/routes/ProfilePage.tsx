@@ -188,7 +188,7 @@ export function ProfilePage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto pt-8 space-y-8"
+      className="mx-auto pt-8 space-y-8 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]"
     >
       {/* Header */}
       <motion.div

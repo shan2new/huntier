@@ -9,14 +9,11 @@ import {
   Phone,
   Plus,
   Send,
-  User,
-  X,
 } from 'lucide-react'
+import { useUser } from '@clerk/clerk-react'
 import { useApi } from '@/lib/use-api'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -33,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { ContactModal } from '@/components/ContactModal'
 
 export interface Contact {
   id: string
@@ -59,6 +57,8 @@ interface ApplicationConversationsProps {
   applicationId?: string
   isCreating?: boolean
   className?: string
+  // Called when a new conversation is created; provides occurred_at ISO string
+  onActivity?: (occurredAtIso: string) => void
 }
 
 const mediumIcons = {
@@ -81,8 +81,10 @@ export function ApplicationConversations({
   applicationId,
   isCreating = false,
   className = '',
+  onActivity,
 }: ApplicationConversationsProps) {
   const { apiCall } = useApi()
+  const { user } = useUser()
   const [conversations, setConversations] = useState<Array<Conversation>>([])
   const [contacts, setContacts] = useState<Array<any>>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -90,13 +92,11 @@ export function ApplicationConversations({
   
   // Message input state
   const [newMessage, setNewMessage] = useState('')
-  const [selectedContact, setSelectedContact] = useState<string | null>(null)
+  const [selectedContact, setSelectedContact] = useState<string | null>('user')
   const [selectedMedium, setSelectedMedium] = useState<string | null>(null)
   
-  // Contact creation state
-  const [showNewContact, setShowNewContact] = useState(false)
-  const [newContactName, setNewContactName] = useState('')
-  const [newContactTitle, setNewContactTitle] = useState('')
+  // Contact creation state (via ContactModal)
+  const [contactModalOpen, setContactModalOpen] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
@@ -149,6 +149,17 @@ export function ApplicationConversations({
     }
   }
   
+  // Initialize default sender: last conversation's sender, else current user
+  useEffect(() => {
+    if (conversations.length > 0) {
+      const last = conversations[conversations.length - 1]
+      const lastSender = last.sender === 'user' ? 'user' : (last.contact_id || null)
+      setSelectedContact(prev => (prev === null || prev === 'user') ? lastSender : prev)
+    } else {
+      setSelectedContact('user')
+    }
+  }, [conversations])
+  
   const handleSendMessage = async () => {
     if (!applicationId || !newMessage.trim()) return
     
@@ -156,27 +167,7 @@ export function ApplicationConversations({
     setError(null)
     
     try {
-      // Create new contact if needed
-      let contactId = selectedContact === 'user' ? null : selectedContact
-      
-      if (showNewContact && newContactName.trim()) {
-        const newContact = await apiCall<any>(
-          `/v1/applications/${applicationId}/contacts`,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              contact: {
-                name: newContactName,
-                title: newContactTitle || null,
-              },
-              role: 'other',
-            }),
-          }
-        )
-        contactId = newContact.contact_id
-        await fetchContacts() // Refresh contacts list
-      }
-      
+      const contactId = selectedContact === 'user' ? null : selectedContact
       const sender = selectedContact === 'user' ? 'user' : 'contact'
       const direction = sender === 'user' ? 'outbound' : 'inbound'
       
@@ -195,10 +186,8 @@ export function ApplicationConversations({
       )
       
       setConversations([...conversations, conversation])
+      onActivity?.(conversation.occurred_at)
       setNewMessage('')
-      setShowNewContact(false)
-      setNewContactName('')
-      setNewContactTitle('')
     } catch (err) {
       console.error('Failed to send message:', err)
       setError('Failed to send message')
@@ -213,16 +202,49 @@ export function ApplicationConversations({
   }
   
   const getContactInitials = (conv: Conversation) => {
-    if (conv.sender === 'user') return 'Y'
-    const name = conv.contact?.name || 'U'
-    return name.charAt(0).toUpperCase()
+    const getInitials = (fullName: string) => fullName
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+
+    if (conv.sender === 'user') {
+      const displayName = user?.fullName || 'You'
+      return getInitials(displayName)
+    }
+    const name = conv.contact?.name || 'Unknown'
+    return getInitials(name)
+  }
+  
+  const getInitialsFromName = (name?: string | null) => {
+    const n = (name || 'C')
+      .split(' ')
+      .filter(Boolean)
+      .map((p) => p.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+    return n
+  }
+  
+  const getContactAvatarUrl = (contact: any | null | undefined): string | undefined => {
+    if (!contact) return undefined
+    return (
+      contact.avatar_url ||
+      contact.image_url ||
+      contact.avatar ||
+      contact.photo ||
+      undefined
+    )
   }
   
   return (
     <div className={`flex flex-col h-full ${className}`}>      
       {/* Messages Area */}
       <ScrollArea className="h-[300px] w-full">
-        <div className="space-y-4 px-4 d-none">
+        <div className="space-y-4 px-3">
         {conversations.length === 0 && !isLoading && (
           <div className="text-center text-sm text-muted-foreground py-8">
             No conversations yet. Start by adding a message below.
@@ -258,6 +280,9 @@ export function ApplicationConversations({
                   {!isUser && (
                     <div className="flex items-center justify-center">
                     <Avatar className="h-8 w-8">
+                      {getContactAvatarUrl(conv.contact as any) && (
+                        <AvatarImage src={getContactAvatarUrl(conv.contact as any)} />
+                      )}
                       <AvatarFallback className="text-xs">
                         {getContactInitials(conv)}
                       </AvatarFallback>
@@ -298,8 +323,18 @@ export function ApplicationConversations({
                   {isUser && (
                     <div className="flex items-end justify-center">
                     <Avatar className="h-8 w-8">
+                      {user?.imageUrl && <AvatarImage src={user.imageUrl} />}
                       <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                        Y
+                        {(() => {
+                          const fullName = user?.fullName || 'You'
+                          return fullName
+                            .split(' ')
+                            .filter(Boolean)
+                            .map((n) => n.charAt(0))
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)
+                        })()}
                       </AvatarFallback>
                     </Avatar>
                     </div>
@@ -324,45 +359,7 @@ export function ApplicationConversations({
       </ScrollArea>
       
       {/* Input Area */}
-      <div className="border-t py-2 space-y-3 px-2">
-        
-        {/* New Contact Form */}
-        {showNewContact && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-2 p-3 bg-muted/50 rounded-lg"
-          >
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">New Contact</Label>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={() => {
-                  setShowNewContact(false)
-                  setNewContactName('')
-                  setNewContactTitle('')
-                }}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-            <Input
-              placeholder="Contact name"
-              value={newContactName}
-              onChange={(e) => setNewContactName(e.target.value)}
-              className="h-8 text-sm"
-            />
-            <Input
-              placeholder="Title (optional)"
-              value={newContactTitle}
-              onChange={(e) => setNewContactTitle(e.target.value)}
-              className="h-8 text-sm"
-            />
-          </motion.div>
-        )}
+      <div className="border-t py-2 px-2">
         
         {/* Message Input */}
         <div className="flex gap-2 items-center">
@@ -372,50 +369,80 @@ export function ApplicationConversations({
               <DropdownMenuTrigger asChild>
                 <button className="h-9 w-9 rounded-full flex items-center justify-center ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground transition-colors">
                   <Avatar className="h-9 w-9 cursor-pointer">
+                    {selectedContact === 'user' && user?.imageUrl && (
+                      <AvatarImage src={user.imageUrl} />
+                    )}
+                    {selectedContact && selectedContact !== 'user' && (() => {
+                      const foundContact = contacts.find((item: any) => item.contact_id === selectedContact)
+                      const url = getContactAvatarUrl(foundContact?.contact)
+                      return url ? <AvatarImage src={url} /> : null
+                    })()}
                     <AvatarFallback className={cn(
                       "text-xs",
                       selectedContact === 'user' && "bg-primary text-primary-foreground"
                     )}>
-                      {selectedContact === 'user' 
-                        ? 'Y'
-                        : selectedContact
-                          ? contacts.find(c => c.contact_id === selectedContact)?.contact?.name.charAt(0).toUpperCase() || 'C'
-                          : showNewContact && newContactName
-                            ? newContactName.charAt(0).toUpperCase()
-                            : '?'}
+                      {(() => {
+                        if (selectedContact === 'user') {
+                          const fullName = user?.fullName || 'You'
+                          return fullName
+                            .split(' ')
+                            .filter(Boolean)
+                            .map((n) => n.charAt(0))
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)
+                        }
+                        const name = contacts.find(c => c.contact_id === selectedContact)?.contact?.name || 'C'
+                        return name.charAt(0).toUpperCase()
+                      })()}
                     </AvatarFallback>
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[200px]">
+              <DropdownMenuContent align="start" className="min-w-[220px]">
                 <DropdownMenuItem onClick={() => {
                   setSelectedContact('user')
-                  setShowNewContact(false)
-                }}>
-                  <User className="h-3 w-3 mr-2" />
-                  You
+                }} className="px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-6 w-6">
+                      {user?.imageUrl && <AvatarImage src={user.imageUrl} />}
+                      <AvatarFallback className="text-[10px] bg-primary/10">
+                        {getInitialsFromName(user?.fullName || 'You')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm">You</div>
+                  </div>
                 </DropdownMenuItem>
                 {contacts.map((c) => (
                   <DropdownMenuItem 
                     key={c.contact_id}
                     onClick={() => {
                       setSelectedContact(c.contact_id)
-                      setShowNewContact(false)
                     }}
-                    className="flex flex-col items-start gap-0.5 px-3 py-2 hover:bg-accent/80"
+                    className="px-3 py-2 hover:bg-accent/80"
                   >
-                    <span className="text-sm font-medium">{c.contact?.name}</span>
-                    {c.contact?.title && (
-                      <span className="text-xs text-muted-foreground">
-                        {c.contact.title}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        {getContactAvatarUrl(c?.contact) && (
+                          <AvatarImage src={getContactAvatarUrl(c?.contact)} />
+                        )}
+                        <AvatarFallback className="text-[10px]">
+                          {getInitialsFromName(c?.contact?.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col items-start leading-none">
+                        <span className="text-sm font-medium">{c.contact?.name}</span>
+                        {c.contact?.title && (
+                          <span className="text-xs text-muted-foreground">{c.contact.title}</span>
+                        )}
+                      </div>
+                    </div>
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem 
                   onClick={() => {
                     setSelectedContact(null)
-                    setShowNewContact(true)
+                    setContactModalOpen(true)
                   }}
                   className="text-sm px-3 py-2 hover:bg-accent/80"
                 >
@@ -473,13 +500,11 @@ export function ApplicationConversations({
                 ? "Type your message..." 
                 : selectedContact
                   ? `Message from ${contacts.find(c => c.contact_id === selectedContact)?.contact?.name || 'contact'}...`
-                  : showNewContact && newContactName
-                    ? `Message from ${newContactName}...`
-                    : "Select a sender to continue..."
+                  : "Select a sender to continue..."
             }
             value={newMessage}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
-            disabled={isLoading || (!selectedContact && !showNewContact)}
+            disabled={isLoading || !selectedContact}
             rows={1}
             className="text-sm h-9 resize-none flex-1"
             onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -495,7 +520,7 @@ export function ApplicationConversations({
             disabled={
               isLoading || 
               !newMessage.trim() || 
-              (!selectedContact && (!showNewContact || !newContactName.trim()))
+              !selectedContact
             }
             className="shrink-0"
           >
@@ -507,6 +532,36 @@ export function ApplicationConversations({
           <div className="text-xs text-destructive">{error}</div>
         )}
       </div>
+      <ContactModal
+        open={contactModalOpen}
+        onOpenChange={setContactModalOpen}
+        onSave={async (contact: any) => {
+          if (!applicationId) return
+          try {
+            setIsLoading(true)
+            const created = await apiCall<any>(
+              `/v1/applications/${applicationId}/contacts`,
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  contact: { name: contact.name },
+                  role: contact.role || 'recruiter',
+                }),
+              }
+            )
+            await fetchContacts()
+            setSelectedContact(created?.contact_id || null)
+          } catch (e) {
+            console.error('Failed to create contact from modal:', e)
+            setError('Failed to create contact')
+          } finally {
+            setIsLoading(false)
+            setContactModalOpen(false)
+          }
+        }}
+        contact={null}
+        onClose={() => setContactModalOpen(false)}
+      />
     </div>
   )
 }

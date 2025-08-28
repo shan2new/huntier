@@ -2,36 +2,21 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import logo512 from '/logo512.svg'
 
-const funTexts = [
-  "Brewing your perfect job hunt... ☕",
-  "Polishing your applications... ✨", 
-  "Connecting the dots... 🔗",
-  "Gathering intelligence... 🎯",
-  "Preparing your arsenal... ⚡",
-  "Loading opportunities... 🚀",
-  "Syncing your ambitions... 💫",
-  "Crafting your journey... 🛠️"
-]
-
 const loadingMessages = [
-  "Just a moment while we get things ready...",
-  "Setting up your workspace...",
-  "Authenticating your session...",
-  "Loading your dashboard..."
+  "Brewing your perfect job hunt... ☕",
+  "Polishing your applications...", 
+  "Connecting the dots...",
+  "Gathering intelligence...",
+  "Preparing your arsenal...",
+  "Loading opportunities...",
+  "Syncing your ambitions...",
+  "Crafting your journey..."
 ]
 
 export function SplashLoader() {
   const [currentTextIndex, setCurrentTextIndex] = useState(0)
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
   const [showSecondary, setShowSecondary] = useState(false)
-
-  // Rotate fun texts
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTextIndex((prev) => (prev + 1) % funTexts.length)
-    }, 1500)
-    return () => clearInterval(interval)
-  }, [])
 
   // Show secondary message after delay and rotate
   useEffect(() => {
@@ -108,11 +93,11 @@ export function SplashLoader() {
               }}
               animate={{ 
                 filter: [
-                  "drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))",
-                  "drop-shadow(0 0 35px rgba(59, 130, 246, 0.8))",
-                  "drop-shadow(0 0 25px rgba(59, 130, 246, 0.6))",
-                  "drop-shadow(0 0 40px rgba(59, 130, 246, 0.9))",
-                  "drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))"
+                  "drop-shadow(0 0 15px rgba(255, 255, 255, 0.4))",
+                  "drop-shadow(0 0 35px rgba(255, 255, 255, 0.8))",
+                  "drop-shadow(0 0 25px rgba(255, 255, 255, 0.6))",
+                  "drop-shadow(0 0 40px rgba(255, 255, 255, 0.9))",
+                  "drop-shadow(0 0 15px rgba(255, 255, 255, 0.4))"
                 ]
               }}
               transition={{
@@ -190,6 +175,7 @@ export function SplashLoader() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
+          className="mt-12"
         >
           <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
             Huntier
@@ -201,28 +187,6 @@ export function SplashLoader() {
             transition={{ delay: 1, duration: 1 }}
           />
         </motion.div>
-
-        {/* Fun rotating text */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="h-8 flex items-center justify-center"
-        >
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={currentTextIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="text-lg md:text-xl text-muted-foreground font-medium"
-            >
-              {funTexts[currentTextIndex]}
-            </motion.p>
-          </AnimatePresence>
-        </motion.div>
-
         {/* Secondary loading message */}
         <AnimatePresence>
           {showSecondary && (

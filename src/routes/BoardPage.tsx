@@ -175,13 +175,13 @@ export function BoardPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-          className="flex items-center justify-between p-4 rounded-xl border border-border bg-card"
+          className="flex items-center justify-between p-4 rounded-xl border border-border bg-accent/40"
         >
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {COLUMNS.map((col) => {
               const count = visibleApps.filter(app => app.milestone === col.key).length
               return (
-                <div key={col.key} className="flex items-center justify-between gap-2.5 rounded-md border border-border/60 px-3 py-2">
+                <div key={col.key} className="flex items-center justify-between gap-2.5 rounded-md border border-border/60 bg-background/80 backdrop-blur-3xl px-3 py-2">
                   <div className="p-1.5 rounded-lg bg-primary/10">
                     <col.icon className="h-3.5 w-3.5 text-primary" />
                   </div>
@@ -192,10 +192,6 @@ export function BoardPage() {
                 </div>
               )
             })}
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Total Pipeline</p>
-            <p className="text-xl font-bold">{visibleApps.length}</p>
           </div>
         </motion.div>
       </div>

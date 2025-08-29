@@ -28,6 +28,28 @@ function StatCard({ title, value, icon: Icon, hint }: { title: string; value: nu
   )
 }
 
+// Sanitize AI response to a safe, predictable shape
+function sanitizeQARehearsalResponse(input: any): QARehearsalResponse {
+  const safe: QARehearsalResponse = {
+    responses: {},
+    pitch: '',
+  }
+  if (!input || typeof input !== 'object') return safe
+  const r: any = input
+  const res: any = r.responses
+  if (res && typeof res === 'object') {
+    for (const [key, value] of Object.entries(res as Record<string, unknown>)) {
+      if (typeof value === 'string') {
+        const v = value.trim()
+        if (v) (safe.responses as any)[key] = v
+      }
+    }
+  }
+  if (typeof r.pitch === 'string') safe.pitch = r.pitch.trim()
+  if (typeof r.note === 'string') (safe as any).note = r.note.trim()
+  return safe
+}
+
 function FunnelWidget() {
   const [data, setData] = useState<FunnelAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -265,7 +287,9 @@ function QARehearsalWidget() {
         await clearQARehearsalCacheWithRefresh(getToken)
       }
       const response = await generateProfileQARehearsalWithRefresh(getToken)
-      setRehearsal(response)
+      const safe = sanitizeQARehearsalResponse(response as any)
+      const hasAny = !!(safe.pitch || safe.note || Object.keys(safe.responses).length > 0)
+      setRehearsal(hasAny ? safe : null)
     } catch {
       setRehearsal(null)
     }

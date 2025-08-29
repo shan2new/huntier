@@ -1,5 +1,6 @@
 
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
+import { Error500 } from './components/Error500'
 import { Layout } from './ui/Layout'
 import { PublicLayout } from './ui/PublicLayout'
 import { LandingPage } from './routes/LandingPage'
@@ -19,8 +20,11 @@ import { ResumeBuilder } from './routes/resumes/$resumeId'
 import { DashboardPage } from './routes/DashboardPage'
 import ResumePrintPage from './routes/resumes/ResumePrintPage'
 
-// Single root for the app
-const rootRoute = createRootRoute()
+// Single root for the app with error fallback
+const rootRoute = createRootRoute({
+  component: undefined,
+  errorComponent: () => <Error500 />,
+})
 
 // Public layout branch (layout routes should have an id, not a path)
 const publicLayout = createRoute({

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Calendar, ChevronsUpDown, ClipboardList, FileText, Home, LogOut, Star, Target, Trophy, User, BarChart3, Globe } from "lucide-react"
+import { BarChart3, Calendar, ChevronsUpDown, ClipboardList, FileText, Globe, Home, LogOut, Mail, Star, Target, Trophy, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -171,6 +171,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Link to="/resumes" className="font-medium">
                   <FileText className="mr-2" size={16} />
                   <span>Resumes</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/mail")} tooltip="Mail">
+                <Link to="/mail" className="font-medium">
+                  <Mail className="mr-2" size={16} />
+                  <span>Mail</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

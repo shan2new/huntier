@@ -19,6 +19,8 @@ import { ResumeList } from './routes/resumes/index'
 import { ResumeBuilder } from './routes/resumes/$resumeId'
 import { DashboardPage } from './routes/DashboardPage'
 import ResumePrintPage from './routes/resumes/ResumePrintPage'
+import { MailPage } from './routes/MailPage'
+import { MailCallbackPage } from './routes/MailCallbackPage'
 
 // Single root for the app with error fallback
 const rootRoute = createRootRoute({
@@ -58,6 +60,8 @@ const boardRoute = createRoute({ getParentRoute: () => appLayout, path: '/board'
 const platformsRoute = createRoute({ getParentRoute: () => appLayout, path: '/platforms', component: PlatformsPage })
 const referrersRoute = createRoute({ getParentRoute: () => appLayout, path: '/referrers', component: ReferrersPage })
 const profileRoute = createRoute({ getParentRoute: () => appLayout, path: '/profile', component: ProfilePage })
+const mailRoute = createRoute({ getParentRoute: () => appLayout, path: '/mail', component: MailPage })
+const mailCallbackRoute = createRoute({ getParentRoute: () => publicLayout, path: '/mail/callback', component: MailCallbackPage })
 
 // Resume routes
 const resumeListRoute = createRoute({ getParentRoute: () => appLayout, path: '/resumes', component: ResumeList })
@@ -71,7 +75,7 @@ const resumeBuilderRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-	publicLayout.addChildren([landing, auth, resumePrintRoute]),
+	publicLayout.addChildren([landing, auth, resumePrintRoute, mailCallbackRoute]),
 	appLayout.addChildren([
 		dashboardRoute,
 		appsRoute,
@@ -84,6 +88,7 @@ const routeTree = rootRoute.addChildren([
 		platformsRoute,
 		referrersRoute,
 		profileRoute,
+		mailRoute,
 		resumeListRoute,
 		resumeBuilderRoute,
 	]),

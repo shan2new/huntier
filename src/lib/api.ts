@@ -398,6 +398,111 @@ export async function updateInterviewTypeWithRefresh<T>(
   })
 }
 
+// Mail API
+export type MailThread = {
+  id: string
+  account_id: string
+  gmail_thread_id: string
+  subject?: string | null
+  snippet?: string | null
+  preview_from?: any | null
+  preview_to?: any | null
+  latest_at: string
+  application_id?: string | null
+}
+
+export type MailMessage = {
+  id: string
+  thread_id: string
+  gmail_message_id: string
+  internal_date: string
+  headers?: any | null
+  from?: any | null
+  to?: any | null
+  cc?: any | null
+  bcc?: any | null
+  subject?: string | null
+  body_text?: string | null
+  body_html?: string | null
+  label_ids?: Array<string> | null
+  has_attachments: boolean
+  direction: 'inbound' | 'outbound'
+}
+
+export async function listMailThreadsWithRefresh(
+  getToken: () => Promise<string>,
+  opts: { query?: string; before?: string } = {}
+) {
+  const params = new URLSearchParams()
+  if (opts.query) params.set('query', opts.query)
+  if (opts.before) params.set('before', opts.before)
+  return apiWithTokenRefresh<Array<MailThread>>(`/v1/mail/threads?${params.toString()}`, getToken)
+}
+
+export async function listMailMessagesWithRefresh(getToken: () => Promise<string>, threadId: string) {
+  return apiWithTokenRefresh<Array<MailMessage>>(`/v1/mail/threads/${threadId}/messages`, getToken)
+}
+
+export async function assignMailThreadWithRefresh(
+  getToken: () => Promise<string>,
+  threadId: string,
+  application_id: string
+) {
+  return apiWithTokenRefresh(`/v1/mail/threads/${threadId}/assign`, getToken, {
+    method: 'POST',
+    body: JSON.stringify({ application_id })
+  })
+}
+
+export async function replyToMailThreadWithRefresh(
+  getToken: () => Promise<string>,
+  threadId: string,
+  body: { text?: string; html?: string }
+) {
+  return apiWithTokenRefresh(`/v1/mail/threads/${threadId}/reply`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+// Gmail connect/callback helpers
+// (Removed) connectGmailWithRefresh - Clerk handles Google OAuth
+
+// (Removed) gmailCallbackWithRefresh - Clerk handles Google OAuth
+
+// Mail queue status
+export type MailQueueStatus = {
+  counts: Record<string, number>
+  job: { id: string; name: string; state?: string; timestamp: number; attemptsMade: number } | null
+  hasAccount?: boolean
+  hasGoogleLinked?: boolean
+  needsAuth?: boolean
+  scopes?: Array<string>
+  hasRequiredScopes?: boolean
+  missingScopes?: Array<string>
+  requiredScopes?: Array<string>
+}
+
+export async function getMailStatusWithRefresh(
+  getToken: () => Promise<string>,
+  opts: { accountId?: string } = {}
+) {
+  const params = new URLSearchParams()
+  if (opts.accountId) params.set('accountId', opts.accountId)
+  return apiWithTokenRefresh<MailQueueStatus>(`/v1/mail/status?${params.toString()}`, getToken)
+}
+
+// Update per-user additional mail scopes in Clerk (via backend)
+export async function updateMailScopesWithRefresh(
+  getToken: () => Promise<string>,
+  body: { send_enabled?: boolean; additionalScopes?: string[] }
+) {
+  return apiWithTokenRefresh<{ additionalScopes: string[] }>(`/v1/mail/scopes`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 /** @deprecated Use deleteInterviewWithRefresh instead */
 export async function deleteInterview<T>(
   token: string,

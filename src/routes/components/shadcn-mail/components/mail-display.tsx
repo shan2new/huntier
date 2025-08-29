@@ -1,14 +1,5 @@
-import { addDays, addHours, format, nextSaturday } from "date-fns"
-import {
-  Archive,
-  ArchiveX,
-  Clock,
-  Forward,
-  MoreVertical,
-  Reply,
-  ReplyAll,
-  Trash2,
-} from "lucide-react"
+import { format } from "date-fns"
+import { Archive, ArchiveX, Forward, MoreVertical, Reply, ReplyAll, Trash2 } from "lucide-react"
 
 import type { Mail } from "@/routes/components/shadcn-mail/data"
 import {
@@ -17,7 +8,6 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,7 +29,6 @@ interface MailDisplayProps {
 }
 
 export function MailDisplay({ mail }: MailDisplayProps) {
-  const today = new Date()
 
   return (
     <div className="flex h-full flex-col gap-1">

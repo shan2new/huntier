@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BarChart3, Calendar, ChevronsUpDown, ClipboardList, FileText, Globe, Home, LogOut, Mail, Star, Target, Trophy, User } from "lucide-react"
+import { BarChart3, Calendar, ChevronsUpDown, ClipboardList, FileText, Globe, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 
@@ -29,6 +29,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+
+function SparklesGradient({ size = 10, className = "", strokeWidth = 2 }: { size?: number | string; className?: string; strokeWidth?: number }) {
+  const gradientId = React.useId()
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={`url(#${gradientId})`}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#06b6d4" />
+        </linearGradient>
+      </defs>
+      <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
+      <path d="M20 2v4" />
+      <path d="M22 4h-4" />
+      <circle cx="4" cy="20" r="2" />
+    </svg>
+  )
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
@@ -170,18 +201,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuButton asChild isActive={appsActive("/resumes")} tooltip="Resumes">
                 <Link to="/resumes" className="font-medium">
                   <FileText className="mr-2" size={16} />
-                  <span>Resumes</span>
+                  <span>Resume AI <SparklesGradient size={10} className="ml-2 inline-block align-middle" /> </span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/mail")} tooltip="Mail">
-                <Link to="/mail" className="font-medium">
-                  <Mail className="mr-2" size={16} />
-                  <span>Mail</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* Mail disabled */}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

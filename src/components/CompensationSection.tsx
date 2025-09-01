@@ -248,26 +248,6 @@ export function CompensationSection({
               </div>
             </div>
           )}
-
-          {/* Quick presets */}
-          {(hasFixedComp || hasVarComp) ? null : (
-            <div className="flex gap-1 flex-wrap">
-              <div className="text-xs text-muted-foreground mb-2">Quick presets:</div>
-              <div className="flex gap-1 flex-wrap">
-                {PRESET_RANGES.slice(0, isCompact ? 3 : 6).map((preset) => (
-                  <Button
-                    key={preset.label}
-                    variant="outline"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => applyPreset(preset)}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </TooltipProvider>

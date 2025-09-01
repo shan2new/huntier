@@ -16,6 +16,8 @@ html, body, #app {
 
 /* Fonts */
 @import "@fontsource/outfit";
+@import "@fontsource/geist-sans";
+@import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));

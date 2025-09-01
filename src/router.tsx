@@ -19,6 +19,7 @@ import { ResumeList } from './routes/resumes/index'
 import { ResumeBuilder } from './routes/resumes/$resumeId'
 import { DashboardPage } from './routes/DashboardPage'
 import ResumePrintPage from './routes/resumes/ResumePrintPage'
+import { ExtensionConnectPage } from './routes/extension/Connect'
  
 
 // Single root for the app with error fallback
@@ -40,6 +41,7 @@ const resumePrintRoute = createRoute({ getParentRoute: () => publicLayout, path:
 	const { resumeId } = resumePrintRoute.useParams()
 	return <ResumePrintPage resumeId={resumeId} />
 } })
+const extConnectRoute = createRoute({ getParentRoute: () => publicLayout, path: '/extension/connect', component: ExtensionConnectPage })
 
 // App (protected via Clerk in main.tsx, but organized under an app layout)
 const appLayout = createRoute({
@@ -73,7 +75,7 @@ const resumeBuilderRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-	publicLayout.addChildren([landing, auth, resumePrintRoute]),
+	publicLayout.addChildren([landing, auth, resumePrintRoute, extConnectRoute]),
 	appLayout.addChildren([
 		dashboardRoute,
 		appsRoute,

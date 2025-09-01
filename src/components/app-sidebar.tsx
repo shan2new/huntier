@@ -75,12 +75,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild tooltip="Huntier">
               <Link to="/dashboard">
-                <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center">
                   <img src="/logo512.svg" alt="Huntier" />
                 </div>
                 <div className="flex items-center gap-2 leading-none">
                   <span className="text-lg font-bold">Huntier</span>
-                  <Badge variant="secondary" className="h-5 px-2 py-0 text-[10px]">Beta</Badge>
+                  <Badge variant="secondary" className="h-4 px-1 py-0 text-[10px] rounded-xs">Beta</Badge>
                 </div>
               </Link>
             </SidebarMenuButton>

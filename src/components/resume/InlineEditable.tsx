@@ -19,6 +19,8 @@ export function InlineEditable({
 
   useEffect(() => {
     if (!ref.current) return
+    // Avoid resetting caret position while the user is actively editing
+    if (document.activeElement === ref.current) return
     if (ref.current.innerText !== (value || '')) {
       ref.current.innerText = value || ''
     }
@@ -45,13 +47,20 @@ export function InlineEditable({
         whiteSpace: multiline ? 'pre-wrap' : 'nowrap',
       }}
       onInput={(e) => {
-        const text = (e.currentTarget.innerText || '').replace(/\u00A0/g, ' ').trimStart()
+        // Normalize NBSP to regular spaces but do not trim; trimming can cause
+        // controlled updates that reset the caret position on key presses
+        const text = (e.currentTarget.innerText || '').replace(/\u00A0/g, ' ')
         onChange(text)
       }}
       onKeyDown={(e) => {
         if (!multiline && e.key === 'Enter') {
           e.preventDefault()
           ;(e.currentTarget as HTMLDivElement).blur()
+        }
+        // prevent accidental line splits on space in non-multiline nodes due to IME/non-breaking space quirks
+        if (!multiline && e.key === ' ') {
+          // Let the space insert normally; avoid any custom text mutations that reset caret
+          // No-op on purpose
         }
       }}
       onFocus={(e) => {

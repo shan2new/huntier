@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useUser } from '@clerk/clerk-react'
+import type { ResumeThemeId } from '@/lib/themes'
 import { toast } from '@/components/ui/toaster'
 
 import { useAuthToken } from '@/lib/auth'
@@ -12,10 +13,13 @@ import { ExperienceSection } from '@/components/resume/ExperienceSection'
 import { SkillsSection } from '@/components/resume/SkillsSection'
 import { EducationSection } from '@/components/resume/EducationSection'
 import { AchievementsSection } from '@/components/resume/AchievementsSection'
+import { CertificationsSection } from '@/components/resume/CertificationsSection'
 import { ResumeProgress } from '@/components/resume/ResumeProgress'
 import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
 import '@/components/resume/resume-editor.css'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { ResumeThemeProvider } from '@/components/resume/ThemeContext'
+import { getResumeTheme } from '@/lib/themes'
 
 export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { getToken } = useAuthToken()
@@ -28,6 +32,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const [autoImportAttempted, setAutoImportAttempted] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const defaultThemeId: ResumeThemeId = 'minimal'
   const [resumeData, setResumeData] = useState({
     id: undefined as string | undefined,
     name: isNew ? 'Untitled Resume' : 'My Resume',
@@ -43,9 +48,11 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     leadership: [] as Array<any>,
     education: [] as Array<any>,
     technologies: [] as Array<any>,
+    certifications: [] as Array<any>,
+    additional_section: [] as Array<any>,
     sections: [] as Array<any>,
     template_id: null as string | null,
-    theme: { font: 'Inter', size: 'md', accent: 'zinc' } as any,
+    theme: { font: 'Inter', size: 'md', accent: 'zinc', id: defaultThemeId as ResumeThemeId },
   })
 
   useEffect(() => {
@@ -75,6 +82,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       // Add achievements section if there are achievements
       if (prev.achievements.length > 0) {
         seed.push({ id: 'achievements', type: 'achievements', title: 'Achievements', order: order++, content: prev.achievements })
+      }
+      // Add certifications section if present
+      if ((prev as any).certifications?.length > 0) {
+        seed.push({ id: 'certifications', type: 'certifications', title: 'Certifications', order: order++, content: (prev as any).certifications })
       }
       
       // Default sections if empty
@@ -124,6 +135,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
           if (Array.isArray(src.achievements) && src.achievements.length > 0) {
             sections.push({ id: 'achievements', type: 'achievements', title: 'Achievements', order: order++, content: src.achievements })
           }
+          // Certifications
+          if (Array.isArray(src?.certifications) && src.certifications.length > 0) {
+            sections.push({ id: 'certifications', type: 'certifications', title: 'Certifications', order: order++, content: src.certifications })
+          }
           if (sections.length === 1) {
             sections.push({ id: 'experience', type: 'experience', title: 'Work Experience', order: order++, content: [] })
           }
@@ -139,9 +154,13 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
           leadership: d.leadership || [],
           education: d.education || [],
           technologies: d.technologies || [],
+          certifications: (Array.isArray(d.sections) ? (d.sections.find((s: any) => s.type === 'certifications')?.content || []) : []),
+          additional_section: d.additional_section || [],
           sections: (Array.isArray(d.sections) && d.sections.length > 0) ? d.sections : buildSectionsFromData(d),
           template_id: d.template_id || null,
-          theme: d.theme || { font: 'Inter', size: 'md', accent: 'zinc' },
+          theme: (d.theme && typeof d.theme === 'object')
+            ? { ...d.theme, id: (d.theme && typeof d.theme.id === 'string') ? d.theme.id : defaultThemeId }
+            : { font: 'Inter', size: 'md', accent: 'zinc', id: defaultThemeId },
         })
       } catch (e) {
         console.error('Failed to load resume', e)
@@ -239,6 +258,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
         education: resumeData.education,
         technologies: resumeData.technologies,
         sections: resumeData.sections,
+        additional_section: (resumeData as any).additional_section,
         template_id: resumeData.template_id,
         theme: resumeData.theme,
       }
@@ -318,6 +338,13 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       title: 'Leadership',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    },
+    {
+      type: 'certifications',
+      title: 'Certifications',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17l-3 3-3-3m3 3V10m3-6H6a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2V6a2 2 0 00-2-2z" />
       </svg>
     }
   ]
@@ -583,10 +610,10 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
               <ResumeToolbar
                 name={resumeData.name}
                 onNameChange={(name) => setResumeData(prev => ({ ...prev, name }))}
-                templateId={resumeData.template_id}
-                onTemplateChange={(template_id) => setResumeData(prev => ({ ...prev, template_id }))}
                 onExportPdf={() => download('pdf')}
                 onExportDocx={() => download('docx')}
+                themeId={resumeData.theme.id}
+                onThemeChange={(id: ResumeThemeId) => setResumeData(prev => ({ ...prev, theme: { ...prev.theme, id } }))}
                 importing={importing}
                 exporting={exporting}
                 onImportPdf={async (file) => {
@@ -649,13 +676,17 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             <div className="lg:col-start-2 justify-self-center">
               <div className="w-full max-w-[900px]">
                 <div className="relative mb-8 last:mb-0">
-                  <div 
-                    className="resume-document mx-auto"
-                    style={{ 
-                      colorScheme: 'light'
-                    }}
-                  >
-                    <div className="px-16 py-16 space-y-8 resume-content">
+                  {(() => {
+                    const theme = getResumeTheme(resumeData.theme.id as any)
+                    const style = theme.fontFamily ? { colorScheme: 'light' as const, fontFamily: theme.fontFamily } : { colorScheme: 'light' as const }
+                    const contentClass = `${theme.contentClass || 'px-16 py-16'} space-y-8 resume-content ${theme.bodyClass}`
+                    return (
+                      <ResumeThemeProvider theme={theme}>
+                        <div 
+                          className={`resume-document mx-auto ${theme.rootClass}`}
+                          style={style}
+                        >
+                          <div className={contentClass}>
                       <div data-section="personal-info">
                         <PersonalInfoSection personalInfo={resumeData.personal_info} onChange={(field, value) => updatePersonalInfo(field, value)} />
                       </div>
@@ -775,13 +806,48 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 />
                               </motion.div>
                             )
+                          case 'certifications': {
+                            const certItems = section.content || []
+                            return (
+                              <motion.div
+                                key={section.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                                data-section="certifications"
+                              >
+                                <CertificationsSection
+                                  items={certItems}
+                                  onAddItem={() => setResumeData(prev => ({
+                                    ...prev,
+                                    certifications: [ ...(prev as any).certifications || [], { name: '', issuer: '', date: '', description: '' } ],
+                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: [ ...(s.content as Array<any>), { name: '', issuer: '', date: '', description: '' } ] } : s),
+                                  }))}
+                                  onRemoveItem={(idx) => setResumeData(prev => ({
+                                    ...prev,
+                                    certifications: ((prev as any).certifications || []).filter((_: any, i: number) => i !== idx),
+                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).filter((_: any, i: number) => i !== idx) } : s),
+                                  }))}
+                                  onChangeField={(idx, field, value) => setResumeData(prev => ({
+                                    ...prev,
+                                    certifications: ((prev as any).certifications || []).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it),
+                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it) } : s),
+                                  }))}
+                                />
+                              </motion.div>
+                            )
+                          }
                           default:
                             return null
                         }
                       })}
                       </AnimatePresence>
-                    </div>
-                  </div>
+                          </div>
+                        </div>
+                      </ResumeThemeProvider>
+                    )
+                  })()}
                 </div>
               </div>
             </div>

@@ -15,10 +15,12 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
   const experienceItems: Array<any> = getSection('experience')?.content || []
   const educationItems: Array<any> = getSection('education')?.content || []
   const achievementsItems: Array<any> = getSection('achievements')?.content || []
+  const certificationsItems: Array<any> = getSection('certifications')?.content || []
   const skillsContent: any = getSection('skills')?.content || { groups: [] }
 
+  // Future: apply theme from data.theme when backend includes it for print
   return (
-    <div className="resume-document mx-auto" style={{ colorScheme: 'light' }}>
+    <div className="resume-document mx-auto bg-white text-zinc-900" style={{ colorScheme: 'light' }}>
       <div className="py-12 space-y-8 resume-content">
         {/* Personal Info */}
         <div>
@@ -155,6 +157,36 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
                         </div>
                         {ach.description && (
                           <div className="text-sm text-gray-600 leading-relaxed">{ach.description}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certifications */}
+          {certificationsItems.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-px bg-border w-10" />
+                  <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Certifications</h2>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+              </div>
+              <div className="space-y-4">
+                {certificationsItems.map((c: any, idx: number) => (
+                  <div key={idx} className="relative">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-start gap-3 flex-wrap">
+                          <span className="font-semibold text-gray-900 text-base flex-1">{c.name}</span>
+                          {c.date && <span className="text-sm text-gray-500">{c.date}</span>}
+                        </div>
+                        {(c.issuer || c.description) && (
+                          <div className="text-sm text-gray-600 leading-relaxed">{[c.issuer, c.description].filter(Boolean).join(' — ')}</div>
                         )}
                       </div>
                     </div>

@@ -1,14 +1,14 @@
 
 import { DownloadIcon, Settings } from 'lucide-react'
+import type { ResumeThemeId } from '@/lib/themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ThemeSelector } from '@/components/resume/ThemeSelector'
 
 type ResumeToolbarProps = {
   name: string
   onNameChange: (name: string) => void
-  templateId: string | null
-  onTemplateChange: (templateId: string | null) => void
   onExportPdf: () => void
   onExportDocx: () => void
   onImportPdf?: (file: File) => void
@@ -19,13 +19,13 @@ type ResumeToolbarProps = {
   variant?: 'bar' | 'card'
   importing?: boolean
   exporting?: boolean
+  themeId?: ResumeThemeId | string
+  onThemeChange?: (id: ResumeThemeId) => void
 }
 
 export function ResumeToolbar({
   name,
   onNameChange,
-  templateId,
-  onTemplateChange,
   onExportPdf,
   onExportDocx,
   onImportPdf,
@@ -36,6 +36,8 @@ export function ResumeToolbar({
   variant = 'bar',
   importing,
   exporting,
+  themeId,
+  onThemeChange,
 }: ResumeToolbarProps) {
   const getSaveStatus = () => {
     if (saving) return 'Saving...'
@@ -78,8 +80,9 @@ export function ResumeToolbar({
             placeholder="Untitled Resume"
             className="h-9"
           />
-          <div className="flex justify-between">
-          <DropdownMenu>
+          <div className="flex flex-wrap items-center gap-2">
+            <ThemeSelector value={themeId} onChange={onThemeChange} />
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="text-xs">
                     <DownloadIcon className="w-4 h-4" />
@@ -109,7 +112,7 @@ export function ResumeToolbar({
                   }}>Import PDF</Button>
                 </label>
               </div>
-              <Button size="sm" className="text-xs" onClick={onSave}>Save</Button>
+              <Button size="sm" className="text-xs ml-auto" onClick={onSave}>Save</Button>
             </div>
         </div>
       </div>
@@ -134,7 +137,7 @@ export function ResumeToolbar({
                 {(saving || hasUnsavedChanges) && (
                   <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
                 )}
                 {!saving && !hasUnsavedChanges && (
@@ -149,16 +152,7 @@ export function ResumeToolbar({
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-3">
-            {/* Template Selector */}
-            <select
-              value={templateId || ''}
-              onChange={(e) => onTemplateChange(e.target.value || null)}
-              className="h-9 px-3 text-sm bg-gray-50 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Default Template</option>
-              <option value="compact">Compact</option>
-              <option value="elegant">Elegant</option>
-            </select>
+            <ThemeSelector value={themeId} onChange={onThemeChange} />
 
             {/* Export Dropdown */}
             <div className="relative group">

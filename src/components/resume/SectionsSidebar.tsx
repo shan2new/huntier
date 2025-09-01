@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Briefcase, Code2, FileText, GraduationCap, GripVertical, Minus, Plus, SquareStack, Trophy, Users } from 'lucide-react'
+import { Briefcase, Code2, FileText, GraduationCap, GripVertical, Minus, Plus, SquareStack, Trophy, Users, Award } from 'lucide-react'
 
 type Section = {
   id: string
@@ -26,6 +26,7 @@ const iconForType: Record<string, React.ReactNode> = {
   education: <GraduationCap className="h-4 w-4" />,
   achievements: <Trophy className="h-4 w-4" />,
   leadership: <Users className="h-4 w-4" />,
+  certifications: <Award className="h-4 w-4" />,
 }
 
 export function SectionsSidebar({

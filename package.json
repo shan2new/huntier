@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite --port 3000",
     "start": "vite --port 3000",
-    "build": "vite build && tsc",
+    "build": "vite build && tsc && npm run build:ext",
+    "build:ext": "esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js && esbuild extension/popup.ts --bundle --format=esm --outfile=extension/popup.js",
     "serve": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -75,6 +76,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
     "jsdom": "^26.1.0",
+    "esbuild": "^0.21.5",
     "postcss": "^8.5.6",
     "prettier": "^3.5.3",
     "sharp": "^0.34.1",

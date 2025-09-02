@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { Briefcase, Circle, MapPin, Sparkles } from 'lucide-react'
+import { AlertCircle, Briefcase, Circle, MapPin, Sparkles } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import type { StageObject } from '@/types/application'
 import {
@@ -24,6 +24,7 @@ import { StageVisualization } from '@/components/StageVisualization'
 import { UpdateApplicationModalMobile } from '@/components/application-form/UpdateApplicationModalMobile'
 import { UpdateApplicationModalDesktop } from '@/components/application-form/UpdateApplicationModalDesktop'
 import { ContactModal } from '@/components/ContactModal'
+import { Alert } from './ui/alert'
 
 // Child contact shape expected by UpdateApplicationModalMobile/Desktop
 type ChildContact = {
@@ -351,7 +352,7 @@ function UpdateApplicationModal({
           'p-0 gap-0',
           isMobile 
             ? 'bg-background' 
-            : 'max-w-5xl rounded-xl bg-neutral-950/95 border border-border'
+            : 'max-w-5xl rounded-2xl bg-neutral-950/95 border border-border'
         )}
         hideClose
       >
@@ -544,11 +545,10 @@ function UpdateApplicationModal({
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-              <Circle className="h-5 w-5 text-destructive" />
+              <AlertCircle className="h-5 w-5 text-destructive"/>
             </div>
             <div>
               <h3 className="text-lg font-semibold">Delete Application</h3>
-              <p className="text-sm text-muted-foreground">This action cannot be undone</p>
             </div>
           </div>
           
@@ -567,7 +567,7 @@ function UpdateApplicationModal({
                   Deleting...
                 </>
               ) : (
-                'Delete Application'
+                'Delete'
               )}
             </Button>
           </div>

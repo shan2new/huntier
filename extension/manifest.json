@@ -38,7 +38,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "crawler.js"
+        "crawler.js",
+        "network-hook.js"
       ],
       "matches": [
         "<all_urls>"

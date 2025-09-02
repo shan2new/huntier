@@ -6,7 +6,7 @@
     "dev": "vite --port 3000",
     "start": "vite --port 3000",
     "build": "vite build && tsc && npm run build:ext",
-    "build:ext": "esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js && esbuild extension/popup.ts --bundle --format=esm --outfile=extension/popup.js",
+    "build:ext": "esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js && esbuild extension/popup.ts --bundle --format=esm --outfile=extension/popup.js && esbuild extension/network-hook.ts --bundle --format=iife --outfile=extension/network-hook.js && esbuild extension/crawler.ts --bundle --format=iife --outfile=extension/crawler.js",
     "serve": "vite preview",
     "test": "vitest run",
     "lint": "eslint",

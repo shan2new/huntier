@@ -125,19 +125,19 @@ export function UpdateApplicationModalDesktop(props: Props) {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full">
-        <ResponsiveModalHeader className="px-6 py-4 border-b border-white/10 bg-neutral-950/60 backdrop-blur-sm">
+      <div className="flex flex-col h-full rounded-2xl overflow-hidden bg-background/95 backdrop-blur-sm border border-border/60 shadow-2xl" >
+        <ResponsiveModalHeader className="px-6 py-4 border-b border-border/60 bg-card/90 backdrop-blur-sm rounded-t-2xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {app?.company?.logo_url ? (
-              <img src={app.company.logo_url} alt={app.company.name} className="w-10 h-10 rounded-xl object-cover border border-border" />
+              <img src={app.company.logo_url} alt={app.company.name} className="w-10 h-10 rounded-xl object-cover border border-border/60 shadow-sm" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center border border-border/60">
                 <Building2 className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
             <div className="min-w-0">
-              <ResponsiveModalTitle className="text-md font-semibold tracking-tight truncate text-left">
+              <ResponsiveModalTitle className="text-md font-semibold tracking-tight truncate text-left text-card-foreground">
                 {app?.role || 'Application'}
               </ResponsiveModalTitle>
               <div className="text-xs text-muted-foreground flex items-center gap-2 truncate">
@@ -151,7 +151,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
                 {app?.company?.website_url && (
                   <>
                     <span>•</span>
-                    <a className="truncate inline-flex items-center gap-1 text-primary" href={app.company.website_url} target="_blank" rel="noreferrer">
+                    <a className="truncate inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors" href={app.company.website_url} target="_blank" rel="noreferrer">
                       <ExternalLink className="h-3 w-3" /> {extractHostname(app.company.website_url)}
                     </a>
                   </>
@@ -169,14 +169,14 @@ export function UpdateApplicationModalDesktop(props: Props) {
             <div className="flex items-center gap-2">
               {isInProgress && (
                 <div className="relative mr-1 h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75 animate-ping"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-500"></span>
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-primary/60 opacity-75 animate-ping"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
                 </div>
               )}
               <div className="flex items-center gap-2">
                 <Badge
                   variant="outline"
-                  className="cursor-pointer rounded-full px-2.5 py-1 text-xs hover:bg-accent transition-colors"
+                  className="cursor-pointer rounded-full px-2.5 py-1 text-xs hover:bg-accent hover:text-accent-foreground transition-colors border-border/60"
                   role="button"
                   aria-label="View stage timeline"
                   onClick={onStageVizOpen}
@@ -191,23 +191,23 @@ export function UpdateApplicationModalDesktop(props: Props) {
                 open={companySearchOpen}
                 onOpenChange={setCompanySearchOpen}
                 variant="dialog"
-                triggerAsChild={<Button variant="outline" size="sm" className="h-8 px-3">Change</Button>}
+                triggerAsChild={<Button variant="outline" size="sm" className="h-8 px-3 border-border/60 hover:bg-accent hover:text-accent-foreground">Change</Button>}
               />
             </div>
           )}
         </div>
       </ResponsiveModalHeader>
 
-      <div className="relative grid grid-cols-5 gap-0">
-        <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-white/10 pointer-events-none" aria-hidden="true" />
+      <div className="relative grid grid-cols-5 gap-0 rounded-2xl">
+        <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border/60 pointer-events-none" aria-hidden="true" />
         {/* Left - main content */}
         <div className="col-span-3 px-6 pb-20 pt-4">
           <div className="space-y-4">
-            <Card className="bg-neutral-900/80 border-white/10">
+            <Card className="bg-card/80 border border-border/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="space-y-2 py-4">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
+                  <Label className="flex items-center gap-2 text-card-foreground">
+                    <Building2 className="h-4 w-4 text-primary" />
                     Role
                   </Label>
                   {app?.company?.id ? (
@@ -222,7 +222,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
                       className="w-full"
                     />
                   ) : (
-                    <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Senior Software Engineer" className="w-full bg-background border-border" />
+                    <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="Senior Software Engineer" className="w-full bg-background border-border/60 focus:border-primary/60 transition-colors" />
                   )}
                 </div>
 
@@ -230,13 +230,13 @@ export function UpdateApplicationModalDesktop(props: Props) {
                 <div className="space-y-2 w-full">
                   <div className="flex items-center space-x-2 w-full justify-end">
                     <Checkbox id="include-job-url" checked={includeJobUrl} onCheckedChange={(checked) => setIncludeJobUrl(!!checked)} />
-                    <Label htmlFor="include-job-url" className="text-sm font-normal cursor-pointer">
+                    <Label htmlFor="include-job-url" className="text-sm font-normal cursor-pointer text-card-foreground">
                       Include Job URL
                     </Label>
                   </div>
                   {includeJobUrl && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
-                      <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://company.com/careers/job-123" className="w-full" />
+                      <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://company.com/careers/job-123" className="w-full bg-background border-border/60 focus:border-primary/60 transition-colors" />
                     </motion.div>
                   )}
                 </div>
@@ -244,12 +244,12 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Notes & Conversations */}
-            <Card className="mt-6 bg-neutral-900/80 border-white/10">
+            <Card className="mt-6 bg-card/80 border border-border/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="p-0">
                 <div className="space-y-3">
-                  <div className="flex gap-2 border-b border-white/10 px-2 pt-0">
-                    <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
-                    <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
+                  <div className="flex gap-2 border-b border-border/60 px-2 pt-0">
+                    <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-card-foreground" : "text-muted-foreground hover:text-card-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
+                    <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-card-foreground" : "text-muted-foreground hover:text-card-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                   </div>
                   <div className="px-2 py-2">
                     {activeTab === 'notes' ? (
@@ -285,13 +285,13 @@ export function UpdateApplicationModalDesktop(props: Props) {
             />
 
             {/* Source & Platform */}
-            <Card className="bg-neutral-900/80 border-white/10">
+            <Card className="bg-card/80 border border-border/60 shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="space-y-3 py-4">
                 <div className="flex items-center gap-2">
-                  <Label className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Source & Platform</Label>
+                  <Label className="flex items-center gap-2 text-card-foreground"><Globe className="h-4 w-4 text-primary" />Source & Platform</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help hover:text-primary/80 transition-colors" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-48 text-xs">How you discovered and applied for this role</p>
@@ -314,26 +314,26 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Details */}
-            <Card className="bg-neutral-900/80 border-white/10">
+            <Card className="bg-card/80 border border-border/60 shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="space-y-2 py-4">
-                <Label className="flex items-center gap-2"><Info className="h-4 w-4" />Details</Label>
+                <Label className="flex items-center gap-2 text-card-foreground"><Info className="h-4 w-4 text-primary" />Details</Label>
                 <div className="space-y-2 text-sm">
                   {app?.created_at && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Created</span>
-                      <span>{formatDateIndian(new Date(app.created_at))}</span>
+                      <span className="text-card-foreground">{formatDateIndian(new Date(app.created_at))}</span>
                     </div>
                   )}
                   {app?.last_activity_at && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Last Activity</span>
-                      <span>{formatDateIndian(new Date(app.last_activity_at))}</span>
+                      <span className="text-card-foreground">{formatDateIndian(new Date(app.last_activity_at))}</span>
                     </div>
                   )}
                   {app?.created_at && (
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Days Active</span>
-                      <span>{Math.ceil((Date.now() - new Date(app.created_at).getTime()) / (1000 * 60 * 60 * 24))}</span>
+                      <span className="text-card-foreground">{Math.ceil((Date.now() - new Date(app.created_at).getTime()) / (1000 * 60 * 60 * 24))}</span>
                     </div>
                   )}
                 </div>
@@ -341,13 +341,13 @@ export function UpdateApplicationModalDesktop(props: Props) {
             </Card>
 
             {/* Contacts */}
-            <Card className="bg-neutral-900/80 border-white/10">
+            <Card className="bg-card/80 border border-border/60 shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="space-y-3 py-4">
                 <div className="flex items-center gap-2">
-                  <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
+                  <Label className="flex items-center gap-2 text-card-foreground"><Users className="h-4 w-4 text-primary" />Contacts</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help hover:text-primary/80 transition-colors" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-48 text-xs">People you've interacted with during the application process</p>
@@ -364,14 +364,14 @@ export function UpdateApplicationModalDesktop(props: Props) {
                       {contacts.map((contact) => (
                         <button
                           key={contact.id}
-                          className="flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-input/70 hover:bg-muted/50 cursor-pointer"
+                          className="flex items-center gap-3 px-3 py-2 rounded-md border border-border/60 bg-input/50 hover:bg-accent/50 hover:border-border/80 cursor-pointer transition-all duration-200"
                           onClick={() => onEditContact && onEditContact(contact)}
                         >
-                          <div className="w-7 h-7 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-semibold">{contact.name.charAt(0).toUpperCase()}</span>
+                          <div className="w-7 h-7 rounded-full bg-primary/10 ring-2 ring-primary/30 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-semibold text-primary">{contact.name.charAt(0).toUpperCase()}</span>
                           </div>
                           <div className="flex-1 min-w-0 text-left">
-                            <div className="text-xs font-medium truncate">
+                            <div className="text-xs font-medium truncate text-card-foreground">
                               <span className="truncate capitalize">{contact.name}</span>
                             </div>
                             <div className="text-[10px] text-muted-foreground truncate capitalize">{contact.role}</div>
@@ -383,11 +383,11 @@ export function UpdateApplicationModalDesktop(props: Props) {
                       ))}
                     </div>
                     {contacts.length === 0 && (
-                      <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border rounded-md bg-muted/20 dark:bg-muted/10">
+                      <div className="text-xs text-muted-foreground text-center py-3 px-4 border border-dashed border-border/60 rounded-md bg-muted/10 hover:bg-muted/20 transition-colors">
                         No contacts available
                       </div>
                     )}
-                    <Button size="sm" variant="outline" onClick={onAddContactClick} className="w-full h-8 text-xs">
+                    <Button size="sm" variant="outline" onClick={onAddContactClick} className="w-full h-8 text-xs border-border/60 hover:bg-accent hover:text-accent-foreground transition-colors">
                       <Plus className="h-3 w-3 mr-1" />Add Contact
                     </Button>
                   </div>
@@ -398,9 +398,9 @@ export function UpdateApplicationModalDesktop(props: Props) {
         </div>
       </div>
 
-      <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t border-white/10">
+      <ResponsiveModalFooter className="px-6 py-3 bg-card/90 backdrop-blur-sm border-t border-border/60 rounded-b-2xl">
         {error && (
-          <div className="flex items-center gap-2 mb-3 p-2 rounded bg-destructive/10 text-destructive text-sm">
+          <div className="flex items-center gap-2 mb-3 p-2 rounded bg-destructive/10 text-destructive text-sm border border-destructive/20">
             <div className="w-1 h-1 rounded-full bg-destructive" />
             <span>{error}</span>
           </div>
@@ -411,7 +411,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
             size="sm"
             onClick={onAskDelete} 
             disabled={isSubmitting}
-            className="text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive/90 transition-colors"
           >
             Delete
           </Button>
@@ -422,6 +422,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
               size="sm"
               onClick={onClose} 
               disabled={isSubmitting}
+              className="border-border/60 hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               Cancel
             </Button>
@@ -429,7 +430,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
               onClick={onSave} 
               disabled={isSubmitting} 
               size="sm"
-              className="min-w-[80px]"
+              className="min-w-[80px] bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
             >
               {isSubmitting ? (
                 <>

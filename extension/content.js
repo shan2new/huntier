@@ -1,4 +1,17 @@
 // extension/content.ts
+function ensureNetworkHook() {
+  try {
+    const id = "huntier-network-hook";
+    if (document.getElementById(id)) return;
+    const s = document.createElement("script");
+    s.id = id;
+    s.src = globalThis.chrome?.runtime?.getURL?.("network-hook.js");
+    s.type = "text/javascript";
+    s.async = false;
+    (document.head || document.documentElement).appendChild(s);
+  } catch {
+  }
+}
 function extractStructured() {
   const data = { title: "", company: {}, location: {} };
   const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
@@ -159,7 +172,12 @@ function listenHandshakeRelay() {
       ;
       globalThis.chrome?.runtime?.sendMessage?.({ type: "huntier-token", token: ev.data.token });
     }
+    if (ev?.data?.source === "huntier" && ev?.data?.type === "huntier:network-log") {
+      ;
+      globalThis.chrome?.runtime?.sendMessage?.({ type: "huntier:network-log", entry: ev.data.entry });
+    }
   });
 }
 listenHandshakeRelay();
+ensureNetworkHook();
 injectButtons();

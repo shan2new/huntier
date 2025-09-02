@@ -58,6 +58,130 @@ function notifyToken(token) {
     }
   }
 }
+async function registerNetworkHook() {
+  try {
+    const exists = await c.scripting.getRegisteredContentScripts({ ids: ["huntier-network-hook"] }).catch(() => []);
+    if (!exists || !exists.length) {
+      await c.scripting.registerContentScripts([{
+        id: "huntier-network-hook",
+        matches: ["http://*/*", "https://*/*"],
+        js: ["network-hook.js"],
+        runAt: "document_start",
+        world: "MAIN",
+        allFrames: false,
+        persistAcrossSessions: true
+      }]);
+      console.log("[Huntier:bg] registered network hook content script");
+    }
+  } catch (e) {
+    console.warn("[Huntier:bg] failed to register network hook; will attempt lazy injection on tab updates", e);
+    try {
+      c.tabs.onUpdated.addListener((tabId, changeInfo) => {
+        if (changeInfo?.status === "loading" || changeInfo?.status === "complete") {
+          c.scripting.executeScript({ target: { tabId }, files: ["network-hook.js"], world: "MAIN" }).catch(() => {
+          });
+        }
+      });
+    } catch {
+    }
+  }
+}
+registerNetworkHook();
+var tabNetworkLogs = /* @__PURE__ */ new Map();
+c.runtime.onMessage.addListener((message, sender, _sendResponse) => {
+  if (message?.type === "huntier:network-log" && sender?.tab?.id) {
+    const arr = tabNetworkLogs.get(sender.tab.id) || [];
+    arr.push({ ...message.entry, tabId: sender.tab.id });
+    if (arr.length > 200) arr.splice(0, arr.length - 200);
+    tabNetworkLogs.set(sender.tab.id, arr);
+  }
+});
+function estimateSize(obj) {
+  try {
+    return JSON.stringify(obj).length;
+  } catch {
+    return 0;
+  }
+}
+function prunePayload(payload) {
+  try {
+    if (typeof payload === "string") {
+      return payload.length > 1e4 ? payload.slice(0, 1e4) : payload;
+    }
+    if (Array.isArray(payload)) {
+      return payload.slice(0, Math.min(payload.length, 5));
+    }
+    if (payload && typeof payload === "object") {
+      const out = {};
+      const entries = Object.entries(payload);
+      for (const [k, v] of entries) {
+        if (Array.isArray(v)) out[k] = v.slice(0, Math.min(v.length, 5));
+        else if (typeof v === "string") out[k] = v.length > 8e3 ? v.slice(0, 8e3) : v;
+        else out[k] = v;
+      }
+      return out;
+    }
+  } catch {
+  }
+  return payload;
+}
+function condenseNetworkEntries(all) {
+  if (!Array.isArray(all) || all.length === 0) return [];
+  const denyHosts = ["mixpanel.com", "segment.com", "amplitude.com", "google-analytics.com", "analytics.google.com", "doubleclick.net", "hotjar.com", "intercom.io", "clarity.ms"];
+  const keywords = ["job", "jobs", "position", "positions", "opening", "openings", "vacancy", "careers", "role", "graphql"];
+  const results = [];
+  let budget = 12e4;
+  const urlHost = (u) => {
+    try {
+      return new URL(u).hostname;
+    } catch {
+      return "";
+    }
+  };
+  const sorted = [...all].sort((a, b) => {
+    const ac = String(a?.response?.headers?.["content-type"] || a?.response?.headers?.["Content-Type"] || "").includes("json") ? 1 : 0;
+    const bc = String(b?.response?.headers?.["content-type"] || b?.response?.headers?.["Content-Type"] || "").includes("json") ? 1 : 0;
+    const ah = keywords.some((k) => String(a?.url || "").toLowerCase().includes(k)) ? 1 : 0;
+    const bh = keywords.some((k) => String(b?.url || "").toLowerCase().includes(k)) ? 1 : 0;
+    return bc + bh - (ac + ah);
+  });
+  for (const e of sorted) {
+    const host = urlHost(String(e?.url || ""));
+    if (!host || denyHosts.some((h) => host.endsWith(h))) continue;
+    const status = Number(e?.status || 0);
+    if (status < 200 || status >= 300) continue;
+    const ct = String(e?.response?.headers?.["content-type"] || e?.response?.headers?.["Content-Type"] || "").toLowerCase();
+    if (!ct.includes("json")) continue;
+    const simplified = {
+      url: String(e.url || ""),
+      method: String(e.method || "GET"),
+      status,
+      response: { content_type: ct, body: prunePayload(e?.response?.body) }
+    };
+    let size = estimateSize(simplified);
+    if (size > 25e3) {
+      simplified.response.body = prunePayload(simplified.response.body);
+      size = estimateSize(simplified);
+    }
+    if (budget - size <= 0) break;
+    budget -= size;
+    results.push(simplified);
+    if (results.length >= 12) break;
+  }
+  if (results.length === 0) {
+    for (const e of all) {
+      const ct = String(e?.response?.headers?.["content-type"] || e?.response?.headers?.["Content-Type"] || "").toLowerCase();
+      if (!ct.includes("json")) continue;
+      const simplified = { url: String(e.url || ""), method: String(e.method || "GET"), status: Number(e.status || 0), response: { content_type: ct, body: prunePayload(e?.response?.body) } };
+      const size = estimateSize(simplified);
+      if (size < 25e3) {
+        results.push(simplified);
+        break;
+      }
+    }
+  }
+  return results;
+}
 async function getAuth() {
   const data = await c.storage.local.get(["huntier_auth"]);
   return data.huntier_auth || {};
@@ -114,9 +238,13 @@ c.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message?.type === "huntier:save-application-ai") {
         const token = await ensureToken(true);
         console.log("[Huntier:bg] AI save requested", { stage: message?.stage, extracted: !!message?.extracted });
+        const [active] = await c.tabs.query({ active: true, currentWindow: true });
+        const activeTabId = active?.id;
+        const networkEntriesRaw = activeTabId ? tabNetworkLogs.get(activeTabId) || [] : [];
+        const networkEntries = condenseNetworkEntries(networkEntriesRaw);
+        console.log("[Huntier:bg] collected network entries", { count: networkEntries.length });
         let deepExtracted = null;
         try {
-          const [active] = await c.tabs.query({ active: true, currentWindow: true });
           const url = active?.url;
           if (url) {
             console.log("[Huntier:bg] launching deep crawl", url);
@@ -127,7 +255,7 @@ c.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
         const dataUrl = await new Promise((resolve, reject) => {
           try {
-            c.tabs.captureVisibleTab({ format: "png" }, (url) => {
+            c.tabs.captureVisibleTab({ format: "jpeg", quality: 60 }, (url) => {
               if (url) resolve(url);
               else reject(new Error("capture failed"));
             });
@@ -136,10 +264,30 @@ c.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           }
         });
         const blob = await (await fetch(dataUrl)).blob();
+        let draft_id = null;
+        try {
+          if (networkEntries.length > 0) {
+            console.log("[Huntier:bg] calling network extractor", { count: networkEntries.length });
+            const netRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-network`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ entries: networkEntries, screenshot_data_url: dataUrl })
+            });
+            const net = await netRes.json().catch(() => null);
+            if (netRes.ok && net?.draft_id) {
+              draft_id = net.draft_id;
+              console.log("[Huntier:bg] network extractor draft", draft_id, { ai: net?.ai });
+            } else {
+              console.warn("[Huntier:bg] network extractor failed", netRes.status, net);
+            }
+          }
+        } catch (e) {
+          console.warn("[Huntier:bg] network extractor error", e);
+        }
         const form = new FormData();
-        form.append("files", blob, "screenshot.png");
+        form.append("files", blob, "screenshot.jpg");
         console.log("[Huntier:bg] uploading screenshot to extractor", { size: blob.size, type: blob.type });
-        const extractRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-images`, {
+        const extractRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-images${draft_id ? `?draft_id=${encodeURIComponent(draft_id)}` : ""}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: form
@@ -149,7 +297,12 @@ c.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           sendResponse({ ok: false, error: `extract_failed:${extractRes.status}:${text}` });
           return;
         }
-        const { draft_id } = await extractRes.json();
+        if (!draft_id) {
+          const j = await extractRes.json();
+          draft_id = j?.draft_id;
+        } else {
+          await extractRes.json().catch(() => null);
+        }
         console.log("[Huntier:bg] extracted draft id", draft_id);
         try {
           const [tab] = await c.tabs.query({ active: true, currentWindow: true });

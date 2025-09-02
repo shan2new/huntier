@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { HelpCircle, Wallet2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,14 +22,7 @@ interface CompensationSectionProps {
   setVariableEnabled?: (v: boolean) => void
 }
 
-const PRESET_RANGES = [
-  { label: '8-12L', fixed: { min: '8', max: '12' } },
-  { label: '15-25L', fixed: { min: '15', max: '25' } },
-  { label: '25-35L', fixed: { min: '25', max: '35' } },
-  { label: '35-50L', fixed: { min: '35', max: '50' } },
-  { label: '50-75L', fixed: { min: '50', max: '75' } },
-  { label: '75L+', fixed: { min: '75', max: '100' } },
-]
+
 
 export function CompensationSection({
   fixedMinLpa,
@@ -65,11 +57,6 @@ export function CompensationSection({
     }
   }
 
-  const applyPreset = (preset: typeof PRESET_RANGES[0]) => {
-    setFixedMinLpa(preset.fixed.min)
-    setFixedMaxLpa(preset.fixed.max)
-  }
-
   const hasFixedComp = fixedMinLpa || fixedMaxLpa
   const hasVarComp = varMinLpa || varMaxLpa
   const variableOn = typeof variableEnabled === 'boolean' ? variableEnabled : !!hasVarComp
@@ -78,17 +65,17 @@ export function CompensationSection({
 
   return (
     <TooltipProvider>
-      <Card className={className}>
+      <Card className={cn("bg-card/80 border border-border/60 shadow-sm hover:shadow-md transition-all duration-200", className)}>
         <CardContent className={cn("space-y-4", isCompact ? "pt-3" : "py-4")}>
           {/* Header */}
           <div className="flex items-center gap-2">
-            <Label className="flex items-center gap-2">
-              <Wallet2 className="h-4 w-4" />
+            <Label className="flex items-center gap-2 text-card-foreground">
+              <Wallet2 className="h-4 w-4 text-primary" />
               Compensation
             </Label>
             <Tooltip>
               <TooltipTrigger asChild>
-                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help hover:text-primary/80 transition-colors" />
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-56 text-xs">Set the expected salary range for this role. Include both fixed and variable components if applicable.</p>
@@ -99,10 +86,10 @@ export function CompensationSection({
           {/* Fixed Compensation */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Base Salary</Label>
+              <Label className="text-sm font-medium text-card-foreground">Base Salary</Label>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                  <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help hover:text-primary/80 transition-colors" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p className="max-w-48 text-xs">Fixed annual salary component in Lakhs per annum</p>
@@ -120,7 +107,7 @@ export function CompensationSection({
                   onBlur={() => setActiveField(null)}
                   placeholder="15"
                   className={cn(
-                    "text-center transition-all duration-200",
+                    "text-center transition-all duration-200 bg-background border-border/60 focus:border-primary/60",
                     activeField === 'fixedMin' && "border-primary/60 bg-primary/5 shadow-sm",
                     !fixedRangeValid && fixedMinLpa && fixedMaxLpa && "border-destructive"
                   )}
@@ -135,7 +122,7 @@ export function CompensationSection({
                   onBlur={() => setActiveField(null)}
                   placeholder="25"
                   className={cn(
-                    "text-center transition-all duration-200",
+                    "text-center transition-all duration-200 bg-background border-border/60 focus:border-primary/60",
                     activeField === 'fixedMax' && "border-primary/60 bg-primary/5 shadow-sm",
                     !fixedRangeValid && fixedMinLpa && fixedMaxLpa && "border-destructive"
                   )}
@@ -152,10 +139,10 @@ export function CompensationSection({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium">Variable/Bonus</Label>
+                <Label className="text-sm font-medium text-card-foreground">Variable/Bonus</Label>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help hover:text-primary/80 transition-colors" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-48 text-xs">Performance-based bonus, equity, or commission in Lakhs per annum</p>
@@ -191,7 +178,7 @@ export function CompensationSection({
                       onBlur={() => setActiveField(null)}
                       placeholder="5"
                       className={cn(
-                        "text-center transition-all duration-200",
+                        "text-center transition-all duration-200 bg-background border-border/60 focus:border-primary/60",
                         activeField === 'varMin' && "border-primary/60 bg-primary/5 shadow-sm",
                         !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
                       )}
@@ -206,7 +193,7 @@ export function CompensationSection({
                       onBlur={() => setActiveField(null)}
                       placeholder="10"
                       className={cn(
-                        "text-center transition-all duration-200",
+                        "text-center transition-all duration-200 bg-background border-border/60 focus:border-primary/60",
                         activeField === 'varMax' && "border-primary/60 bg-primary/5 shadow-sm",
                         !varRangeValid && varMinLpa && varMaxLpa && "border-destructive"
                       )}
@@ -223,10 +210,10 @@ export function CompensationSection({
 
           {/* Total Compensation Display */}
           {(hasFixedComp || hasVarComp) && (
-            <div className="pt-2 border-t border-border">
+            <div className="pt-2 border-t border-border/60">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Total Range</span>
-                <span className="font-medium">
+                <span className="font-medium text-card-foreground">
                   {(() => {
                     const fixedMin = parseFloat(fixedMinLpa) || 0
                     const fixedMax = parseFloat(fixedMaxLpa) || 0

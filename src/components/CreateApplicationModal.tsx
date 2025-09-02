@@ -245,7 +245,7 @@ export function CreateApplicationModal({
           'p-0 gap-0',
           isMobile 
             ? 'bg-background' 
-            : 'max-w-4xl rounded-xl bg-neutral-950/95 border border-white/10 shadow-2xl'
+            : 'max-w-4xl rounded-xl bg-neutral-950/95 shadow-2xl'
         )}
       >
         {isMobile ? (

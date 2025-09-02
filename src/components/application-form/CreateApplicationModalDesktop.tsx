@@ -199,7 +199,7 @@ export function CreateApplicationModalDesktop(props: Props) {
   return (
     <TooltipProvider>
       <div className="flex flex-col">
-        <ResponsiveModalHeader className="px-6 py-4 border-b border-white/10 bg-neutral-950/60 backdrop-blur-sm">
+        <ResponsiveModalHeader className="px-6 py-4 border-b bg-neutral-950/60 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           {company ? (
             <>
@@ -266,10 +266,10 @@ export function CreateApplicationModalDesktop(props: Props) {
               </div>
               <JobUrlToggleField include={includeJobUrl} onIncludeChange={setIncludeJobUrl} url={jobUrl} onUrlChange={setJobUrl} />
 
-              <Card className="mt-2 bg-neutral-900/80 border-white/10">
+              <Card className="mt-2 bg-neutral-900/80">
                 <CardContent className="p-0">
                   <div className="space-y-3">
-                    <div className="flex gap-2 border-b border-white/10 px-6 pt-6">
+                    <div className="flex gap-2 border-b px-6 pt-6">
                       <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                       <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                     </div>
@@ -300,7 +300,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               />
 
               {/* Source & Platform */}
-              <Card className="bg-neutral-900/80 border-white/10">
+              <Card className="bg-neutral-900/80">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Target className="h-4 w-4" />Source & Platform</Label>
@@ -323,7 +323,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               </Card>
 
               {/* Contacts */}
-              <Card className="bg-neutral-900/80 border-white/10">
+              <Card className="bg-neutral-900/80">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
@@ -417,7 +417,7 @@ export function CreateApplicationModalDesktop(props: Props) {
           </div>
         )}
 
-        <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t border-white/10">
+        <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t">
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center text-destructive text-sm min-h-[1.25rem]">
               {error && (

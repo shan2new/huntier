@@ -1,4 +1,17 @@
 export {}
+// Ensure network hook is injected into the page main world
+function ensureNetworkHook() {
+  try {
+    const id = 'huntier-network-hook'
+    if (document.getElementById(id)) return
+    const s = document.createElement('script')
+    s.id = id
+    s.src = (globalThis as any).chrome?.runtime?.getURL?.('network-hook.js')
+    s.type = 'text/javascript'
+    s.async = false
+    ;(document.head || document.documentElement).appendChild(s)
+  } catch {}
+}
 // Prefer direct chrome API in content scripts
 function getJobContext(): { title?: string; company?: string; url: string } {
   const url = location.href
@@ -176,10 +189,14 @@ function listenHandshakeRelay() {
       // Forward to the extension background to persist
       ;(globalThis as any).chrome?.runtime?.sendMessage?.({ type: 'huntier-token', token: ev.data.token })
     }
+    if (ev?.data?.source === 'huntier' && ev?.data?.type === 'huntier:network-log') {
+      ;(globalThis as any).chrome?.runtime?.sendMessage?.({ type: 'huntier:network-log', entry: ev.data.entry })
+    }
   })
 }
 
 listenHandshakeRelay()
+ensureNetworkHook()
 injectButtons()
 
 

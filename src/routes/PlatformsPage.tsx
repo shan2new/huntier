@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { Award, BarChart3, Clock, Globe, TrendingUp } from 'lucide-react'
 import { useApi } from '../lib/use-api'
 import { Card, CardContent } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { ManageUserPlatforms } from '@/components/platforms/ManageUserPlatforms'
 
 type PlatformRow = {
@@ -106,7 +107,9 @@ export function PlatformsPage() {
       </div>
 
       {/* Unified listing (ManageUserPlatforms shows analytics inline) */}
-      <ManageUserPlatforms analytics={Object.fromEntries(rows.map(r => [r.platform_id, { totals: r.totals, in_progress: r.in_progress, offers: r.offers, rejects: r.rejects }]))} />
+      <ScrollArea className="h-[calc(100vh-300px)]">
+        <ManageUserPlatforms analytics={Object.fromEntries(rows.map(r => [r.platform_id, { totals: r.totals, in_progress: r.in_progress, offers: r.offers, rejects: r.rejects }]))} />
+      </ScrollArea>
     </motion.div>
   )
 }

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { cn, formatDateIndian } from '@/lib/utils'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const COLUMNS = [
   { 
@@ -197,167 +198,169 @@ export function BoardPage() {
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {COLUMNS.map((col, columnIndex) => {
-          const columnApps = visibleApps.filter((a) => a.milestone === col.key)
-          const isDropTarget = dragOverColumn === col.key
-          
-          return (
-            <motion.div
-              key={col.key}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 0.3 + (columnIndex * 0.1), ease: "easeOut" }}
-            >
-              <Card className={cn(
-                "h-fit min-h-[450px] transition-all duration-300",
-                isDropTarget ? "ring-2 ring-primary ring-offset-2" : "",
-                "bg-accent/40"
-              )}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2.5">
-                      <div className="p-1.5 rounded-lg bg-primary/10">
-                        <col.icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-base">{col.title}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {columnApps.length} {columnApps.length === 1 ? 'application' : 'applications'}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge className="text-xs font-medium" variant="secondary">
-                      {columnApps.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent 
-                  className="space-y-3"
-                  onDragOver={(e) => onDragOver(e, col.key)}
-                  onDragLeave={onDragLeave}
-                  onDrop={(e) => onDrop(e, col.stages[0], col.key)}
-                >
-                  <AnimatePresence>
-                    {columnApps.map((app, index) => (
-                      <motion.div
-                        key={app.id}
-                        layout
-                        initial={{ opacity: 0 }}
-                        animate={{ 
-                          opacity: draggedItem === app.id ? 0.6 : 1, 
-                          scale: draggedItem === app.id ? 0.95 : 1,
-                          rotateZ: draggedItem === app.id ? 2 : 0
-                        }}
-                        exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                        whileHover={{ y: -2, transition: { duration: 0.15 } }}
-                        whileDrag={{ y: -4, rotate: 2, zIndex: 50 }}
-                        transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
-                        className="cursor-grab active:cursor-grabbing"
-                        draggable
-                        onDragStart={(e) => onDragStart(e as any, app.id)}
-                        onDragEnd={onDragEnd}
-                      >
-                        <Card className={cn("bg-card/80 border border-border hover:border-primary/40 transition-all duration-200", compact ? '' : '')}>
-                          <CardContent className={cn("p-3", compact ? 'p-2' : 'p-3')}>
-                            <button className="w-full text-left" onClick={() => { setSelectedAppId(app.id); setUpdateModalOpen(true) }}>
-                              <div className="space-y-2.5">
-                                {/* Header: company left, stage right */}
-                                <div className="flex items-start gap-2">
-                                  {app.company?.logo_url ? (
-                                    <img src={app.company.logo_url} alt={app.company.name || app.company_id} className={cn("rounded-sm border", compact ? 'h-6 w-6' : 'h-7 w-7')} />
-                                  ) : (
-                                    <Building2 className={cn("text-muted-foreground", compact ? 'h-5 w-5' : 'h-6 w-6')} />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <h4 className={cn("font-medium truncate", compact ? 'text-[13px]' : 'text-sm')}>
-                                        {app.company?.name ?? app.company_id.slice(0, 8)}
-                                      </h4>
-                                      <Badge variant="secondary" className={cn("px-2 py-0.5 text-[11px]", compact ? 'text-[10px]' : 'text-[11px]')}>
-                                        {app.stage.name}
-                                      </Badge>
-                                    </div>
-                                    <div className={cn("text-muted-foreground truncate", compact ? 'text-[11px]' : 'text-xs')}>
-                                      {app.role}
-                                    </div>
-                                  </div>
-                                </div>
-                                {/* Middle chips */}
-                                <div className="flex flex-wrap gap-1.5">
-                                  <Badge className="text-xs font-medium px-1.5 py-0.5 bg-secondary text-secondary-foreground">
-                                    {sourceConfig[app.source as keyof typeof sourceConfig].label}
-                                  </Badge>
-                                  {app.platform && app.platform.name ? (
-                                    <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                                      {app.platform.name}
-                                    </Badge>
-                                  ) : null}
-                                </div>
-                                {/* Footer */}
-                                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/50">
-                                  <div className="flex items-center space-x-1">
-                                    <Clock className="h-2.5 w-2.5" />
-                                    <span>{formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}</span>
-                                  </div>
-                                  <Building2 className="h-2.5 w-2.5" />
-                                </div>
-                              </div>
-                            </button>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                  
-                  {/* Empty State */}
-                  {columnApps.length === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={cn(
-                        "flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed transition-all duration-300",
-                        isDropTarget 
-                          ? "border-primary bg-primary/5" 
-                          : "border-zinc-200/50 dark:border-zinc-800/50 bg-muted/20"
-                      )}
-                    >
-                      <div className={cn("p-3 rounded-full mb-3 bg-gradient-to-br", col.gradient, "opacity-50")}>
-                        <col.icon className="h-6 w-6 text-foreground" />
-                      </div>
-                      <h4 className="font-medium mb-1 text-sm">No applications here</h4>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Drop applications to move to <strong>{col.stages[0].replace('_', ' ')}</strong>
-                      </p>
-                      {isDropTarget && (
-                        <div className="flex items-center space-x-1.5 text-primary font-medium">
-                          <MoveRight className="h-3.5 w-3.5" />
-                          <span className="text-xs">Drop here</span>
+      <ScrollArea className="h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {COLUMNS.map((col, columnIndex) => {
+            const columnApps = visibleApps.filter((a) => a.milestone === col.key)
+            const isDropTarget = dragOverColumn === col.key
+            
+            return (
+              <motion.div
+                key={col.key}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.3 + (columnIndex * 0.1), ease: "easeOut" }}
+              >
+                <Card className={cn(
+                  "h-fit min-h-[450px] transition-all duration-300",
+                  isDropTarget ? "ring-2 ring-primary ring-offset-2" : "",
+                  "bg-accent/40"
+                )}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-primary/10">
+                          <col.icon className="h-4 w-4 text-primary" />
                         </div>
-                      )}
-                    </motion.div>
-                  )}
-                  
-                  {/* Drop Zone Hint */}
-                  {columnApps.length > 0 && isDropTarget && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="text-center py-4 border-t border-dashed border-primary/50 bg-primary/5 rounded-lg"
-                    >
-                      <div className="flex items-center justify-center space-x-2 text-primary font-medium">
-                        <MoveRight className="h-4 w-4" />
-                        <span className="text-sm">Drop to move to {col.stages[0].replace('_', ' ')}</span>
+                        <div>
+                          <h3 className="font-semibold text-base">{col.title}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {columnApps.length} {columnApps.length === 1 ? 'application' : 'applications'}
+                          </p>
+                        </div>
                       </div>
-                    </motion.div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </div>
+                      <Badge className="text-xs font-medium" variant="secondary">
+                        {columnApps.length}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent 
+                    className="space-y-3"
+                    onDragOver={(e) => onDragOver(e, col.key)}
+                    onDragLeave={onDragLeave}
+                    onDrop={(e) => onDrop(e, col.stages[0], col.key)}
+                  >
+                    <AnimatePresence>
+                      {columnApps.map((app, index) => (
+                        <motion.div
+                          key={app.id}
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ 
+                            opacity: draggedItem === app.id ? 0.6 : 1, 
+                            scale: draggedItem === app.id ? 0.95 : 1,
+                            rotateZ: draggedItem === app.id ? 2 : 0
+                          }}
+                          exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                          whileHover={{ y: -2, transition: { duration: 0.15 } }}
+                          whileDrag={{ y: -4, rotate: 2, zIndex: 50 }}
+                          transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
+                          className="cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={(e) => onDragStart(e as any, app.id)}
+                          onDragEnd={onDragEnd}
+                        >
+                          <Card className={cn("bg-card/80 border border-border hover:border-primary/40 transition-all duration-200", compact ? '' : '')}>
+                            <CardContent className={cn("p-3", compact ? 'p-2' : 'p-3')}>
+                              <button className="w-full text-left" onClick={() => { setSelectedAppId(app.id); setUpdateModalOpen(true) }}>
+                                <div className="space-y-2.5">
+                                  {/* Header: company left, stage right */}
+                                  <div className="flex items-start gap-2">
+                                    {app.company?.logo_url ? (
+                                      <img src={app.company.logo_url} alt={app.company.name || app.company_id} className={cn("rounded-sm border", compact ? 'h-6 w-6' : 'h-7 w-7')} />
+                                    ) : (
+                                      <Building2 className={cn("text-muted-foreground", compact ? 'h-5 w-5' : 'h-6 w-6')} />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <h4 className={cn("font-medium truncate", compact ? 'text-[13px]' : 'text-sm')}>
+                                          {app.company?.name ?? app.company_id.slice(0, 8)}
+                                        </h4>
+                                        <Badge variant="secondary" className={cn("px-2 py-0.5 text-[11px]", compact ? 'text-[10px]' : 'text-[11px]')}>
+                                          {app.stage.name}
+                                        </Badge>
+                                      </div>
+                                      <div className={cn("text-muted-foreground truncate", compact ? 'text-[11px]' : 'text-xs')}>
+                                        {app.role}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {/* Middle chips */}
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <Badge className="text-xs font-medium px-1.5 py-0.5 bg-secondary text-secondary-foreground">
+                                      {sourceConfig[app.source as keyof typeof sourceConfig].label}
+                                    </Badge>
+                                    {app.platform && app.platform.name ? (
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                                        {app.platform.name}
+                                      </Badge>
+                                    ) : null}
+                                  </div>
+                                  {/* Footer */}
+                                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-1.5 border-t border-border/50">
+                                    <div className="flex items-center space-x-1">
+                                      <Clock className="h-2.5 w-2.5" />
+                                      <span>{formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}</span>
+                                    </div>
+                                    <Building2 className="h-2.5 w-2.5" />
+                                  </div>
+                                </div>
+                              </button>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    
+                    {/* Empty State */}
+                    {columnApps.length === 0 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className={cn(
+                          "flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed transition-all duration-300",
+                          isDropTarget 
+                            ? "border-primary bg-primary/5" 
+                            : "border-zinc-200/50 dark:border-zinc-800/50 bg-muted/20"
+                        )}
+                      >
+                        <div className={cn("p-3 rounded-full mb-3 bg-gradient-to-br", col.gradient, "opacity-50")}>
+                          <col.icon className="h-6 w-6 text-foreground" />
+                        </div>
+                        <h4 className="font-medium mb-1 text-sm">No applications here</h4>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Drop applications to move to <strong>{col.stages[0].replace('_', ' ')}</strong>
+                        </p>
+                        {isDropTarget && (
+                          <div className="flex items-center space-x-1.5 text-primary font-medium">
+                            <MoveRight className="h-3.5 w-3.5" />
+                            <span className="text-xs">Drop here</span>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                    
+                    {/* Drop Zone Hint */}
+                    {columnApps.length > 0 && isDropTarget && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className="text-center py-4 border-t border-dashed border-primary/50 bg-primary/5 rounded-lg"
+                      >
+                        <div className="flex items-center justify-center space-x-2 text-primary font-medium">
+                          <MoveRight className="h-4 w-4" />
+                          <span className="text-sm">Drop to move to {col.stages[0].replace('_', ' ')}</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+      </ScrollArea>
       {selectedAppId && (
         <UpdateApplicationModal
           open={updateModalOpen}

@@ -266,3 +266,169 @@ html, body, #app {
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix for any container with horizontal overflow */
+.horizontal-scroll {
+  scrollbar-gutter: stable;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ---------------------------
+   Complete scrollbar styling and fixes
+   --------------------------- */
+/* Prevent scrollbar blinking/flickering */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: transparent transparent;
+}
+
+/* Webkit scrollbar styling (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/* Horizontal scrollbar specific fixes */
+::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  min-width: 40px;
+}
+
+/* Prevent scrollbar from causing layout shifts */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Smooth scrolling to reduce visual jarring */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fix for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+/* Ensure scrollbars don't interfere with layout */
+.overflow-auto,
+.overflow-scroll,
+.overflow-x-auto,
+.overflow-y-auto {
+  scrollbar-gutter: stable;
+}
+
+/* Prevent horizontal scrollbar flickering in tables and grids */
+.table-container,
+.grid-container {
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Custom scrollbar for specific containers if needed */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Additional fixes for horizontal scrollbar flickering */
+/* Prevent layout shifts that cause scrollbar blinking */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure stable scrollbar rendering */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Fix for table containers and data grids */
+.table-container,
+.grid-container,
+[class*="overflow-x"],
+[class*="overflow-auto"] {
+  scrollbar-gutter: stable;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Specific fix for horizontal scrollbars in tables */
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Prevent horizontal scrollbar from causing layout shifts */
+.overflow-x-auto {
+  scrollbar-gutter: stable;
+  min-width: 0;
+}
+
+/* Fix for network request tables (like in your image) */
+.network-table,
+[data-testid*="network"],
+[class*="network"] {
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Ensure scrollbars don't interfere with content */
+.scroll-container {
+  position: relative;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Prevent scrollbar flickering during animations */
+* {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Fix for Firefox horizontal scrollbar */
+@-moz-document url-prefix() {
+  .overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+}

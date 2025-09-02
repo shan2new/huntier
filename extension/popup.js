@@ -12,8 +12,24 @@ async function connect() {
   const url = `${APP_ORIGIN}/extension/connect?extId=${c.runtime.id}`;
   await c.tabs.create({ url, active: true });
 }
-document.getElementById("connect")?.addEventListener("click", connect);
-getToken().then((t) => {
+function updateStatus(token) {
   const status = document.getElementById("status");
-  status.textContent = t ? "Connected" : "Not connected";
-});
+  const connectButton = document.getElementById("connect");
+  if (token) {
+    status.textContent = "\u2705 Connected to Huntier";
+    status.style.background = "#ecfdf5";
+    status.style.borderColor = "#10b981";
+    status.style.color = "#065f46";
+    connectButton.textContent = "Reconnect account";
+    connectButton.style.background = "#6b7280";
+  } else {
+    status.textContent = "\u{1F517} Connect your Huntier account to get started";
+    status.style.background = "#f9fafb";
+    status.style.borderColor = "#e5e7eb";
+    status.style.color = "#6b7280";
+    connectButton.textContent = "Connect account";
+    connectButton.style.background = "#111827";
+  }
+}
+document.getElementById("connect")?.addEventListener("click", connect);
+getToken().then(updateStatus);

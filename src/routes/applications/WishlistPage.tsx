@@ -6,6 +6,7 @@ import { useApi } from '@/lib/use-api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
@@ -59,64 +60,66 @@ export function WishlistApplicationsPage() {
           />
         </div>
       ) : (
-        <div className="space-y-3">
-          <Card className="shadow-xs">
-            <CardContent className="p-0">
-              <AnimatePresence>
-                <div className="divide-y divide-border">
-                  {filtered.map((app, index) => (
-                    <motion.div
-                      key={app.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                      transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                      className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
-                      onClick={() => {
-                        setSelectedAppId(app.id)
-                        setUpdateModalOpen(true)
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {app.company?.logo_url ? (
-                            <img
-                              src={app.company.logo_url}
-                              alt={app.company.name}
-                              className="h-8 w-8 rounded-md border border-border object-cover"
-                            />
-                          ) : (
-                            <Building2 className="h-8 w-8 text-muted-foreground" />
-                          )}
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <h3 className="font-medium text-base truncate">{app.company?.name ?? app.company_id.slice(0, 8)}</h3>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
-                              <span className="truncate">{app.role}</span>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}
-                              </span>
+        <ScrollArea className="h-[calc(100vh-200px)]">
+          <div className="space-y-3">
+            <Card className="shadow-xs">
+              <CardContent className="p-0">
+                <AnimatePresence>
+                  <div className="divide-y divide-border">
+                    {filtered.map((app, index) => (
+                      <motion.div
+                        key={app.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                        transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                        className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
+                        onClick={() => {
+                          setSelectedAppId(app.id)
+                          setUpdateModalOpen(true)
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {app.company?.logo_url ? (
+                              <img
+                                src={app.company.logo_url}
+                                alt={app.company.name}
+                                className="h-8 w-8 rounded-md border border-border object-cover"
+                              />
+                            ) : (
+                              <Building2 className="h-8 w-8 text-muted-foreground" />
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h3 className="font-medium text-base truncate">{app.company?.name ?? app.company_id.slice(0, 8)}</h3>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+                                <span className="truncate">{app.role}</span>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {formatDateIndian((app as any).progress_updated_at || app.last_activity_at)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                  {filtered.length === 0 ? (
-                    <div className="text-center py-12 text-sm text-muted-foreground">No applications in wishlist</div>
-                  ) : null}
-                </div>
-              </AnimatePresence>
-            </CardContent>
-          </Card>
+                      </motion.div>
+                    ))}
+                    {filtered.length === 0 ? (
+                      <div className="text-center py-12 text-sm text-muted-foreground">No applications in wishlist</div>
+                    ) : null}
+                  </div>
+                </AnimatePresence>
+              </CardContent>
+            </Card>
 
-          {filtered.length === 0 ? (
-            <div className="text-center py-12 text-sm text-muted-foreground">No applications in wishlist</div>
-          ) : null}
-        </div>
+            {filtered.length === 0 ? (
+              <div className="text-center py-12 text-sm text-muted-foreground">No applications in wishlist</div>
+            ) : null}
+          </div>
+        </ScrollArea>
       )}
 
       <motion.div

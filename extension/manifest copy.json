@@ -4,19 +4,19 @@
   "description": "Fill and save job applications seamlessly.",
   "version": "0.1.0",
   "icons": {
-    "16": "logo192.png",
-    "32": "logo192.png",
-    "48": "logo512.png",
-    "128": "logo512.png"
+    "16": "huntier-logo16.png",
+    "32": "huntier-logo32.png",
+    "48": "huntier-logo48.png",
+    "128": "huntier-logo128.png"
   },
   "action": {
     "default_title": "Huntier",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "logo192.png",
-      "32": "logo192.png",
-      "48": "logo512.png",
-      "128": "logo512.png"
+      "16": "huntier-logo16.png",
+      "32": "huntier-logo32.png",
+      "48": "huntier-logo48.png",
+      "128": "huntier-logo128.png"
     }
   },
   "permissions": [

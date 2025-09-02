@@ -1,3 +1,4 @@
+import { NetworkLogStore } from './bg/services'
 // Avoid polluting global types; reference chrome via local alias
 const c: any = (globalThis as any).chrome
 export {}
@@ -33,7 +34,7 @@ async function runDeepCrawl(targetUrl: string): Promise<any | null> {
     await c.scripting.executeScript({ target: { tabId: crawlTabId }, files: ['crawler.js'] })
 
     // Await a single crawl result message for this tab
-    const result = await new Promise<any>((resolve, reject) => {
+    const result = await new Promise<any>((resolve) => {
       const timeout = setTimeout(() => {
         off()
         resolve(null)
@@ -100,8 +101,6 @@ async function registerNetworkHook() {
 
 registerNetworkHook()
 
-// Per-tab network logs buffer (OOP wrapper)
-import { NetworkLogStore } from './bg/services'
 const logs = new NetworkLogStore()
 
 // Relay from content script: harvest network logs from page main world
@@ -110,32 +109,6 @@ c.runtime.onMessage.addListener((message: any, sender: any, _sendResponse: any) 
     logs.add(sender.tab.id, message.entry)
   }
 })
-
-function estimateSize(obj: any): number {
-  try { return JSON.stringify(obj).length } catch { return 0 }
-}
-
-function prunePayload(payload: any): any {
-  try {
-    if (typeof payload === 'string') {
-      return payload.length > 10000 ? payload.slice(0, 10000) : payload
-    }
-    if (Array.isArray(payload)) {
-      return payload.slice(0, Math.min(payload.length, 5))
-    }
-    if (payload && typeof payload === 'object') {
-      const out: any = {}
-      const entries = Object.entries(payload)
-      for (const [k, v] of entries) {
-        if (Array.isArray(v)) out[k] = v.slice(0, Math.min(v.length, 5))
-        else if (typeof v === 'string') out[k] = v.length > 8000 ? v.slice(0, 8000) : v
-        else out[k] = v
-      }
-      return out
-    }
-  } catch {}
-  return payload
-}
 
 const condenseNetworkEntries = (all: any[]) => logs.condense(all)
 const selectLikelyJobEntries = (entries: any[]) => logs.pickLikelyJobEntries(entries)
@@ -234,7 +207,7 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         const token = await ensureToken(true)
         const [active] = await c.tabs.query({ active: true, currentWindow: true })
         const activeTabId = active?.id
-        const networkEntriesRaw = activeTabId ? (tabNetworkLogs.get(activeTabId) || []) : []
+        const networkEntriesRaw = logs.getRaw(activeTabId)
         const networkEntries = condenseNetworkEntries(networkEntriesRaw)
         let platform_id: string | null = null
         let platform_job_id: string | null = null

@@ -139,7 +139,6 @@ function injectButtons() {
   async function computePlatformJobId() {
     try {
       const u = new URL(location.href);
-      const canonical = document.querySelector('link[rel="canonical"]')?.href || u.href;
       const idParam = u.searchParams.get("gh_jid") || u.searchParams.get("lever-origin-jobId") || u.searchParams.get("jobId") || u.searchParams.get("jid");
       const key = `${u.hostname}:${idParam || (u.pathname || "/")}`;
       return key.toLowerCase();
@@ -249,7 +248,7 @@ function listenHandshakeRelay() {
 function listenToggleMessages() {
   try {
     globalThis.chrome?.runtime?.onMessage?.addListener?.((message, sender, _sendResponse) => {
-      if (message?.type === "huntier:toggle-helper") {
+      if (message?.type === "huntier:toggle-helper" && sender?.tab?.id) {
         const enabled = !!message?.enabled;
         if (enabled && !helperDismissed) injectButtons();
         else removeHelper();

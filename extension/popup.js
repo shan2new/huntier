@@ -1,6 +1,6 @@
 // extension/popup.ts
 var c = globalThis.chrome;
-var APP_ORIGIN = self.VITE_APP_ORIGIN || "http://localhost:3000";
+var APP_ORIGIN = "https://huntier.pro";
 async function getToken() {
   return new Promise((resolve) => {
     c.storage.local.get(["huntier_auth"], (r) => {

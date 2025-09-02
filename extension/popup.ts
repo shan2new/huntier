@@ -1,6 +1,6 @@
 export {}
 const c: any = (globalThis as any).chrome
-const APP_ORIGIN = (self as any).VITE_APP_ORIGIN || 'http://localhost:3000'
+const APP_ORIGIN = "https://huntier.pro"
 
 type Settings = { helperEnabled?: boolean }
 

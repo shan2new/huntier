@@ -24,7 +24,6 @@ import { StageVisualization } from '@/components/StageVisualization'
 import { UpdateApplicationModalMobile } from '@/components/application-form/UpdateApplicationModalMobile'
 import { UpdateApplicationModalDesktop } from '@/components/application-form/UpdateApplicationModalDesktop'
 import { ContactModal } from '@/components/ContactModal'
-import { Alert } from './ui/alert'
 
 // Child contact shape expected by UpdateApplicationModalMobile/Desktop
 type ChildContact = {

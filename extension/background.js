@@ -152,7 +152,7 @@ async function runDeepCrawl(targetUrl) {
       c.tabs.onUpdated.addListener(listener);
     });
     await c.scripting.executeScript({ target: { tabId: crawlTabId }, files: ["crawler.js"] });
-    const result = await new Promise((resolve, reject) => {
+    const result = await new Promise((resolve) => {
       const timeout = setTimeout(() => {
         off();
         resolve(null);
@@ -314,7 +314,7 @@ c.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const token = await ensureToken(true);
         const [active] = await c.tabs.query({ active: true, currentWindow: true });
         const activeTabId = active?.id;
-        const networkEntriesRaw = activeTabId ? tabNetworkLogs.get(activeTabId) || [] : [];
+        const networkEntriesRaw = logs.getRaw(activeTabId);
         const networkEntries = condenseNetworkEntries(networkEntriesRaw);
         let platform_id = null;
         let platform_job_id = null;

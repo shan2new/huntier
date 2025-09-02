@@ -1,12 +1,63 @@
 // Avoid polluting global types; reference chrome via local alias
 const c: any = (globalThis as any).chrome
 export {}
-const API_BASE = (self as any).VITE_API_URL || 'http://localhost:3001/api'
-const APP_ORIGIN = (self as any).VITE_APP_ORIGIN || 'http://localhost:3000'
+const API_BASE = (self as any).VITE_API_URL || 'https://api.huntier.pro/api'
+const APP_ORIGIN = (self as any).VITE_APP_ORIGIN || 'https://huntier.pro'
 
 type StoredAuth = { token?: string; lastAt?: number }
 let connectTabId: number | null = null
 const pendingResolvers: Array<(t: string) => void> = []
+
+// Deep crawl coordination
+async function runDeepCrawl(targetUrl: string): Promise<any | null> {
+  try {
+    // Open a background popup window with the target URL. Keep it unfocused to avoid user disruption.
+    const win = await c.windows.create({ url: targetUrl, focused: false, type: 'popup', width: 900, height: 900, left: 5000, top: 5000 })
+    const crawlWindowId: number | undefined = win?.id
+    const crawlTabId: number | undefined = win?.tabs?.[0]?.id
+    if (!crawlTabId) throw new Error('crawl_tab_missing')
+
+    // Wait for the tab to be fully loaded
+    await new Promise<void>((resolve) => {
+      const listener = (tabId: number, info: any) => {
+        if (tabId === crawlTabId && info?.status === 'complete') {
+          c.tabs.onUpdated.removeListener(listener)
+          resolve()
+        }
+      }
+      c.tabs.onUpdated.addListener(listener)
+    })
+
+    // Inject crawler script file
+    await c.scripting.executeScript({ target: { tabId: crawlTabId }, files: ['crawler.js'] })
+
+    // Await a single crawl result message for this tab
+    const result = await new Promise<any>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        off()
+        resolve(null)
+      }, 20000)
+      const handler = (message: any, sender: any, _sendResponse: any) => {
+        if (sender?.tab?.id === crawlTabId && message?.type === 'huntier:crawl-result') {
+          clearTimeout(timeout)
+          off()
+          resolve(message?.extracted || null)
+        }
+      }
+      const off = () => c.runtime.onMessage.removeListener(handler)
+      c.runtime.onMessage.addListener(handler)
+    })
+
+    // Close the crawl window
+    if (crawlWindowId) {
+      try { await c.windows.remove(crawlWindowId) } catch {}
+    }
+    return result
+  } catch (e) {
+    console.warn('[Huntier:bg] runDeepCrawl failed', e)
+    return null
+  }
+}
 
 console.log('[Huntier:bg] service worker loaded')
 
@@ -81,6 +132,17 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
       }
       if (message?.type === 'huntier:save-application-ai') {
         const token = await ensureToken(true)
+        console.log('[Huntier:bg] AI save requested', { stage: message?.stage, extracted: !!message?.extracted })
+        // 0) Perform an invisible deep-crawl on a background window to enrich extracted hints
+        let deepExtracted: any = null
+        try {
+          const [active] = await c.tabs.query({ active: true, currentWindow: true })
+          const url = active?.url
+          if (url) {
+            console.log('[Huntier:bg] launching deep crawl', url)
+            deepExtracted = await runDeepCrawl(url)
+          }
+        } catch (e) { console.warn('[Huntier:bg] deep crawl skipped', e) }
         // 1) Capture current tab screenshot
         const dataUrl: string = await new Promise((resolve, reject) => {
           try {
@@ -93,6 +155,7 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         // 2) Upload to AI extract endpoint
         const form = new FormData()
         form.append('files', blob, 'screenshot.png')
+        console.log('[Huntier:bg] uploading screenshot to extractor', { size: blob.size, type: blob.type })
         const extractRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-images`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -104,12 +167,63 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
           return
         }
         const { draft_id } = await extractRes.json()
+        console.log('[Huntier:bg] extracted draft id', draft_id)
+        // 2.5) Enrich draft with tab URL + platform upsert
+        try {
+          const [tab] = await c.tabs.query({ active: true, currentWindow: true })
+          const tabUrl: string | undefined = tab?.url
+          if (tabUrl) {
+            // Upsert platform by origin
+            const u = new URL(tabUrl)
+            const origin = `${u.protocol}//${u.hostname}`
+            const host = u.hostname.replace(/^www\./, '')
+            const prettyName = host
+              .split('.')
+              .slice(0, -1)
+              .join(' ')
+              .replace(/[-_]/g, ' ')
+              .replace(/\b\w/g, (m) => m.toUpperCase()) || host
+            const platRes = await fetch(`${API_BASE}/v1/platforms`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ name: prettyName, url: origin }),
+            })
+            const platform = await platRes.json().catch(() => null)
+            console.log('[Huntier:bg] upsert platform', { origin, id: platform?.id })
+            // Patch draft with platform_id, job_url and extracted fields
+            const patchBody: any = { job_url: tabUrl }
+            if (platform?.id) patchBody.platform_id = platform.id
+            // Map extracted hint fields
+            const ex = { ...(message?.extracted || {}), ...(deepExtracted || {}) }
+            if (ex?.title && !ex?.company?.name) patchBody.role = String(ex.title).slice(0, 180)
+            if (ex?.company?.name || ex?.company?.website) {
+              // We keep company_id path in commit; here we can only store notes or rely on commit to resolve company
+              // Append as draft notes for context
+              patchBody.notes = [
+                ...(Array.isArray(ex?.notes) ? ex.notes : []),
+                [ex?.company?.name, ex?.company?.website].filter(Boolean).join(' • ')
+              ].filter(Boolean).slice(0, 10)
+            }
+            if (ex?.location) {
+              // Store as notes; commit() will currently ignore but safe to keep for future mapping
+              patchBody.notes = [...(patchBody.notes || []), [ex.location.city, ex.location.country, ex.location.type].filter(Boolean).join(' • ')].filter(Boolean).slice(0, 10)
+            }
+            await fetch(`${API_BASE}/v1/applications/drafts/${draft_id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify(patchBody),
+            })
+          }
+        } catch (e) {
+          console.warn('[Huntier:bg] draft enrich failed', e)
+        }
         // 3) Commit draft to application
         const commit = await fetch(`${API_BASE}/v1/applications/drafts/${draft_id}/commit`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         })
         const app = await commit.json()
+        console.log('[Huntier:bg] committed draft -> application', { id: app?.id, company_id: app?.company_id })
         // 4) Optional stage transition (e.g., wishlist)
         if (message?.stage) {
           try {
@@ -118,6 +232,7 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ to_stage: message.stage }),
             })
+            console.log('[Huntier:bg] transitioned stage', message.stage)
           } catch {}
         }
         sendResponse({ ok: true, data: app })
@@ -131,7 +246,7 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
 
       if (message?.type === 'huntier:save-application') {
         const token = await ensureToken(true)
-        console.log('[Huntier:bg] creating application')
+        console.log('[Huntier:bg] creating application (raw)', message.body)
         const res = await fetch(`${API_BASE}/v1/applications`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

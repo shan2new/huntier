@@ -161,7 +161,6 @@ export function ApplicationsPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold">{group.title}</h3>
-                    <p className="text-xs text-muted-foreground">{group.items.length} apps</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{group.items.length}</Badge>

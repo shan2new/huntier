@@ -9,6 +9,45 @@ function getJobContext(): { title?: string; company?: string; url: string } {
   return { title, company, url }
 }
 
+function extractStructured() {
+  const data: any = { title: '', company: {}, location: {} }
+  // JSON-LD JobPosting
+  const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+  for (const s of scripts) {
+    try {
+      const json = JSON.parse(s.textContent || 'null')
+      const nodes = Array.isArray(json) ? json : [json]
+      for (const n of nodes) {
+        if (!n) continue
+        const type = (Array.isArray(n['@type']) ? n['@type'] : [n['@type']]).map((x:any)=>String(x).toLowerCase())
+        if (type.includes('jobposting')) {
+          data.title = data.title || (n.title || '')
+          const org = n.hiringOrganization || {}
+          data.company.name = data.company.name || org.name || ''
+          data.company.website = data.company.website || org.sameAs || org.url || ''
+          data.company.logo = data.company.logo || org.logo || ''
+          const jl = n.jobLocation || n.jobLocationType || {}
+          const addr = (jl.address || n.address) || {}
+          data.location.city = data.location.city || addr.addressLocality || ''
+          data.location.country = data.location.country || addr.addressCountry || ''
+          const jlt = (n.jobLocationType || '').toString().toLowerCase()
+          if (jlt.includes('remote')) data.location.type = 'remote'
+          else if (jlt.includes('hybrid')) data.location.type = 'hybrid'
+          else if (jlt.includes('onsite') || jlt.includes('on-site')) data.location.type = 'onsite'
+        }
+      }
+    } catch {}
+  }
+  // Fallbacks
+  data.title = data.title || (document.querySelector('h1')?.textContent || '').trim()
+  const metaUrl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null
+  const ogSite = document.querySelector('meta[property="og:site_name"]') as HTMLMetaElement | null
+  const ogUrl = document.querySelector('meta[property="og:url"]') as HTMLMetaElement | null
+  data.company.website = data.company.website || (ogUrl?.content || metaUrl?.href || '')
+  data.company.name = data.company.name || (ogSite?.content || '')
+  return data
+}
+
 async function request<T = any>(type: string, payload?: any): Promise<T> {
   return new Promise((resolve) => {
     if (!(globalThis as any)?.chrome?.runtime?.sendMessage) {
@@ -45,6 +84,13 @@ function injectButtons() {
   btnSave.style.background = '#111827'
   btnSave.style.color = 'white'
   btnSave.style.border = '1px solid rgba(255,255,255,0.2)'
+  const saveDefaultLabel = 'Save to Huntier'
+  function setSaving(saving: boolean, label?: string) {
+    btnSave.disabled = saving
+    btnSave.style.opacity = saving ? '0.7' : '1'
+    btnSave.style.cursor = saving ? 'wait' : 'pointer'
+    btnSave.textContent = label || (saving ? 'Saving…' : saveDefaultLabel)
+  }
   const feedback = document.createElement('div')
   feedback.style.position = 'fixed'
   feedback.style.bottom = '64px'
@@ -63,17 +109,32 @@ function injectButtons() {
   }
 
   btnSave.onclick = async () => {
+    setSaving(true)
     showFeedback('Saving via AI…')
-    let resp = await request('huntier:save-application-ai', { stage: 'wishlist' })
+    const extracted = extractStructured()
+    console.log('[Huntier:cs] sending message huntier:save-application-ai', { stage: 'wishlist', extracted })
+    let resp = await request('huntier:save-application-ai', { stage: 'wishlist', extracted })
     if (!(resp as any)?.ok) {
       await request('huntier:get-token')
-      resp = await request('huntier:save-application-ai', { stage: 'wishlist' })
+      resp = await request('huntier:save-application-ai', { stage: 'wishlist', extracted })
     }
-    if ((resp as any)?.ok) {
-      showFeedback('Saved to Huntier')
-      console.log('[Huntier:cs] saved application', (resp as any).data)
-    } else {
-      showFeedback('Save failed')
+    try {
+      if ((resp as any)?.ok && (resp as any)?.data?.id) {
+        showFeedback('Saved to Huntier')
+        console.log('[Huntier:cs] saved application', (resp as any).data)
+        setSaving(false, 'Saved')
+        setTimeout(() => setSaving(false), 1500)
+      } else {
+        showFeedback('Save failed')
+        console.log('[Huntier:cs] save failed', resp)
+        setSaving(false, 'Retry Save')
+        setTimeout(() => setSaving(false), 2000)
+      }
+    } finally {
+      if (!(resp as any)?.ok) {
+        // Ensure button is usable again after failure
+        setSaving(false)
+      }
     }
   }
 

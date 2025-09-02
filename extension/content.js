@@ -1,4 +1,41 @@
 // extension/content.ts
+function extractStructured() {
+  const data = { title: "", company: {}, location: {} };
+  const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+  for (const s of scripts) {
+    try {
+      const json = JSON.parse(s.textContent || "null");
+      const nodes = Array.isArray(json) ? json : [json];
+      for (const n of nodes) {
+        if (!n) continue;
+        const type = (Array.isArray(n["@type"]) ? n["@type"] : [n["@type"]]).map((x) => String(x).toLowerCase());
+        if (type.includes("jobposting")) {
+          data.title = data.title || (n.title || "");
+          const org = n.hiringOrganization || {};
+          data.company.name = data.company.name || org.name || "";
+          data.company.website = data.company.website || org.sameAs || org.url || "";
+          data.company.logo = data.company.logo || org.logo || "";
+          const jl = n.jobLocation || n.jobLocationType || {};
+          const addr = jl.address || n.address || {};
+          data.location.city = data.location.city || addr.addressLocality || "";
+          data.location.country = data.location.country || addr.addressCountry || "";
+          const jlt = (n.jobLocationType || "").toString().toLowerCase();
+          if (jlt.includes("remote")) data.location.type = "remote";
+          else if (jlt.includes("hybrid")) data.location.type = "hybrid";
+          else if (jlt.includes("onsite") || jlt.includes("on-site")) data.location.type = "onsite";
+        }
+      }
+    } catch {
+    }
+  }
+  data.title = data.title || (document.querySelector("h1")?.textContent || "").trim();
+  const metaUrl = document.querySelector('link[rel="canonical"]');
+  const ogSite = document.querySelector('meta[property="og:site_name"]');
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  data.company.website = data.company.website || (ogUrl?.content || metaUrl?.href || "");
+  data.company.name = data.company.name || (ogSite?.content || "");
+  return data;
+}
 async function request(type, payload) {
   return new Promise((resolve) => {
     if (!globalThis?.chrome?.runtime?.sendMessage) {
@@ -33,6 +70,13 @@ function injectButtons() {
   btnSave.style.background = "#111827";
   btnSave.style.color = "white";
   btnSave.style.border = "1px solid rgba(255,255,255,0.2)";
+  const saveDefaultLabel = "Save to Huntier";
+  function setSaving(saving, label) {
+    btnSave.disabled = saving;
+    btnSave.style.opacity = saving ? "0.7" : "1";
+    btnSave.style.cursor = saving ? "wait" : "pointer";
+    btnSave.textContent = label || (saving ? "Saving\u2026" : saveDefaultLabel);
+  }
   const feedback = document.createElement("div");
   feedback.style.position = "fixed";
   feedback.style.bottom = "64px";
@@ -52,17 +96,31 @@ function injectButtons() {
     }, 3e3);
   }
   btnSave.onclick = async () => {
+    setSaving(true);
     showFeedback("Saving via AI\u2026");
-    let resp = await request("huntier:save-application-ai", { stage: "wishlist" });
+    const extracted = extractStructured();
+    console.log("[Huntier:cs] sending message huntier:save-application-ai", { stage: "wishlist", extracted });
+    let resp = await request("huntier:save-application-ai", { stage: "wishlist", extracted });
     if (!resp?.ok) {
       await request("huntier:get-token");
-      resp = await request("huntier:save-application-ai", { stage: "wishlist" });
+      resp = await request("huntier:save-application-ai", { stage: "wishlist", extracted });
     }
-    if (resp?.ok) {
-      showFeedback("Saved to Huntier");
-      console.log("[Huntier:cs] saved application", resp.data);
-    } else {
-      showFeedback("Save failed");
+    try {
+      if (resp?.ok && resp?.data?.id) {
+        showFeedback("Saved to Huntier");
+        console.log("[Huntier:cs] saved application", resp.data);
+        setSaving(false, "Saved");
+        setTimeout(() => setSaving(false), 1500);
+      } else {
+        showFeedback("Save failed");
+        console.log("[Huntier:cs] save failed", resp);
+        setSaving(false, "Retry Save");
+        setTimeout(() => setSaving(false), 2e3);
+      }
+    } finally {
+      if (!resp?.ok) {
+        setSaving(false);
+      }
     }
   };
   const btnApply = document.createElement("button");

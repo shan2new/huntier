@@ -19,7 +19,6 @@
       const ct = (headers?.['content-type'] || headers?.['Content-Type'] || '').toString().toLowerCase()
       if (ct.includes('json')) return true
       if (path.includes('api') || path.includes('graphql') || path.includes('jobs') || path.includes('positions')) return true
-      console.log('shouldCapture', url, headers)
       return false
     } catch { return false }
   }
@@ -32,7 +31,7 @@
       let method = 'GET'
       let reqHeaders: Record<string, string> = {}
       let reqBodyPreview: string | undefined
-      console.log('fetch', args)
+      
       try {
         if (typeof args[0] === 'string') url = args[0]
         else if (args[0]?.url) url = String(args[0].url)
@@ -46,7 +45,7 @@
       } catch {}
 
       const res = await origFetch.apply(window, args as any)
-      console.log('res', res)
+      
       try {
         const clone = res.clone()
         const resHeaders: Record<string, string> = {}
@@ -70,14 +69,13 @@
     const origOpen = XMLHttpRequest.prototype.open
     const origSend = XMLHttpRequest.prototype.send
     XMLHttpRequest.prototype.open = function(method: string, url: string) {
-      console.log('open', method, url)
+      
       ;(this as any).__huntier = { method, url, ts: Date.now() }
       return origOpen.apply(this, arguments as any)
     }
     XMLHttpRequest.prototype.send = function(body?: Document | BodyInit | null) {
       const ctx = (this as any).__huntier || {}
       const reqBodyPreview = typeof body === 'string' && body.length < 5000 ? body : undefined
-      console.log('send', ctx.url, ctx.method, reqBodyPreview)
       this.addEventListener('loadend', function() {
         try {
           const url: string = ctx.url || this.responseURL

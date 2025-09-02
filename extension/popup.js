@@ -8,28 +8,88 @@ async function getToken() {
     });
   });
 }
+async function getSettings() {
+  return new Promise((resolve) => {
+    c.storage.local.get(["huntier_settings"], (r) => {
+      resolve(r.huntier_settings || {});
+    });
+  });
+}
+async function setSettings(patch) {
+  const cur = await getSettings();
+  const next = { ...cur, ...patch };
+  await c.storage.local.set({ huntier_settings: next });
+}
 async function connect() {
   const url = `${APP_ORIGIN}/extension/connect?extId=${c.runtime.id}`;
   await c.tabs.create({ url, active: true });
 }
-function updateStatus(token) {
+async function openDashboard() {
+  await c.tabs.create({ url: `${APP_ORIGIN}/dashboard`, active: true });
+}
+function setStatus(text, tone = "muted") {
   const status = document.getElementById("status");
+  if (!status) return;
+  status.textContent = text;
+  status.classList.remove("status-success", "status-warn");
+  if (tone === "success") status.classList.add("status-success");
+  else if (tone === "warn") status.classList.add("status-warn");
+}
+function updateStatus(token) {
   const connectButton = document.getElementById("connect");
+  if (!connectButton) return;
   if (token) {
-    status.textContent = "\u2705 Connected to Huntier";
-    status.style.background = "#ecfdf5";
-    status.style.borderColor = "#10b981";
-    status.style.color = "#065f46";
-    connectButton.textContent = "Reconnect account";
-    connectButton.style.background = "#6b7280";
+    setStatus("\u2705 Connected to Huntier", "success");
+    connectButton.textContent = "Reconnect";
+    connectButton.style.background = "var(--secondary)";
+    connectButton.style.color = "var(--secondary-foreground)";
   } else {
-    status.textContent = "\u{1F517} Connect your Huntier account to get started";
-    status.style.background = "#f9fafb";
-    status.style.borderColor = "#e5e7eb";
-    status.style.color = "#6b7280";
-    connectButton.textContent = "Connect account";
-    connectButton.style.background = "#111827";
+    setStatus("\u{1F517} Connect your Huntier account to get started", "muted");
+    connectButton.textContent = "Connect";
+    connectButton.style.background = "var(--primary)";
+    connectButton.style.color = "var(--primary-foreground)";
   }
 }
-document.getElementById("connect")?.addEventListener("click", connect);
-getToken().then(updateStatus);
+async function saveNow() {
+  try {
+    setStatus("\u23F3 Saving via AI\u2026", "muted");
+    const resp = await new Promise((resolve) => {
+      c.runtime.sendMessage({ type: "huntier:save-application-ai", stage: "wishlist" }, (r) => resolve(r));
+    });
+    if (resp?.ok) {
+      setStatus("\u2705 Saved to Huntier", "success");
+    } else {
+      setStatus("\u26A0\uFE0F Save failed. Try reconnecting.", "warn");
+    }
+  } catch {
+    setStatus("\u26A0\uFE0F Save failed. Try again.", "warn");
+  }
+}
+async function init() {
+  const connectBtn = document.getElementById("connect");
+  const saveBtn = document.getElementById("save-now");
+  const dashBtn = document.getElementById("open-dashboard");
+  const toggle = document.getElementById("helper-toggle");
+  const label = document.getElementById("helper-label");
+  connectBtn?.addEventListener("click", connect);
+  saveBtn?.addEventListener("click", saveNow);
+  dashBtn?.addEventListener("click", openDashboard);
+  const [token, settings] = await Promise.all([getToken(), getSettings()]);
+  updateStatus(token);
+  const enabled = settings.helperEnabled !== false;
+  if (toggle) toggle.checked = enabled;
+  if (label) label.textContent = enabled ? "Page helper: On" : "Page helper: Off";
+  toggle?.addEventListener("change", async () => {
+    const on = !!toggle.checked;
+    await setSettings({ helperEnabled: on });
+    if (label) label.textContent = on ? "Page helper: On" : "Page helper: Off";
+    try {
+      const [active] = await c.tabs.query({ active: true, currentWindow: true });
+      if (active?.id) {
+        c.runtime.sendMessage({ type: "huntier:toggle-helper", enabled: on, tabId: active.id });
+      }
+    } catch {
+    }
+  });
+}
+init();

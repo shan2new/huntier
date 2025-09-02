@@ -1,12 +1,13 @@
 // Avoid polluting global types; reference chrome via local alias
 const c: any = (globalThis as any).chrome
 export {}
-const API_BASE = (self as any).VITE_API_URL || 'http://localhost:3001/api'
-const APP_ORIGIN = (self as any).VITE_APP_ORIGIN || 'http://localhost:3000'
+const API_BASE = 'https://api.huntier.pro/api'
+const APP_ORIGIN = 'https://huntier.pro'
 
 type StoredAuth = { token?: string; lastAt?: number }
 let connectTabId: number | null = null
 const pendingResolvers: Array<(t: string) => void> = []
+type Settings = { helperEnabled?: boolean }
 
 // Deep crawl coordination
 async function runDeepCrawl(targetUrl: string): Promise<any | null> {
@@ -99,17 +100,14 @@ async function registerNetworkHook() {
 
 registerNetworkHook()
 
-// Per-tab network logs buffer
-const tabNetworkLogs = new Map<number, any[]>()
+// Per-tab network logs buffer (OOP wrapper)
+import { NetworkLogStore } from './bg/services'
+const logs = new NetworkLogStore()
 
 // Relay from content script: harvest network logs from page main world
 c.runtime.onMessage.addListener((message: any, sender: any, _sendResponse: any) => {
   if (message?.type === 'huntier:network-log' && sender?.tab?.id) {
-    const arr = tabNetworkLogs.get(sender.tab.id) || []
-    arr.push({ ...message.entry, tabId: sender.tab.id })
-    // keep recent ~200 entries
-    if (arr.length > 200) arr.splice(0, arr.length - 200)
-    tabNetworkLogs.set(sender.tab.id, arr)
+    logs.add(sender.tab.id, message.entry)
   }
 })
 
@@ -139,59 +137,10 @@ function prunePayload(payload: any): any {
   return payload
 }
 
-function condenseNetworkEntries(all: any[]): any[] {
-  if (!Array.isArray(all) || all.length === 0) return []
-  const denyHosts = ['mixpanel.com','segment.com','amplitude.com','google-analytics.com','analytics.google.com','doubleclick.net','hotjar.com','intercom.io','clarity.ms']
-  const keywords = ['job','jobs','position','positions','opening','openings','vacancy','careers','role','graphql']
-  const results: any[] = []
-  let budget = 120_000 // keep well under server JSON limit
-  const urlHost = (u: string) => { try { return new URL(u).hostname } catch { return '' } }
+const condenseNetworkEntries = (all: any[]) => logs.condense(all)
+const selectLikelyJobEntries = (entries: any[]) => logs.pickLikelyJobEntries(entries)
 
-  // Prefer JSON 2xx and keyword URLs first
-  const sorted = [...all].sort((a, b) => {
-    const ac = String(a?.response?.headers?.['content-type'] || a?.response?.headers?.['Content-Type'] || '').includes('json') ? 1 : 0
-    const bc = String(b?.response?.headers?.['content-type'] || b?.response?.headers?.['Content-Type'] || '').includes('json') ? 1 : 0
-    const ah = keywords.some(k => String(a?.url || '').toLowerCase().includes(k)) ? 1 : 0
-    const bh = keywords.some(k => String(b?.url || '').toLowerCase().includes(k)) ? 1 : 0
-    return (bc + bh) - (ac + ah)
-  })
-
-  for (const e of sorted) {
-    const host = urlHost(String(e?.url || ''))
-    if (!host || denyHosts.some(h => host.endsWith(h))) continue
-    const status = Number(e?.status || 0)
-    if (status < 200 || status >= 300) continue
-    const ct = String(e?.response?.headers?.['content-type'] || e?.response?.headers?.['Content-Type'] || '').toLowerCase()
-    if (!ct.includes('json')) continue
-    const simplified: any = {
-      url: String(e.url || ''),
-      method: String(e.method || 'GET'),
-      status,
-      response: { content_type: ct, body: prunePayload(e?.response?.body) },
-    }
-    let size = estimateSize(simplified)
-    if (size > 25_000) {
-      simplified.response.body = prunePayload(simplified.response.body)
-      size = estimateSize(simplified)
-    }
-    if (budget - size <= 0) break
-    budget -= size
-    results.push(simplified)
-    if (results.length >= 12) break
-  }
-
-  // If nothing matched, fall back to first small JSON entry
-  if (results.length === 0) {
-    for (const e of all) {
-      const ct = String(e?.response?.headers?.['content-type'] || e?.response?.headers?.['Content-Type'] || '').toLowerCase()
-      if (!ct.includes('json')) continue
-      const simplified: any = { url: String(e.url||''), method: String(e.method||'GET'), status: Number(e.status||0), response: { content_type: ct, body: prunePayload(e?.response?.body) } }
-      const size = estimateSize(simplified)
-      if (size < 25_000) { results.push(simplified); break }
-    }
-  }
-  return results
-}
+// removed duplicate; using logs.pickLikelyJobEntries
 
 async function getAuth(): Promise<StoredAuth> {
   const data = await c.storage.local.get(['huntier_auth'])
@@ -200,6 +149,17 @@ async function getAuth(): Promise<StoredAuth> {
 
 async function setAuth(auth: StoredAuth) {
   await c.storage.local.set({ huntier_auth: auth })
+}
+
+async function getSettings(): Promise<Settings> {
+  const data = await c.storage.local.get(['huntier_settings'])
+  return (data.huntier_settings as Settings) || {}
+}
+
+async function setSettings(patch: Settings) {
+  const cur = await getSettings()
+  const next = { ...cur, ...patch }
+  await c.storage.local.set({ huntier_settings: next })
 }
 
 async function ensureToken(interactive = true): Promise<string> {
@@ -249,9 +209,87 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
   console.log('[Huntier:bg] message', message?.type)
   ;(async () => {
     try {
+      if (message?.type === 'huntier:toggle-helper') {
+        const enabled = !!message?.enabled
+        await setSettings({ helperEnabled: enabled })
+        // Broadcast to all tabs or just the target tab if provided
+        const targetTabId: number | undefined = message?.tabId
+        if (targetTabId) {
+          try { await c.tabs.sendMessage(targetTabId, { type: 'huntier:toggle-helper', enabled }) } catch {}
+        } else {
+          const tabs = await c.tabs.query({})
+          for (const t of tabs) {
+            if (t?.id) try { await c.tabs.sendMessage(t.id, { type: 'huntier:toggle-helper', enabled }) } catch {}
+          }
+        }
+        sendResponse({ ok: true })
+        return
+      }
       if (message?.type === 'huntier-token') {
         notifyToken(message.token)
         sendResponse({ ok: true })
+        return
+      }
+      if (message?.type === 'huntier:precheck-application') {
+        const token = await ensureToken(true)
+        const [active] = await c.tabs.query({ active: true, currentWindow: true })
+        const activeTabId = active?.id
+        const networkEntriesRaw = activeTabId ? (tabNetworkLogs.get(activeTabId) || []) : []
+        const networkEntries = condenseNetworkEntries(networkEntriesRaw)
+        let platform_id: string | null = null
+        let platform_job_id: string | null = null
+        try {
+          if (networkEntries.length > 0) {
+            const netRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-network`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ entries: networkEntries })
+            })
+            const net = await netRes.json().catch(() => null)
+            console.log('[Huntier:bg] net', net)
+            if (netRes.ok) {
+              const ai: any = net?.ai || {}
+              const jobUrl: string | undefined = ai?.job_url || ai?.url || undefined
+              const platformUrl: string | undefined = ai?.platform_url || ai?.platform || undefined
+              let platformOrigin: string | undefined
+              if (platformUrl) { try { const u = new URL(String(platformUrl)); platformOrigin = `${u.protocol}//${u.hostname}` } catch {} }
+              else if (jobUrl) { try { const u = new URL(String(jobUrl)); platformOrigin = `${u.protocol}//${u.hostname}` } catch {} }
+              if (platformOrigin) {
+                const platRes = await fetch(`${API_BASE}/v1/platforms`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ name: platformOrigin.replace(/^https?:\/\//,'').replace(/^www\./,''), url: platformOrigin })
+                })
+                const platform = await platRes.json().catch(() => null)
+                platform_id = platform?.id || null
+              }
+              console.log('[Huntier:bg] platform_job_id', platform_job_id)
+              if (!platform_job_id && jobUrl) {
+                console.log('[Huntier:bg] jobUrl found', jobUrl)
+                try {
+                  const uu = new URL(String(jobUrl))
+                  const idParam = uu.searchParams.get('gh_jid') || uu.searchParams.get('lever-origin-jobId') || uu.searchParams.get('jobId') || uu.searchParams.get('jid')
+                  platform_job_id = `${uu.hostname}:${idParam || (uu.pathname || '/')}`.toLowerCase()
+                } catch {}
+              }
+            }
+          }
+        } catch {}
+        // Check existence if we have identifiers
+        let exists = false
+        try {
+          const params = new URLSearchParams()
+          if (platform_id) params.set('platform_id', platform_id)
+          if (platform_job_id) params.set('platform_job_id', platform_job_id)
+          if ([...params.keys()].length) {
+            const res = await fetch(`${API_BASE}/v1/applications?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
+            if (res.ok) {
+              const arr = await res.json().catch(() => [])
+              exists = Array.isArray(arr) && arr.length > 0
+            }
+          }
+        } catch {}
+        sendResponse({ ok: true, platform_id, platform_job_id, exists })
         return
       }
       if (message?.type === 'huntier:save-application-ai') {
@@ -260,8 +298,10 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         // 0) Collect recent network logs for this tab
         const [active] = await c.tabs.query({ active: true, currentWindow: true })
         const activeTabId = active?.id
-        const networkEntriesRaw = activeTabId ? (tabNetworkLogs.get(activeTabId) || []) : []
-        const networkEntries = condenseNetworkEntries(networkEntriesRaw)
+        const networkEntriesRaw = logs.getRaw(activeTabId)
+        const condensed = condenseNetworkEntries(networkEntriesRaw)
+        const likely = selectLikelyJobEntries(condensed)
+        const networkEntries = likely.length ? likely : condensed
         console.log('[Huntier:bg] collected network entries', { count: networkEntries.length })
         // 0.1) Perform an invisible deep-crawl on a background window to enrich extracted hints (optional)
         let deepExtracted: any = null
@@ -285,21 +325,58 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         let draft_id: string | null = null
         try {
           if (networkEntries.length > 0) {
-            console.log('[Huntier:bg] calling network extractor', { count: networkEntries.length })
+            // Phase 1: quick mapping request
+            let mapping: any = null
+            try {
+              const mapRes = await fetch(`${API_BASE}/v1/applications/ai/map-network`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ entries: condensed.slice(0, 12) })
+              })
+              mapping = await mapRes.json().catch(() => null)
+            } catch {}
+
+            let entriesForExtract = networkEntries
+            if (mapping?.best_entry_index !== undefined && mapping?.best_entry_index !== null) {
+              const i = Number(mapping.best_entry_index)
+              if (!isNaN(i) && i >= 0 && i < condensed.length) {
+                entriesForExtract = [condensed[i]]
+              }
+            }
+
+            console.log('[Huntier:bg] calling network extractor', { count: entriesForExtract.length })
             const netRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-network`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ entries: networkEntries, screenshot_data_url: dataUrl })
+              body: JSON.stringify({ entries: entriesForExtract, screenshot_data_url: dataUrl })
             })
             const net = await netRes.json().catch(() => null)
             if (netRes.ok && net?.draft_id) {
               draft_id = net.draft_id
-              console.log('[Huntier:bg] network extractor draft', draft_id, { ai: net?.ai })
+              console.log('[Huntier:bg] network extractor draft', draft_id, { ai: net?.ai, used: entriesForExtract.length })
             } else {
               console.warn('[Huntier:bg] network extractor failed', netRes.status, net)
             }
           }
         } catch (e) { console.warn('[Huntier:bg] network extractor error', e) }
+        // Pre-check: if platform_job_id present, query for existing app
+        let existingApp: any = null
+        try {
+          const pj = message?.platform_job_id
+          if (pj) {
+            const search = new URLSearchParams({ platform_job_id: pj }).toString()
+            const res = await fetch(`${API_BASE}/v1/applications?${search}`, { headers: { Authorization: `Bearer ${token}` } })
+            if (res.ok) {
+              const arr = await res.json().catch(() => [])
+              if (Array.isArray(arr) && arr.length > 0) existingApp = arr[0]
+            }
+          }
+        } catch {}
+        if (existingApp?.id) {
+          sendResponse({ ok: true, data: existingApp, already_exists: true })
+          return
+        }
+
         // 2) Upload to AI extract endpoint
         const form = new FormData()
         form.append('files', blob, 'screenshot.jpg')
@@ -377,6 +454,17 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         })
         const app = await commit.json()
         console.log('[Huntier:bg] committed draft -> application', { id: app?.id, company_id: app?.company_id })
+        // 3.5) Optionally update platform_job_id to prevent duplicates in future
+        try {
+          const platform_job_id: string | null | undefined = message?.platform_job_id
+          if (platform_job_id) {
+            await fetch(`${API_BASE}/v1/applications/${app.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ platform_job_id })
+            })
+          }
+        } catch {}
         // 4) Optional stage transition (e.g., wishlist)
         if (message?.stage) {
           try {

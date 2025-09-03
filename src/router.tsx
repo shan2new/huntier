@@ -22,6 +22,8 @@ import { DashboardPage } from './routes/DashboardPage'
 import ResumePrintPage from './routes/resumes/ResumePrintPage'
 import { ExtensionConnectPage } from './routes/extension/Connect'
 import { CompaniesPage } from './routes/CompaniesPage'
+import AutofillInputsPage from './routes/autofill/InputsPage'
+import AutofillTemplatesPage from './routes/autofill/TemplatesPage'
 import { CompanyGroupsPage } from './routes/companies/GroupsPage'
 import { CompanyGroupDetailPage } from './routes/companies/$groupId'
  
@@ -72,6 +74,17 @@ const companyGroupDetailRoute = createRoute({ getParentRoute: () => appLayout, p
   const { groupId } = companyGroupDetailRoute.useParams()
   return <CompanyGroupDetailPage groupId={groupId} />
 } })
+
+// Autofill assistant (split)
+const autofillInputsRoute = createRoute({ getParentRoute: () => appLayout, path: '/autofill/inputs', component: AutofillInputsPage })
+const autofillTemplatesRoute = createRoute({ getParentRoute: () => appLayout, path: '/autofill/templates', component: AutofillTemplatesPage })
+const autofillRedirectRoute = createRoute({ getParentRoute: () => appLayout, path: '/autofill', component: () => {
+  // Client-side redirect to inputs
+  if (typeof window !== 'undefined') {
+    window.location.replace('/autofill/inputs')
+  }
+  return null
+} })
  
 
 // Resume routes
@@ -103,6 +116,9 @@ const routeTree = rootRoute.addChildren([
 		companiesRoute,
 		companiesGroupsRoute,
 		companyGroupDetailRoute,
+		autofillRedirectRoute,
+		autofillInputsRoute,
+		autofillTemplatesRoute,
 		resumeListRoute,
 		resumeBuilderRoute,
 	]),

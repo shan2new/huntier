@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
+import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Sparkles, Star, Target, Trophy, User, Users } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useAuthToken } from "@/lib/auth"
@@ -278,6 +278,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span>Resume AI <SparklesGradient size={10} className="ml-2 inline-block align-middle" /> </span>
                 </Link>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/autofill")} tooltip="Autofill Assistant">
+                <Link to="/autofill/inputs" className="font-medium">
+                  <Sparkles className="mr-2" size={16} />
+                  <span>Autofill</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <div className="px-2 text-xs text-muted-foreground mt-1">Autofill</div>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem className="mt-2">
+                  <SidebarMenuSubButton asChild isActive={appsActive("/autofill/inputs")}>
+                    <Link to="/autofill/inputs" className="flex items-center gap-2">
+                      <span>Inputs</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={appsActive("/autofill/templates")}>
+                    <Link to="/autofill/templates" className="flex items-center gap-2">
+                      <span>Templates</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
             {/* Mail disabled */}
           </SidebarMenu>

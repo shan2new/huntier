@@ -1069,6 +1069,50 @@ export const api = {
   resumeApi
 }
 
+// Autofill state API
+export type AutofillStateServer = { state: any; updated_at: string }
+
+export async function getAutofillStateWithRefresh(getToken: () => Promise<string>): Promise<AutofillStateServer> {
+  return apiWithTokenRefresh(`/v1/autofill/state`, getToken)
+}
+
+export async function saveAutofillStateWithRefresh(getToken: () => Promise<string>, state: any): Promise<{ success: boolean } & AutofillStateServer> {
+  return apiWithTokenRefresh(`/v1/autofill/state`, getToken, {
+    method: 'POST',
+    body: JSON.stringify({ state })
+  })
+}
+
+// Autofill AI helpers
+export async function analyzeAutofillScreenshotsWithRefresh(
+  getToken: () => Promise<string>,
+  files: Array<File>,
+  body: { previewText?: string; jdText?: string }
+): Promise<{ suggestions: Array<string> }> {
+  const form = new FormData()
+  files.forEach((f) => form.append('files', f))
+  if (body.previewText) form.append('previewText', body.previewText)
+  if (body.jdText) form.append('jdText', body.jdText)
+  const token = await getToken()
+  const res = await fetch(`${BASE}/v1/autofill/ai/analyze`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  })
+  if (!res.ok) throw new Error(`Analyze failed: ${res.status}`)
+  return res.json()
+}
+
+export async function improveAutofillTemplateWithRefresh(
+  getToken: () => Promise<string>,
+  body: { template: string; placeholders: Array<string>; autofill?: any; resume?: any; jdText?: string; suggestions?: Array<string> }
+): Promise<{ improved: string }> {
+  return apiWithTokenRefresh(`/v1/autofill/ai/improve-template`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 // Upsert a platform by name and url
 export async function upsertPlatformWithRefresh<T = Platform>(
   getToken: () => Promise<string>,

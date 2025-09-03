@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
+import { Globe, Plus, Search, Star, Trash2 } from 'lucide-react'
+import type { Platform, UserPlatform } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAuthToken } from '@/lib/auth'
 import {
   addMyPlatformWithRefresh,
   deleteMyPlatformWithRefresh,
   listMyPlatformsWithRefresh,
   searchPlatformsByNameWithRefresh,
-  upsertPlatformWithRefresh,
   updateMyPlatformWithRefresh,
-  type Platform,
-  type UserPlatform,
+  upsertPlatformWithRefresh,
 } from '@/lib/api'
-import { Globe, Plus, Search, Star, Trash2 } from 'lucide-react'
 
 type SearchResult = Platform
 
@@ -119,7 +119,7 @@ export function ManageUserPlatforms({ analytics }: { analytics?: Record<string, 
     setItems((prev) => prev.filter((i) => i.id !== row.id))
   }
 
-  const empty = useMemo(() => !items || items.length === 0, [items])
+  const empty = useMemo(() => items.length === 0, [items])
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
@@ -160,7 +160,7 @@ export function ManageUserPlatforms({ analytics }: { analytics?: Record<string, 
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {row.platform?.logo_url ? (
-                      <img src={row.platform.logo_url} alt={row.platform?.name} className="h-7 w-7 rounded-md border border-border object-cover" />
+                      <img src={row.platform.logo_url} alt={row.platform.name} className="h-7 w-7 rounded-md border border-border object-cover" />
                     ) : (
                       <div className="h-7 w-7 rounded-md border border-border flex items-center justify-center bg-muted/30">
                         <Globe className="h-3.5 w-3.5 text-muted-foreground" />
@@ -179,6 +179,16 @@ export function ManageUserPlatforms({ analytics }: { analytics?: Record<string, 
                         ) : null}
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate max-w-[420px]">{row.platform?.url}</div>
+                      {row.notes ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-[11px] text-muted-foreground truncate max-w-[420px] mt-0.5">Notes: {row.notes}</div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[420px]">
+                            <div className="max-w-[400px] whitespace-pre-wrap text-left">{row.notes}</div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

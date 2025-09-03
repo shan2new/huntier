@@ -20,8 +20,11 @@ import { ResumeBuilder } from './routes/resumes/$resumeId'
 import { DashboardPage } from './routes/DashboardPage'
 import ResumePrintPage from './routes/resumes/ResumePrintPage'
 import { ExtensionConnectPage } from './routes/extension/Connect'
+import { CompaniesPage } from './routes/CompaniesPage'
+import { CompanyGroupsPage } from './routes/companies/GroupsPage'
+import { CompanyGroupDetailPage } from './routes/companies/$groupId'
  
-
+ 
 // Single root for the app with error fallback
 const rootRoute = createRootRoute({
   component: undefined,
@@ -61,6 +64,12 @@ const boardRoute = createRoute({ getParentRoute: () => appLayout, path: '/board'
 const platformsRoute = createRoute({ getParentRoute: () => appLayout, path: '/platforms', component: PlatformsPage })
 const referrersRoute = createRoute({ getParentRoute: () => appLayout, path: '/referrers', component: ReferrersPage })
 const profileRoute = createRoute({ getParentRoute: () => appLayout, path: '/profile', component: ProfilePage })
+const companiesRoute = createRoute({ getParentRoute: () => appLayout, path: '/companies', component: CompaniesPage })
+const companiesGroupsRoute = createRoute({ getParentRoute: () => appLayout, path: '/companies/groups', component: CompanyGroupsPage })
+const companyGroupDetailRoute = createRoute({ getParentRoute: () => appLayout, path: '/companies/groups/$groupId', component: () => {
+  const { groupId } = companyGroupDetailRoute.useParams()
+  return <CompanyGroupDetailPage groupId={groupId} />
+} })
  
 
 // Resume routes
@@ -88,6 +97,9 @@ const routeTree = rootRoute.addChildren([
 		platformsRoute,
 		referrersRoute,
 		profileRoute,
+		companiesRoute,
+		companiesGroupsRoute,
+		companyGroupDetailRoute,
 		resumeListRoute,
 		resumeBuilderRoute,
 	]),

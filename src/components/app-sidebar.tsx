@@ -1,7 +1,9 @@
 import * as React from "react"
-import { BarChart3, Calendar, ChevronsUpDown, ClipboardList, FileText, Globe, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
+import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
+import { useAuthToken } from "@/lib/auth"
+import { listMyCompanyGroupsWithRefresh } from "@/lib/api"
 
 import {
   Sidebar,
@@ -65,6 +67,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
   const { user } = useUser()
   const { signOut } = useAuth()
+  const { getToken } = useAuthToken()
+  const [companyGroups, setCompanyGroups] = React.useState<Array<{ id: string; name: string }>>([])
+
+  React.useEffect(() => {
+    ;(async () => {
+      try {
+        const groups = await listMyCompanyGroupsWithRefresh(getToken)
+        setCompanyGroups(groups as any)
+      } catch {}
+    })()
+  }, [getToken])
 
   const appsActive = (path: string) => location.pathname.startsWith(path)
 
@@ -167,6 +180,44 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         <SidebarSeparator className="mx-0" />
+
+        {/* Companies */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Companies</SidebarGroupLabel>
+          <SidebarMenu className="gap-1">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/companies"} tooltip="All companies">
+                <Link to="/companies" className="font-medium">
+                  <Building2 className="mr-2" size={16} />
+                  <span>All</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <div className="px-2 text-xs text-muted-foreground mt-1">Groups</div>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem className="mt-2">
+                  <SidebarMenuSubButton asChild isActive={appsActive("/companies/groups") && location.pathname === "/companies/groups"}>
+                    <Link to="/companies/groups" className="flex items-center gap-2">
+                      <FolderTree size={14} />
+                      <span>All groups</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                {companyGroups.slice(0, 6).map((g) => (
+                  <SidebarMenuSubItem key={g.id}>
+                    <SidebarMenuSubButton asChild isActive={location.pathname === `/companies/groups/${g.id}`} >
+                      <Link to="/companies/groups/$groupId" params={{ groupId: g.id }} className="flex items-center gap-2">
+                        <FolderTree size={14} />
+                        <span className="truncate max-w-[140px]">{g.name}</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
 
         {/* Insights */}
         <SidebarGroup>

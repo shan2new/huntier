@@ -60,7 +60,7 @@ export function WishlistApplicationsPage() {
           />
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="h-[calc(100vh-150px)]">
           <div className="space-y-3">
             <Card className="shadow-xs">
               <CardContent className="p-0">

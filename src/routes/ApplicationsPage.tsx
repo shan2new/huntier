@@ -107,7 +107,7 @@ export function ApplicationsPage() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="relative space-y-8 h-full"
     >
-      <div className="mx-auto pt-8 max-w-[1100px] md:max-w-[900px] lg:max-w-[1024px] xl:max-w-[1200px]">
+      <div className="mx-auto pt-8 max-w-6xl">
 
       {/* Pipeline lanes: Screening → Interviewing → Completed */}
       <motion.div
@@ -150,7 +150,7 @@ export function ApplicationsPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
       >
-        <ScrollArea className="h-[calc(100vh-200px)] px-2">
+        <ScrollArea className="h-[calc(100vh-150px)] px-2">
           {(['wishlist','in_progress','interviewing','completed'] as const).map((laneKey) => {
             const group = pipelineGroups.find(g => g.key === laneKey)
             if (!group || group.items.length === 0) return null

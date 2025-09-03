@@ -56,7 +56,7 @@ export function CompletedApplicationsPage() {
             </div>
           ) : (
             <AnimatePresence>
-              <ScrollArea className="h-[calc(100vh-200px)]">
+              <ScrollArea className="h-[calc(100vh-150px)]">
                 <div className="divide-y divide-border">
                   {filtered.map((app, index) => (
                     <motion.div

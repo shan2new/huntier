@@ -6,7 +6,7 @@
     "dev": "vite --port 3000",
     "start": "vite --port 3000",
     "build": "vite build && tsc && npm run build:ext",
-    "build:ext": "postcss extension/popup.css -o extension/popup.build.css && esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js && esbuild extension/popup.ts --bundle --format=esm --outfile=extension/popup.js && esbuild extension/network-hook.ts --bundle --format=iife --outfile=extension/network-hook.js && esbuild extension/crawler.ts --bundle --format=iife --outfile=extension/crawler.js",
+    "build:ext": "postcss extension/popup.css -o extension/popup.build.css && esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js && esbuild extension/popup.tsx --bundle --format=esm --outfile=extension/popup.js && esbuild extension/network-hook.ts --bundle --format=iife --outfile=extension/network-hook.js && esbuild extension/crawler.ts --bundle --format=iife --outfile=extension/crawler.js",
     "serve": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
@@ -14,6 +14,7 @@
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
+    "@clerk/chrome-extension": "^1.3.40",
     "@clerk/clerk-react": "^5.41.0",
     "@fontsource-variable/geist-mono": "^5.2.6",
     "@fontsource-variable/inter": "^5.2.6",

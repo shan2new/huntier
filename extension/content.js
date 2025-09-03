@@ -81,7 +81,7 @@ function injectButtons() {
   const btnSave = document.createElement("button");
   btnSave.id = "huntier-btn-save";
   btnSave.textContent = "Save to Huntier";
-  btnSave.style.padding = "6px 10px";
+  btnSave.style.padding = "6px";
   btnSave.style.borderRadius = "8px";
   btnSave.style.background = "#111827";
   btnSave.style.color = "white";
@@ -95,7 +95,7 @@ function injectButtons() {
   }
   const btnApply = document.createElement("button");
   btnApply.textContent = "Apply";
-  btnApply.style.padding = "6px 10px";
+  btnApply.style.padding = "6px";
   btnApply.style.borderRadius = "8px";
   btnApply.style.background = "white";
   btnApply.style.color = "#111827";
@@ -114,28 +114,6 @@ function injectButtons() {
   const styleSpin = document.createElement("style");
   styleSpin.textContent = "@keyframes hnt-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}";
   (document.head || document.documentElement).appendChild(styleSpin);
-  (async () => {
-    try {
-      btnSave.disabled = true;
-      btnSave.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.6);border-top-color:white;border-radius:999px;margin-right:8px;vertical-align:-2px;animation: hnt-spin .9s linear infinite"></span>Processing\u2026';
-      const resp = await request("huntier:precheck-application");
-      if (resp?.ok) {
-        if (resp.exists) {
-          btnSave.disabled = false;
-          btnSave.textContent = "Re-save \u2713";
-        } else {
-          btnSave.disabled = false;
-          btnSave.textContent = saveDefaultLabel;
-        }
-      } else {
-        btnSave.disabled = false;
-        btnSave.textContent = saveDefaultLabel;
-      }
-    } catch {
-      btnSave.disabled = false;
-      btnSave.textContent = saveDefaultLabel;
-    }
-  })();
   async function computePlatformJobId() {
     try {
       const u = new URL(location.href);
@@ -148,13 +126,18 @@ function injectButtons() {
   }
   btnSave.onclick = async () => {
     setSaving(true);
+    console.log("[Huntier:ext] extracting structured");
     const extracted = extractStructured();
+    console.log("[Huntier:ext] extracted", extracted);
     const platform_job_id = await computePlatformJobId();
+    console.log("[Huntier:ext] platform_job_id", platform_job_id);
     let resp = await request("huntier:save-application-ai", { stage: "wishlist", extracted, platform_job_id });
+    console.log("[Huntier:ext] resp", resp);
     if (!resp?.ok) {
       await request("huntier:get-token");
       resp = await request("huntier:save-application-ai", { stage: "wishlist", extracted, platform_job_id });
     }
+    console.log("[Huntier:ext] resp", resp);
     try {
       if (resp?.ok && resp?.data?.id) {
         const already = !!resp?.already_exists;

@@ -120,7 +120,7 @@ export function InProgressApplicationsPage() {
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="h-[calc(100vh-150px)]">
           <div className="space-y-8">
             <AnimatePresence>
               {stageGroups.map((group, gi) => (

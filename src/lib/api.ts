@@ -676,6 +676,74 @@ export async function getCompanyByIdWithRefresh<T>(
   return apiWithTokenRefresh(`/v1/companies/${id}`, getToken)
 }
 
+// --- My Companies (targets & groups) ---
+export type UserCompanyTarget = {
+  id: string
+  user_id: string
+  company_id: string
+  company?: Company | null
+  group_id?: string | null
+}
+
+export type CompanyGroup = {
+  id: string
+  user_id: string
+  name: string
+  sort_order: number
+}
+
+export async function listMyCompaniesAllWithRefresh(getToken: () => Promise<string>, search?: string) {
+  const query = search ? `?search=${encodeURIComponent(search)}` : ''
+  return apiWithTokenRefresh<Array<Company>>(`/v1/companies/me/all${query}`, getToken)
+}
+
+export async function listMyCompanyTargetsWithRefresh(getToken: () => Promise<string>) {
+  return apiWithTokenRefresh<Array<UserCompanyTarget>>(`/v1/companies/me/targets`, getToken)
+}
+
+export async function addMyCompanyTargetWithRefresh(
+  getToken: () => Promise<string>,
+  body: { company_id: string; group_id?: string | null }
+) {
+  return apiWithTokenRefresh<UserCompanyTarget>(`/v1/companies/me/targets`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+export async function deleteMyCompanyTargetWithRefresh(getToken: () => Promise<string>, id: string) {
+  return apiWithTokenRefresh(`/v1/companies/me/targets/${id}`, getToken, { method: 'DELETE' })
+}
+
+export async function listMyCompanyGroupsWithRefresh(getToken: () => Promise<string>) {
+  return apiWithTokenRefresh<Array<CompanyGroup>>(`/v1/companies/me/groups`, getToken)
+}
+
+export async function createMyCompanyGroupWithRefresh(
+  getToken: () => Promise<string>,
+  body: { name: string; sort_order?: number }
+) {
+  return apiWithTokenRefresh<CompanyGroup>(`/v1/companies/me/groups`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  })
+}
+
+export async function updateMyCompanyGroupWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  body: { name?: string; sort_order?: number }
+) {
+  return apiWithTokenRefresh<CompanyGroup>(`/v1/companies/me/groups/${id}`, getToken, {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  })
+}
+
+export async function deleteMyCompanyGroupWithRefresh(getToken: () => Promise<string>, id: string) {
+  return apiWithTokenRefresh(`/v1/companies/me/groups/${id}`, getToken, { method: 'DELETE' })
+}
+
 // Profile
 export type UserProfile = { 
   notice_period_days?: number | null; 

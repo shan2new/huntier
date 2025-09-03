@@ -198,7 +198,7 @@ export function BoardPage() {
       </div>
 
       {/* Kanban Board */}
-      <ScrollArea className="h-[calc(100vh-200px)]">
+      <ScrollArea className="h-[calc(100vh-150px)]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {COLUMNS.map((col, columnIndex) => {
             const columnApps = visibleApps.filter((a) => a.milestone === col.key)

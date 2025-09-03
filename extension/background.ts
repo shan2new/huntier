@@ -2,7 +2,7 @@ import { NetworkLogStore } from './bg/services'
 // Avoid polluting global types; reference chrome via local alias
 const c: any = (globalThis as any).chrome
 export {}
-const API_BASE = 'https://api.huntier.pro/api'
+const API_BASE = 'https://prod.huntier.pro/api'
 const APP_ORIGIN = 'https://huntier.pro'
 
 type StoredAuth = { token?: string; lastAt?: number }
@@ -203,68 +203,7 @@ c.runtime.onMessage.addListener((message: any, _sender: any, sendResponse: any) 
         sendResponse({ ok: true })
         return
       }
-      if (message?.type === 'huntier:precheck-application') {
-        const token = await ensureToken(true)
-        const [active] = await c.tabs.query({ active: true, currentWindow: true })
-        const activeTabId = active?.id
-        const networkEntriesRaw = logs.getRaw(activeTabId)
-        const networkEntries = condenseNetworkEntries(networkEntriesRaw)
-        let platform_id: string | null = null
-        let platform_job_id: string | null = null
-        try {
-          if (networkEntries.length > 0) {
-            const netRes = await fetch(`${API_BASE}/v1/applications/ai/extract-from-network`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ entries: networkEntries })
-            })
-            const net = await netRes.json().catch(() => null)
-            console.log('[Huntier:bg] net', net)
-            if (netRes.ok) {
-              const ai: any = net?.ai || {}
-              const jobUrl: string | undefined = ai?.job_url || ai?.url || undefined
-              const platformUrl: string | undefined = ai?.platform_url || ai?.platform || undefined
-              let platformOrigin: string | undefined
-              if (platformUrl) { try { const u = new URL(String(platformUrl)); platformOrigin = `${u.protocol}//${u.hostname}` } catch {} }
-              else if (jobUrl) { try { const u = new URL(String(jobUrl)); platformOrigin = `${u.protocol}//${u.hostname}` } catch {} }
-              if (platformOrigin) {
-                const platRes = await fetch(`${API_BASE}/v1/platforms`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                  body: JSON.stringify({ name: platformOrigin.replace(/^https?:\/\//,'').replace(/^www\./,''), url: platformOrigin })
-                })
-                const platform = await platRes.json().catch(() => null)
-                platform_id = platform?.id || null
-              }
-              console.log('[Huntier:bg] platform_job_id', platform_job_id)
-              if (!platform_job_id && jobUrl) {
-                console.log('[Huntier:bg] jobUrl found', jobUrl)
-                try {
-                  const uu = new URL(String(jobUrl))
-                  const idParam = uu.searchParams.get('gh_jid') || uu.searchParams.get('lever-origin-jobId') || uu.searchParams.get('jobId') || uu.searchParams.get('jid')
-                  platform_job_id = `${uu.hostname}:${idParam || (uu.pathname || '/')}`.toLowerCase()
-                } catch {}
-              }
-            }
-          }
-        } catch {}
-        // Check existence if we have identifiers
-        let exists = false
-        try {
-          const params = new URLSearchParams()
-          if (platform_id) params.set('platform_id', platform_id)
-          if (platform_job_id) params.set('platform_job_id', platform_job_id)
-          if ([...params.keys()].length) {
-            const res = await fetch(`${API_BASE}/v1/applications?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } })
-            if (res.ok) {
-              const arr = await res.json().catch(() => [])
-              exists = Array.isArray(arr) && arr.length > 0
-            }
-          }
-        } catch {}
-        sendResponse({ ok: true, platform_id, platform_job_id, exists })
-        return
-      }
+      // Removed precheck-application handler per request
       if (message?.type === 'huntier:save-application-ai') {
         const token = await ensureToken(true)
         console.log('[Huntier:bg] AI save requested', { stage: message?.stage, extracted: !!message?.extracted })

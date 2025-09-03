@@ -280,14 +280,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/autofill")} tooltip="Autofill Assistant">
-                <Link to="/autofill/inputs" className="font-medium">
-                  <Sparkles className="mr-2" size={16} />
-                  <span>Autofill</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
               <div className="px-2 text-xs text-muted-foreground mt-1">Autofill</div>
               <SidebarMenuSub>
                 <SidebarMenuSubItem className="mt-2">

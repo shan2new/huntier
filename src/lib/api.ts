@@ -715,6 +715,28 @@ export async function deleteMyCompanyTargetWithRefresh(getToken: () => Promise<s
   return apiWithTokenRefresh(`/v1/companies/me/targets/${id}`, getToken, { method: 'DELETE' })
 }
 
+export async function updateMyCompanyTargetGroupWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  group_id: string | null
+) {
+  return apiWithTokenRefresh(`/v1/companies/me/targets/${id}/group`, getToken, {
+    method: 'PUT',
+    body: JSON.stringify({ group_id })
+  })
+}
+
+export async function reorderGroupTargetsWithRefresh(
+  getToken: () => Promise<string>,
+  group_id: string,
+  orderedIds: string[]
+) {
+  return apiWithTokenRefresh(`/v1/companies/me/groups/${group_id}/reorder`, getToken, {
+    method: 'PUT',
+    body: JSON.stringify({ orderedIds })
+  })
+}
+
 export async function listMyCompanyGroupsWithRefresh(getToken: () => Promise<string>) {
   return apiWithTokenRefresh<Array<CompanyGroup>>(`/v1/companies/me/groups`, getToken)
 }

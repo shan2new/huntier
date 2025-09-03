@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronRight, FolderTree, Plus, Search, Trash2 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
+import { ChevronRight, FolderTree, Plus, Search, Trash2, X } from 'lucide-react'
 import type { Company, CompanyGroup, UserCompanyTarget } from '@/lib/api'
-import { addMyCompanyTargetWithRefresh, createMyCompanyGroupWithRefresh, deleteMyCompanyGroupWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh, updateMyCompanyGroupWithRefresh } from '@/lib/api'
+import { addMyCompanyTargetWithRefresh, createMyCompanyGroupWithRefresh, deleteMyCompanyGroupWithRefresh, deleteMyCompanyTargetWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh, updateMyCompanyGroupWithRefresh, updateMyCompanyTargetGroupWithRefresh } from '@/lib/api'
 import { useAuthToken } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
+import { Link } from '@tanstack/react-router'
 
 export function CompanyGroupsPage() {
   const { getToken } = useAuthToken()
@@ -17,6 +17,8 @@ export function CompanyGroupsPage() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [pickerByGroup, setPickerByGroup] = useState<Record<string, Company | null>>({})
+  const [draggedTargetId, setDraggedTargetId] = useState<string | null>(null)
+  const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null)
 
   const refresh = async () => {
     setLoading(true)
@@ -75,6 +77,16 @@ export function CompanyGroupsPage() {
     return groups.filter(g => g.name.toLowerCase().includes(q))
   }, [groups, query])
 
+  async function onRemoveTarget(targetId: string) {
+    const prev = targets
+    setTargets((p) => p.filter(t => t.id !== targetId))
+    try {
+      await deleteMyCompanyTargetWithRefresh(getToken, targetId)
+    } catch {
+      setTargets(prev)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 w-full h-full">
       <div className="mx-auto max-w-6xl flex justify-center w-full px-6">
@@ -99,6 +111,7 @@ export function CompanyGroupsPage() {
         <div className="mx-auto max-w-6xl">
           {filteredGroups.map((g) => {
             const items = targetsByGroup.get(g.id) || []
+            const isDroppingHere = dragOverGroupId === g.id
             return (
               <div key={g.id} className="mb-2">
                 <div className="flex items-center justify-between px-2 md:px-0 mb-2">
@@ -123,7 +136,28 @@ export function CompanyGroupsPage() {
                     </Button>
                   </div>
                 </div>
-                <Card className="shadow-xs">
+                <Card className={`shadow-xs ${isDroppingHere ? 'ring-1 ring-primary/30 border-primary/50' : ''}`}
+                  onDragOver={(e) => { e.preventDefault(); if (draggedTargetId) setDragOverGroupId(g.id) }}
+                  onDragLeave={() => { if (dragOverGroupId === g.id) setDragOverGroupId(null) }}
+                  onDrop={async (e) => {
+                    e.preventDefault()
+                    const id = draggedTargetId
+                    setDragOverGroupId(null)
+                    setDraggedTargetId(null)
+                    if (!id) return
+                    // Optimistic move
+                    const prev = targets
+                    const target = prev.find(t => t.id === id)
+                    if (!target) return
+                    if (target.group_id === g.id) return
+                    setTargets(prev.map(t => t.id === id ? { ...t, group_id: g.id } as any : t))
+                    try {
+                      await updateMyCompanyTargetGroupWithRefresh(getToken, id, g.id)
+                    } catch {
+                      setTargets(prev)
+                    }
+                  }}
+                >
                   <CardContent className="p-0">
                     {/* Inline add row */}
                     <div className="px-4 py-3 md:px-6 md:py-4">
@@ -146,7 +180,7 @@ export function CompanyGroupsPage() {
                           }
                         }}
                         placeholder="Add a company..."
-                        triggerAsChild={<button className="w-full flex items-center gap-2 text-sm text-muted-foreground border border-dashed rounded-md px-3 py-2 hover:text-foreground"><Plus className="h-4 w-4" /> Add company</button>}
+                        triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/30 hover:border-border hover:text-foreground transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
                         className="w-[520px]"
                       />
                     </div>
@@ -154,15 +188,28 @@ export function CompanyGroupsPage() {
                       <AnimatePresence initial={false}>
                         {items.length > 0 ? (
                           items.map((t) => (
-                            <motion.div key={t.id} initial={{ opacity: 0, y: 10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.18 }} className="px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10 flex items-center gap-3">
-                            {t.company?.logo_url ? (
-                              <img src={t.company.logo_url} className="h-8 w-8 rounded-md border object-cover" />
-                            ) : (
-                              <div className="h-8 w-8 rounded-md bg-muted" />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">{t.company?.name || t.company_id}</div>
-                            </div>
+                            <motion.div
+                              key={t.id}
+                              initial={{ opacity: 0, y: 10, scale: 0.98, backgroundColor: 'hsl(var(--primary) / 0.10)' }}
+                              animate={{ opacity: 1, y: 0, scale: 1, backgroundColor: 'hsl(var(--background) / 0)' }}
+                              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                              transition={{ duration: 0.25 }}
+                              className="group px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10 flex items-center gap-3"
+                              draggable
+                              onDragStart={() => setDraggedTargetId(t.id)}
+                              onDragEnd={() => { setDraggedTargetId(null); setDragOverGroupId(null) }}
+                            >
+                              {t.company?.logo_url ? (
+                                <img src={t.company.logo_url} className="h-8 w-8 rounded-md border object-cover" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-md bg-muted" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium truncate">{t.company?.name || t.company_id}</div>
+                              </div>
+                              <button onClick={() => onRemoveTarget(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                                <X className="h-4 w-4" />
+                              </button>
                             </motion.div>
                           ))
                         ) : (

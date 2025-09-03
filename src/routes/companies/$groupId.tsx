@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { FolderTree, Plus } from 'lucide-react'
+import { FolderTree, Plus, X } from 'lucide-react'
 import type { Company, CompanyGroup, UserCompanyTarget } from '@/lib/api'
-import { addMyCompanyTargetWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh } from '@/lib/api'
+import { addMyCompanyTargetWithRefresh, deleteMyCompanyTargetWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh, reorderGroupTargetsWithRefresh } from '@/lib/api'
 import { useAuthToken } from '@/lib/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { CompanySearchCombobox } from '@/components/CompanySearchCombobox'
@@ -31,7 +31,18 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
   useEffect(() => { refresh() }, [])
 
   const group = useMemo(() => groups.find(g => g.id === groupId) || null, [groups, groupId])
-  const items = useMemo(() => targets.filter(t => t.group_id === groupId), [targets, groupId])
+  const items = useMemo(() => targets.filter(t => t.group_id === groupId).sort((a, b) => (a as any).sort_order - (b as any).sort_order), [targets, groupId])
+  const [dragId, setDragId] = useState<string | null>(null)
+
+  async function onRemoveTarget(targetId: string) {
+    const prev = targets
+    setTargets((p) => p.filter(t => t.id !== targetId))
+    try {
+      await deleteMyCompanyTargetWithRefresh(getToken, targetId)
+    } catch {
+      setTargets(prev)
+    }
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 w-full h-full px-6">
@@ -84,8 +95,41 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
                   {items.length === 0 ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-6 py-6 text-sm text-muted-foreground">No companies in this group yet</motion.div>
                   ) : (
-                    items.map((t) => (
-                      <motion.div key={t.id} initial={{ opacity: 0, y: 10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.98 }} transition={{ duration: 0.18 }} className="px-4 py-3 md:px-6 md:py-4 flex items-center gap-3">
+                    items.map((t, idx) => (
+                      <motion.div
+                        key={t.id}
+                        initial={{ opacity: 0, y: 10, scale: 0.98, backgroundColor: 'hsl(var(--primary) / 0.10)' }}
+                        animate={{ opacity: 1, y: 0, scale: 1, backgroundColor: 'hsl(var(--background) / 0)' }}
+                        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                        transition={{ duration: 0.25 }}
+                        className="group px-4 py-3 md:px-6 md:py-4 flex items-center gap-3"
+                        draggable
+                        onDragStart={() => setDragId(t.id)}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          if (!dragId || dragId === t.id) return
+                          const a = items.findIndex(i => i.id === dragId)
+                          const b = idx
+                          if (a === -1) return
+                          const newOrder = items.map(i => i.id)
+                          const [moved] = newOrder.splice(a, 1)
+                          newOrder.splice(b, 0, moved)
+                          // optimistic reorder locally by updating sort_order
+                          setTargets(prev => prev.map(x => {
+                            const pos = newOrder.indexOf(x.id)
+                            return pos >= 0 ? { ...(x as any), sort_order: pos } : x
+                          }))
+                        }}
+                        onDragEnd={async () => {
+                          if (!dragId) return
+                          const orderedIds = items.sort((a, b) => (a as any).sort_order - (b as any).sort_order).map(i => i.id)
+                          try {
+                            await reorderGroupTargetsWithRefresh(getToken, groupId, orderedIds)
+                          } finally {
+                            setDragId(null)
+                          }
+                        }}
+                      >
                         {t.company?.logo_url ? (
                           <img src={t.company.logo_url} className="h-8 w-8 rounded-md border object-cover" />
                         ) : (
@@ -94,6 +138,9 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
                         <div className="min-w-0 flex-1">
                           <div className="font-medium truncate">{t.company?.name || t.company_id}</div>
                         </div>
+                        <button onClick={() => onRemoveTarget(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                          <X className="h-4 w-4" />
+                        </button>
                       </motion.div>
                     ))
                   )}

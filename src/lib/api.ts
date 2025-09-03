@@ -495,9 +495,9 @@ export async function getMailStatusWithRefresh(
 // Update per-user additional mail scopes in Clerk (via backend)
 export async function updateMailScopesWithRefresh(
   getToken: () => Promise<string>,
-  body: { send_enabled?: boolean; additionalScopes?: string[] }
+  body: { send_enabled?: boolean; additionalScopes?: Array<string> }
 ) {
-  return apiWithTokenRefresh<{ additionalScopes: string[] }>(`/v1/mail/scopes`, getToken, {
+  return apiWithTokenRefresh<{ additionalScopes: Array<string> }>(`/v1/mail/scopes`, getToken, {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -556,6 +556,62 @@ export async function addApplicationContactWithRefresh<T>(
     method: 'POST', 
     body: JSON.stringify(body) 
   })
+}
+
+// Contacts (aggregated)
+export type AggregatedContact = {
+  contact: { id: string; name: string; title?: string | null }
+  channels: Array<{ medium: string; channel_value: string }>
+  roles: Array<string>
+  companies: Array<{ id: string; name: string; logo_url?: string | null }>
+  platforms: Array<{ id: string; name: string; logo_url?: string | null }>
+  applications_count: number
+}
+
+export async function listContactsWithRefresh<T = Array<AggregatedContact>>(
+  getToken: () => Promise<string>,
+): Promise<T> {
+  return apiWithTokenRefresh(`/v1/contacts`, getToken)
+}
+
+export async function getContactWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+): Promise<{ contact: { id: string; name: string; title?: string | null; notes?: string | null }; channels: Array<{ id: string; medium: string; channel_value: string }> }> {
+  return apiWithTokenRefresh(`/v1/contacts/${id}`, getToken)
+}
+
+export async function updateContactWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  body: { name?: string; title?: string | null; notes?: string | null }
+) {
+  return apiWithTokenRefresh(`/v1/contacts/${id}`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function addContactChannelWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  body: { medium: 'email' | 'linkedin' | 'phone' | 'whatsapp' | 'other'; channel_value: string }
+) {
+  return apiWithTokenRefresh(`/v1/contacts/${id}/channels`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function updateContactChannelWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  channelId: string,
+  body: { medium?: 'email' | 'linkedin' | 'phone' | 'whatsapp' | 'other'; channel_value?: string }
+) {
+  return apiWithTokenRefresh(`/v1/contacts/${id}/channels/${channelId}`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function deleteContactChannelWithRefresh(
+  getToken: () => Promise<string>,
+  id: string,
+  channelId: string
+) {
+  return apiWithTokenRefresh(`/v1/contacts/${id}/channels/${channelId}/delete`, getToken, { method: 'POST' })
 }
 
 // Platforms
@@ -729,7 +785,7 @@ export async function updateMyCompanyTargetGroupWithRefresh(
 export async function reorderGroupTargetsWithRefresh(
   getToken: () => Promise<string>,
   group_id: string,
-  orderedIds: string[]
+  orderedIds: Array<string>
 ) {
   return apiWithTokenRefresh(`/v1/companies/me/groups/${group_id}/reorder`, getToken, {
     method: 'PUT',

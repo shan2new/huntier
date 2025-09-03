@@ -14,6 +14,7 @@ import { BoardPage } from './routes/BoardPage'
 import { ApplicationDetailPage } from './routes/ApplicationDetailPage'
 import { PlatformsPage } from './routes/PlatformsPage'
 import { ReferrersPage } from './routes/ReferrersPage'
+import { ContactsPage } from './routes/ContactsPage'
 import { ProfilePage } from './routes/ProfilePage'
 import { ResumeList } from './routes/resumes/index'
 import { ResumeBuilder } from './routes/resumes/$resumeId'
@@ -63,6 +64,7 @@ const appDetailRoute = createRoute({ getParentRoute: () => appLayout, path: '/ap
 const boardRoute = createRoute({ getParentRoute: () => appLayout, path: '/board', component: BoardPage })
 const platformsRoute = createRoute({ getParentRoute: () => appLayout, path: '/platforms', component: PlatformsPage })
 const referrersRoute = createRoute({ getParentRoute: () => appLayout, path: '/referrers', component: ReferrersPage })
+const contactsRoute = createRoute({ getParentRoute: () => appLayout, path: '/contacts', component: ContactsPage })
 const profileRoute = createRoute({ getParentRoute: () => appLayout, path: '/profile', component: ProfilePage })
 const companiesRoute = createRoute({ getParentRoute: () => appLayout, path: '/companies', component: CompaniesPage })
 const companiesGroupsRoute = createRoute({ getParentRoute: () => appLayout, path: '/companies/groups', component: CompanyGroupsPage })
@@ -95,6 +97,7 @@ const routeTree = rootRoute.addChildren([
 		appDetailRoute,
 		boardRoute,
 		platformsRoute,
+		contactsRoute,
 		referrersRoute,
 		profileRoute,
 		companiesRoute,

@@ -54,36 +54,35 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
             </div>
             <h1 className="text-base font-semibold">{group?.name || 'Group'}</h1>
           </div>
-          <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border">{items.length}</span>
+          <div className="flex items-center gap-2">
+            <CompanySearchCombobox
+              value={picker}
+              onChange={async (c) => {
+                setPicker(c)
+                if (c) {
+                  const optimisticId = `temp-${Date.now()}-${c.id}`
+                  const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: groupId, company: c, _key: optimisticId } as any
+                  setTargets((prev) => [...prev, optimistic])
+                  try {
+                    const created = await addMyCompanyTargetWithRefresh(getToken, { company_id: c.id, group_id: groupId }) as any
+                    setTargets((prev) => prev.map(t => (t as any)._key === optimisticId ? { ...t, id: created.id, user_id: created.user_id } as any : t))
+                  } catch {
+                    setTargets((prev) => prev.filter(t => t.id !== optimisticId))
+                  } finally {
+                    setPicker(null)
+                  }
+                }
+              }}
+              placeholder="Add company..."
+              triggerAsChild={<button className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border hover:bg-muted"><Plus className="h-3 w-3" /> Add</button>}
+              className="w-[520px]"
+            />
+            <span className="inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground border">{items.length}</span>
+          </div>
         </div>
 
         <Card className="shadow-xs">
           <CardContent className="p-0">
-            {/* Add company row */}
-            <div className="px-4 py-2 md:px-6 md:py-3">
-              <CompanySearchCombobox
-                value={picker}
-                onChange={async (c) => {
-                  setPicker(c)
-                  if (c) {
-                    const optimisticId = `temp-${Date.now()}-${c.id}`
-                    const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: groupId, company: c, _key: optimisticId } as any
-                    setTargets((prev) => [...prev, optimistic])
-                    try {
-                      const created = await addMyCompanyTargetWithRefresh(getToken, { company_id: c.id, group_id: groupId }) as any
-                      setTargets((prev) => prev.map(t => (t as any)._key === optimisticId ? { ...t, id: created.id, user_id: created.user_id } as any : t))
-                    } catch {
-                      setTargets((prev) => prev.filter(t => t.id !== optimisticId))
-                    } finally {
-                      setPicker(null)
-                    }
-                  }
-                }}
-                placeholder="Add a company..."
-                triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md bg-transparent px-2 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
-                className="w-[520px]"
-              />
-            </div>
 
             <div className="divide-y divide-border">
               {loading ? (

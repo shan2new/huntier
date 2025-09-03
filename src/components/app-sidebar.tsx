@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Star, Target, Trophy, User } from "lucide-react"
+import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useAuthToken } from "@/lib/auth"
@@ -215,6 +215,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuSubItem>
                 ))}
               </SidebarMenuSub>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* Network */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Network</SidebarGroupLabel>
+          <SidebarMenu className="gap-1">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/contacts")} tooltip="Contacts">
+                <Link to="/contacts" className="font-medium">
+                  <Users className="mr-2" size={16} />
+                  <span>Contacts</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={appsActive("/referrers")} tooltip="Referrers">
+                <Link to="/referrers" className="font-medium">
+                  <Network className="mr-2" size={16} />
+                  <span>Referrers</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>

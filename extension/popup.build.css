@@ -537,6 +537,9 @@
   .col-span-3 {
     grid-column: span 3 / span 3;
   }
+  .col-span-full {
+    grid-column: 1 / -1;
+  }
   .col-start-2 {
     grid-column-start: 2;
   }
@@ -846,6 +849,9 @@
   }
   .h-\[112px\] {
     height: 112px;
+  }
+  .h-\[180px\] {
+    height: 180px;
   }
   .h-\[300px\] {
     height: 300px;
@@ -1235,6 +1241,9 @@
   }
   .rotate-45 {
     rotate: 45deg;
+  }
+  .rotate-90 {
+    rotate: 90deg;
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
@@ -4183,6 +4192,11 @@
       max-width: var(--container-lg);
     }
   }
+  .sm\:max-w-md {
+    @media (width >= 40rem) {
+      max-width: var(--container-md);
+    }
+  }
   .sm\:max-w-sm {
     @media (width >= 40rem) {
       max-width: var(--container-sm);
@@ -4358,11 +4372,6 @@
   .md\:px-6 {
     @media (width >= 48rem) {
       padding-inline: calc(var(--spacing) * 6);
-    }
-  }
-  .md\:py-3 {
-    @media (width >= 48rem) {
-      padding-block: calc(var(--spacing) * 3);
     }
   }
   .md\:py-4 {

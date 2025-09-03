@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Building2, Filter, Globe, Link as LinkIcon, Mail, MessageSquare, MoreHorizontal, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-react'
-import { listContactsWithRefresh, type AggregatedContact, getContactWithRefresh, updateContactWithRefresh, addContactChannelWithRefresh, updateContactChannelWithRefresh, deleteContactChannelWithRefresh } from '@/lib/api'
+import { listContactsWithRefresh, type AggregatedContact, getContactWithRefresh, updateContactWithRefresh, addContactChannelWithRefresh, updateContactChannelWithRefresh, deleteContactChannelWithRefresh, createContactWithRefresh } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Label } from '@/components/ui/label'
@@ -39,6 +39,11 @@ export function ContactsPage() {
   const [editNotes, setEditNotes] = useState<string>('')
   const [editChannels, setEditChannels] = useState<Array<EditableChannel>>([])
   const [saving, setSaving] = useState(false)
+  // Create drawer
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newTitle, setNewTitle] = useState('')
+  const [newChannels, setNewChannels] = useState<Array<EditableChannel>>([])
 
   useEffect(() => {
     ;(async () => {
@@ -109,11 +114,10 @@ export function ContactsPage() {
     try {
       await updateContactWithRefresh(getTokenNonNull, editingId, { name: editName.trim(), title: editTitle.trim() || null, notes: editNotes.trim() || null })
 
-      // Sync channels: create for those without id, update if changed, delete removed handled optimistically below by comparing with server? We'll perform simple approach:
+      // Sync channels
       const server = await getContactWithRefresh(getTokenNonNull, editingId)
       const byId = new Map(server.channels.map(c => [c.id, c]))
 
-      // Create/update
       for (const ch of editChannels) {
         if (!ch.id) {
           if (!ch.channel_value.trim()) continue
@@ -126,7 +130,6 @@ export function ContactsPage() {
           }
         }
       }
-      // Delete removed
       const currentIds = new Set(editChannels.filter(c => !!c.id).map(c => c.id as string))
       for (const existing of server.channels) {
         if (!currentIds.has(existing.id)) {
@@ -134,7 +137,6 @@ export function ContactsPage() {
         }
       }
 
-      // Refresh list view
       const refreshed = await listContactsWithRefresh(getTokenNonNull)
       setRows(refreshed)
       setDrawerOpen(false)
@@ -171,13 +173,13 @@ export function ContactsPage() {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full w-full">
       {/* Header & Filters */}
       <div className="px-6 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="mx-auto w-full max-w-6xl flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Contacts</h1>
             <p className="text-sm text-muted-foreground">People you interact with across applications</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+        <div className="mx-auto w-full max-w-6xl flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search contacts..." className="pl-9" />
@@ -200,6 +202,9 @@ export function ContactsPage() {
                 <option value="whatsapp">WhatsApp</option>
                 <option value="linkedin">LinkedIn</option>
               </select>
+              <Button size="sm" onClick={() => { setCreateOpen(true); setNewName(''); setNewTitle(''); setNewChannels([]) }}>
+                <Plus className="h-3 w-3" /> Add Contact
+              </Button>
             </div>
           </div>
         </div>
@@ -288,6 +293,75 @@ export function ContactsPage() {
           )}
         </div>
       </ScrollArea>
+
+      {/* Create Drawer */}
+      <Drawer open={createOpen} onOpenChange={setCreateOpen}>
+        <DrawerContent>
+          <div className="flex flex-col max-h-[80vh]">
+            <DrawerHeader className="px-6 py-4 border-b border-border">
+              <DrawerTitle className="text-lg font-semibold tracking-tight">Add Contact</DrawerTitle>
+            </DrawerHeader>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="new_name">Name</Label>
+                    <Input id="new_name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="John Doe" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new_title">Title</Label>
+                    <Input id="new_title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Senior Engineer" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Channels</Label>
+                      <Button variant="outline" size="sm" onClick={() => setNewChannels((prev) => [...prev, { _tempId: `tmp-${Date.now()}`, medium: 'email', channel_value: '' }])}><Plus className="h-3 w-3" /> Add</Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {newChannels.map((c, idx) => (
+                        <div key={(c.id || c._tempId) as string} className="flex items-center gap-2 rounded-md border px-2 py-1">
+                          <select value={c.medium} onChange={(e) => setNewChannels(prev => prev.map((x, i) => i === idx ? { ...x, medium: e.target.value as any } : x))} className="bg-background border rounded-md px-1 py-0.5 text-xs">
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="other">Other</option>
+                          </select>
+                          <Input value={c.channel_value} onChange={(e) => setNewChannels(prev => prev.map((x, i) => i === idx ? { ...x, channel_value: e.target.value } : x))} placeholder="value" className="h-7" />
+                          <Button variant="ghost" size="icon" onClick={() => setNewChannels(prev => prev.filter((_, i) => i !== idx))}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
+            <DrawerFooter className="border-t border-border bg-background/30">
+              <div className="flex items-center justify-between">
+                <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+                <Button onClick={async () => {
+                  const getTokenNonNull = async () => { const t = await getToken(); if (!t) throw new Error('Missing auth token'); return t }
+                  try {
+                    await createContactWithRefresh(getTokenNonNull, {
+                      name: newName.trim(),
+                      title: newTitle.trim() || null,
+                      channels: newChannels.filter(c => c.channel_value.trim()).map(c => ({ medium: c.medium, channel_value: c.channel_value.trim() })),
+                    })
+                    const refreshed = await listContactsWithRefresh(getTokenNonNull)
+                    setRows(refreshed)
+                    setCreateOpen(false)
+                    toast.success('Contact added')
+                  } catch {
+                    toast.error('Failed to add contact')
+                  }
+                }} disabled={!newName.trim()}>Save</Button>
+              </div>
+            </DrawerFooter>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Edit Drawer */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>

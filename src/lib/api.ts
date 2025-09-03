@@ -574,6 +574,20 @@ export async function listContactsWithRefresh<T = Array<AggregatedContact>>(
   return apiWithTokenRefresh(`/v1/contacts`, getToken)
 }
 
+export async function createContactWithRefresh(
+  getToken: () => Promise<string>,
+  body: {
+    name: string
+    title?: string | null
+    notes?: string | null
+    channels?: Array<{ medium: 'email' | 'linkedin' | 'phone' | 'whatsapp' | 'other'; channel_value: string }>
+    application_id?: string | null
+    role?: 'recruiter' | 'referrer' | 'hiring_manager' | 'interviewer' | 'other' | null
+  }
+) {
+  return apiWithTokenRefresh(`/v1/contacts`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
 export async function getContactWithRefresh(
   getToken: () => Promise<string>,
   id: string,

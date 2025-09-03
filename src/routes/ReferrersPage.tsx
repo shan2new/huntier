@@ -74,7 +74,8 @@ export function ReferrersPage() {
   return (
     <MotionEffect fade slide={{ direction: 'up', offset: 20 }} className="space-y-8">
       {/* Header */}
-      <div className="space-y-2">
+      <div className="space-y-2 px-6">
+        <div className="mx-auto w-full max-w-6xl">
         <MotionEffect fade slide={{ direction: 'left', offset: 20 }}>
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Referrers Network
@@ -85,10 +86,12 @@ export function ReferrersPage() {
             Manage your professional network and referral contacts
           </p>
         </MotionEffect>
+        </div>
       </div>
 
       {/* Overview Stats */}
-      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.1} className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.1} className="px-6">
+        <div className="mx-auto w-full max-w-6xl grid grid-cols-1 gap-6 md:grid-cols-3">
         {[
           { 
             label: 'Total Referrers', 
@@ -134,11 +137,12 @@ export function ReferrersPage() {
             </Card>
           </MotionEffect>
         ))}
+        </div>
       </MotionEffect>
 
       {/* Referrers List */}
-      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.2}>
-        <Card className="border border-border">
+      <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.2} className="px-6">
+        <Card className="border border-border mx-auto w-full max-w-6xl">
           <CardHeader className="border-b border-border">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">

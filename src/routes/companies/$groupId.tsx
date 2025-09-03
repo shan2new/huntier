@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { FolderTree, Plus, X } from 'lucide-react'
+import { FolderTree, GripVertical, Plus, X } from 'lucide-react'
 import type { Company, CompanyGroup, UserCompanyTarget } from '@/lib/api'
 import { addMyCompanyTargetWithRefresh, deleteMyCompanyTargetWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh, reorderGroupTargetsWithRefresh } from '@/lib/api'
 import { useAuthToken } from '@/lib/auth'
@@ -60,18 +60,18 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
         <Card className="shadow-xs">
           <CardContent className="p-0">
             {/* Add company row */}
-            <div className="px-4 py-3 md:px-6 md:py-4">
+            <div className="px-4 py-2 md:px-6 md:py-3">
               <CompanySearchCombobox
                 value={picker}
                 onChange={async (c) => {
                   setPicker(c)
                   if (c) {
                     const optimisticId = `temp-${Date.now()}-${c.id}`
-                    const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: groupId, company: c } as any
+                    const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: groupId, company: c, _key: optimisticId } as any
                     setTargets((prev) => [...prev, optimistic])
                     try {
                       const created = await addMyCompanyTargetWithRefresh(getToken, { company_id: c.id, group_id: groupId }) as any
-                      setTargets((prev) => prev.map(t => t.id === optimisticId ? { ...t, id: created.id, user_id: created.user_id } : t))
+                      setTargets((prev) => prev.map(t => (t as any)._key === optimisticId ? { ...t, id: created.id, user_id: created.user_id } as any : t))
                     } catch {
                       setTargets((prev) => prev.filter(t => t.id !== optimisticId))
                     } finally {
@@ -80,7 +80,7 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
                   }
                 }}
                 placeholder="Add a company..."
-                triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/30 hover:border-border hover:text-foreground transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
+                triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md bg-transparent px-2 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
                 className="w-[520px]"
               />
             </div>
@@ -97,14 +97,12 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
                   ) : (
                     items.map((t, idx) => (
                       <motion.div
-                        key={t.id}
+                        key={(t as any)._key || t.id}
                         initial={{ opacity: 0, y: 10, scale: 0.98, backgroundColor: 'hsl(var(--primary) / 0.10)' }}
                         animate={{ opacity: 1, y: 0, scale: 1, backgroundColor: 'hsl(var(--background) / 0)' }}
                         exit={{ opacity: 0, y: 8, scale: 0.98 }}
                         transition={{ duration: 0.25 }}
                         className="group px-4 py-3 md:px-6 md:py-4 flex items-center gap-3"
-                        draggable
-                        onDragStart={() => setDragId(t.id)}
                         onDragOver={(e) => {
                           e.preventDefault()
                           if (!dragId || dragId === t.id) return
@@ -130,6 +128,23 @@ export function CompanyGroupDetailPage({ groupId }: { groupId: string }) {
                           }
                         }}
                       >
+                        <button
+                          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={() => setDragId(t.id)}
+                          onDragEnd={async () => {
+                            if (!dragId) return
+                            const orderedIds = items.sort((a, b) => (a as any).sort_order - (b as any).sort_order).map(i => i.id)
+                            try {
+                              await reorderGroupTargetsWithRefresh(getToken, groupId, orderedIds)
+                            } finally {
+                              setDragId(null)
+                            }
+                          }}
+                          aria-label="Drag to reorder"
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </button>
                         {t.company?.logo_url ? (
                           <img src={t.company.logo_url} className="h-8 w-8 rounded-md border object-cover" />
                         ) : (

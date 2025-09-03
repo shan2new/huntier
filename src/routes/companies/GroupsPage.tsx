@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronRight, FolderTree, Plus, Search, Trash2, X } from 'lucide-react'
+import { ChevronRight, FolderTree, GripVertical, Plus, Search, Trash2, X } from 'lucide-react'
 import type { Company, CompanyGroup, UserCompanyTarget } from '@/lib/api'
 import { addMyCompanyTargetWithRefresh, createMyCompanyGroupWithRefresh, deleteMyCompanyGroupWithRefresh, deleteMyCompanyTargetWithRefresh, listMyCompanyGroupsWithRefresh, listMyCompanyTargetsWithRefresh, updateMyCompanyGroupWithRefresh, updateMyCompanyTargetGroupWithRefresh } from '@/lib/api'
 import { useAuthToken } from '@/lib/auth'
@@ -47,8 +47,16 @@ export function CompanyGroupsPage() {
     while (existing.has(name.toLowerCase())) {
       name = `${base} ${counter++}`
     }
-    await createMyCompanyGroupWithRefresh(getToken, { name, sort_order: groups.length })
-    await refresh()
+    // Optimistic insert
+    const tempId = `temp-${Date.now()}`
+    const optimistic: CompanyGroup = { id: tempId, user_id: 'optimistic', name, sort_order: groups.length } as any
+    setGroups((prev) => [...prev, optimistic])
+    try {
+      const created = await createMyCompanyGroupWithRefresh(getToken, { name, sort_order: groups.length }) as any
+      setGroups((prev) => prev.map((g) => (g.id === tempId ? created : g)))
+    } catch {
+      setGroups((prev) => prev.filter((g) => g.id !== tempId))
+    }
   }
 
   async function onRename(id: string, name: string) {
@@ -109,11 +117,12 @@ export function CompanyGroupsPage() {
         </div>
       ) : (
         <div className="mx-auto max-w-6xl">
+          <AnimatePresence initial={false}>
           {filteredGroups.map((g) => {
             const items = targetsByGroup.get(g.id) || []
             const isDroppingHere = dragOverGroupId === g.id
             return (
-              <div key={g.id} className="mb-2">
+              <motion.div key={g.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.2 }} className="mb-2">
                 <div className="flex items-center justify-between px-2 md:px-0 mb-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-md bg-primary/10">
@@ -160,18 +169,18 @@ export function CompanyGroupsPage() {
                 >
                   <CardContent className="p-0">
                     {/* Inline add row */}
-                    <div className="px-4 py-3 md:px-6 md:py-4">
+                    <div className="px-4 py-2 md:px-6 md:py-3">
                       <CompanySearchCombobox
                         value={pickerByGroup[g.id] || null}
                         onChange={async (c) => {
                           setPickerByGroup((prev) => ({ ...prev, [g.id]: c }))
                           if (c) {
                             const optimisticId = `temp-${Date.now()}-${c.id}`
-                            const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: g.id, company: c } as any
+                            const optimistic = { id: optimisticId, user_id: 'optimistic', company_id: c.id, group_id: g.id, company: c, _key: optimisticId } as any
                             setTargets((prev) => [...prev, optimistic])
                             try {
                               const created = await addMyCompanyTargetWithRefresh(getToken, { company_id: c.id, group_id: g.id }) as any
-                              setTargets((prev) => prev.map(t => t.id === optimisticId ? { ...t, id: created.id, user_id: created.user_id } : t))
+                              setTargets((prev) => prev.map(t => (t as any)._key === optimisticId ? { ...t, id: created.id, user_id: created.user_id } as any : t))
                             } catch {
                               setTargets((prev) => prev.filter(t => t.id !== optimisticId))
                             } finally {
@@ -180,7 +189,7 @@ export function CompanyGroupsPage() {
                           }
                         }}
                         placeholder="Add a company..."
-                        triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md border border-dashed border-border/60 bg-transparent px-3 py-2 text-sm text-muted-foreground hover:bg-muted/30 hover:border-border hover:text-foreground transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
+                        triggerAsChild={<button className="w-full flex items-center gap-2 rounded-md bg-transparent px-2 py-2 text-sm text-muted-foreground hover:bg-muted/40 transition-colors"><Plus className="h-4 w-4" /> Add company</button>}
                         className="w-[520px]"
                       />
                     </div>
@@ -189,7 +198,7 @@ export function CompanyGroupsPage() {
                         {items.length > 0 ? (
                           items.map((t) => (
                             <motion.div
-                              key={t.id}
+                              key={(t as any)._key || t.id}
                               initial={{ opacity: 0, y: 10, scale: 0.98, backgroundColor: 'hsl(var(--primary) / 0.10)' }}
                               animate={{ opacity: 1, y: 0, scale: 1, backgroundColor: 'hsl(var(--background) / 0)' }}
                               exit={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -199,6 +208,7 @@ export function CompanyGroupsPage() {
                               onDragStart={() => setDraggedTargetId(t.id)}
                               onDragEnd={() => { setDraggedTargetId(null); setDragOverGroupId(null) }}
                             >
+                              <span className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"><GripVertical className="h-4 w-4" /></span>
                               {t.company?.logo_url ? (
                                 <img src={t.company.logo_url} className="h-8 w-8 rounded-md border object-cover" />
                               ) : (
@@ -219,9 +229,10 @@ export function CompanyGroupsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </motion.div>
             )
           })}
+          </AnimatePresence>
         </div>
       )}
 

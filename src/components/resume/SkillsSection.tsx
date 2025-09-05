@@ -100,7 +100,7 @@ export function SkillsSection({ tags = [], onChange }: SkillsSectionProps) {
               }
             }}
             placeholder="Add skills"
-            className={cn('bg-background')}
+            className={cn('bg-gray-200 text-gray-800 border-gray-300')}
             aria-label="Add skills"
           />
         </div>

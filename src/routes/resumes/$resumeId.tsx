@@ -5,7 +5,7 @@ import type { ResumeThemeId } from '@/lib/themes'
 import { toast } from '@/components/ui/toaster'
 
 import { useAuthToken } from '@/lib/auth'
-import { aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeBlobWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importResumeFromPdfWithRefresh, updateResumeWithRefresh } from '@/lib/api'
+import { aiEnhanceTextWithRefresh, aiGenerateResumeFromProfileWithRefresh, aiSuggestBulletsWithRefresh, createResumeWithRefresh, exportResumeBlobWithRefresh, getProfileWithRefresh, getResumeWithRefresh, importResumeFromPdfWithRefresh, updateResumeWithRefresh } from '@/lib/api'
 import { ResumeToolbar } from '@/components/resume/ResumeToolbar'
 import { PersonalInfoSection } from '@/components/resume/PersonalInfoSection'
 import { SummarySection } from '@/components/resume/SummarySection'
@@ -372,6 +372,22 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     }))
   }
 
+  const enhanceSummary = async (current: string) => {
+    try {
+      if (!resumeData.id) return current
+      const result: any = await aiEnhanceTextWithRefresh(resumeData.id, getToken, {
+        text: current,
+        mode: 'rewrite',
+        contentType: 'summary',
+        tone: 'professional',
+      })
+      const next = (typeof result?.text === 'string' ? result.text : current)
+      return next
+    } catch {
+      return current
+    }
+  }
+
   const setExperienceField = (index: number, field: 'company' | 'role' | 'startDate' | 'endDate', value: string) => {
     setResumeData(prev => ({
       ...prev,
@@ -392,6 +408,22 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
         : s
       ),
     }))
+  }
+
+  const enhanceExperienceBullet = async (_index: number, _bulletIndex: number, current: string) => {
+    try {
+      if (!resumeData.id) return current
+      const result: any = await aiEnhanceTextWithRefresh(resumeData.id, getToken, {
+        text: current,
+        mode: 'rewrite',
+        contentType: 'bullet',
+        tone: 'professional',
+      })
+      const next = (typeof result?.text === 'string' ? result.text : current)
+      return next
+    } catch {
+      return current
+    }
   }
 
   const addExperienceItem = () => {
@@ -723,7 +755,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                 transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
                                 data-section="summary"
                               >
-                                <SummarySection text={section.content?.text || ''} onChange={setSummaryText} />
+                                <SummarySection text={section.content?.text || ''} onChange={setSummaryText} onEnhance={enhanceSummary} />
                               </motion.div>
                             )
                           case 'experience': {
@@ -745,6 +777,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                                   onAddBullet={addExperienceBullet}
                                   onRemoveBullet={removeExperienceBullet}
                                   onChangeBullet={setExperienceBullet}
+                                  onEnhanceBullet={enhanceExperienceBullet}
                                   onSuggestBullets={suggestBullets}
                                 />
                               </motion.div>

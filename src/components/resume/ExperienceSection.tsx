@@ -1,4 +1,5 @@
-import { Briefcase, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Briefcase, Loader2, Plus, Sparkles, Trash2, Wand2 } from 'lucide-react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { InlineEditable } from '@/components/resume/InlineEditable'
 import { SectionHeader } from '@/components/resume/SectionHeader'
@@ -21,6 +22,7 @@ type ExperienceSectionProps = {
   onRemoveBullet: (index: number, bulletIndex: number) => void
   onChangeBullet: (index: number, bulletIndex: number, text: string) => void
   onSuggestBullets?: (index: number) => void
+  onEnhanceBullet?: (index: number, bulletIndex: number, text: string) => Promise<string>
 }
 
 export function ExperienceSection({
@@ -32,7 +34,29 @@ export function ExperienceSection({
   onRemoveBullet,
   onChangeBullet,
   onSuggestBullets,
+  onEnhanceBullet,
 }: ExperienceSectionProps) {
+  const [improvingKey, setImprovingKey] = useState<string | null>(null)
+  const [highlightKey, setHighlightKey] = useState<string | null>(null)
+
+  const improve = async (index: number, bulletIndex: number, current: string) => {
+    if (!onEnhanceBullet) return
+    const key = `${index}:${bulletIndex}`
+    setImprovingKey(key)
+    try {
+      const next = await onEnhanceBullet(index, bulletIndex, current)
+      if (typeof next === 'string' && next.trim() && next.trim() !== current.trim()) {
+        onChangeBullet(index, bulletIndex, next.trim())
+        setHighlightKey(key)
+        setTimeout(() => setHighlightKey((prev) => (prev === key ? null : prev)), 1200)
+      }
+    } catch {
+      // swallow
+    } finally {
+      setImprovingKey((prev: string | null) => (prev === key ? null : prev))
+    }
+  }
+
   return (
     <div>
       <SectionHeader
@@ -149,21 +173,37 @@ export function ExperienceSection({
                       value={bullet} 
                       onChange={(v) => onChangeBullet(idx, bulletIdx, v)} 
                       placeholder="• Led cross-functional team to deliver key feature, improving user engagement by 25%" 
-                      className="text-sm leading-relaxed text-gray-700 hover:bg-gray-100 px-2 py-1 -mx-2 -my-1 rounded transition-colors"
+                      className={`text-sm leading-relaxed text-gray-700 hover:bg-gray-100 px-2 py-1 -mx-2 -my-1 rounded transition-colors ${highlightKey === `${idx}:${bulletIdx}` ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''}`}
                       multiline 
                     />
                   </div>
-                  {(exp.bullets || []).length > 1 && (
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="opacity-0 group-hover/bullet:opacity-100 transition-all duration-200 h-6 w-6 p-0 hover:bg-red-100 text-red-600" 
-                      onClick={() => onRemoveBullet(idx, bulletIdx)} 
-                      aria-label="Remove bullet"
+                  <div className="opacity-0 group-hover/bullet:opacity-100 transition-all duration-200 flex flex-col items-center self-start ml-2 gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0 hover:bg-primary/10 text-primary"
+                      onClick={() => improve(idx, bulletIdx, bullet)}
+                      aria-label="Improve bullet with AI"
+                      disabled={!onEnhanceBullet || improvingKey === `${idx}:${bulletIdx}`}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      {improvingKey === `${idx}:${bulletIdx}` ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3 w-3" />
+                      )}
                     </Button>
-                  )}
+                    {(exp.bullets || []).length > 1 && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 w-6 p-0 hover:bg-red-100 text-red-600" 
+                        onClick={() => onRemoveBullet(idx, bulletIdx)} 
+                        aria-label="Remove bullet"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

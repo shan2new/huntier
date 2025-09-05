@@ -588,7 +588,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
     <div className="h-full overflow-hidden">
       {/* Document Viewer Background */}
       <div className="document-viewer h-full">
-        {importing && (
+        {(importing || exporting) && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-lg p-6 w-[360px] text-center">
               <div className="flex items-center justify-center mb-4">
@@ -597,8 +597,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
               </div>
-              <h3 className="text-base font-medium text-gray-900 mb-1">Analyzing your resume</h3>
-              <p className="text-sm text-gray-500">Extracting details with AI. This may take a few seconds…</p>
+              <h3 className="text-base font-medium text-gray-900 mb-1">{exporting ? 'Preparing your PDF' : 'Analyzing your resume'}</h3>
+              <p className="text-sm text-gray-500">{exporting ? 'Generating a print-perfect PDF. This may take a few seconds…' : 'Extracting details with AI. This may take a few seconds…'}</p>
             </div>
           </div>
         )}

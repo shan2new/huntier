@@ -98,14 +98,26 @@ export function ResumeToolbar({
             <div className="grid grid-cols-2 gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="text-xs h-8 w-full">
-                    <DownloadIcon className="w-3 h-3 mr-1" />
-                    Export
+                  <Button size="sm" variant="outline" className="text-xs h-8 w-full" disabled={!!exporting} aria-busy={!!exporting}>
+                    {exporting ? (
+                      <>
+                        <svg className="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Exporting…
+                      </>
+                    ) : (
+                      <>
+                        <DownloadIcon className="w-3 h-3 mr-1" />
+                        Export
+                      </>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-32">
-                  <DropdownMenuItem onClick={onExportPdf}>PDF</DropdownMenuItem>
-                  <DropdownMenuItem onClick={onExportDocx}>Word</DropdownMenuItem>
+                  <DropdownMenuItem onClick={onExportPdf} disabled={!!exporting}>PDF</DropdownMenuItem>
+                  <DropdownMenuItem onClick={onExportDocx} disabled={!!exporting}>Word</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               

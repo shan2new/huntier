@@ -311,7 +311,9 @@
   }
   @page {
     size: A4;
-    margin: 0;
+    margin-top: 15mm;
+    margin-bottom: 15mm;
+    /* Add comfortable top/bottom margins, slightly narrower sides */
   }
   .document-viewer {
     background-color: white !important;
@@ -319,10 +321,17 @@
     padding: 0 !important;
   }
   .resume-document {
-    width: 210mm !important;
+    /* Use the printable content width inside @page margins */
+    width: 210mm !important; 
+    max-width: 210mm !important;
     min-height: auto !important;
     margin: 0 auto !important;
     box-shadow: none !important;
+  }
+  /* Remove extra internal padding so first page starts at the top margin */
+  .resume-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
   /* Allow automatic page breaks inside all content */
   .resume-document, .resume-document * {

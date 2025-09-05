@@ -304,7 +304,32 @@
 
 /* Print Styles */
 @media print {
-  html, body { background: #ffffff !important; }
+  html, body { 
+    background: #ffffff !important; 
+    width: 210mm;
+    height: auto !important;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  .document-viewer {
+    background-color: white !important;
+    min-height: auto !important;
+    padding: 0 !important;
+  }
+  .resume-document {
+    width: 210mm !important;
+    min-height: auto !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+  }
+  /* Allow automatic page breaks inside all content */
+  .resume-document, .resume-document * {
+    overflow: visible !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+  }
   .resume-page {
     box-shadow: none;
     border: none;
@@ -328,9 +353,7 @@
     background-color: transparent;
   }
   
-  .document-viewer {
-    background-color: white;
-  }
+  .document-viewer { background-color: white; }
 }
 
 /* Animation Classes */

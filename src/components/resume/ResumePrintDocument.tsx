@@ -6,6 +6,8 @@ type ResumePrintDocumentProps = {
   }
 }
 
+import { getResumeTheme } from '@/lib/themes'
+
 export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
   const pi = data.personal_info || {}
   const sections = Array.isArray(data.sections) ? [...data.sections].sort((a, b) => (a?.order ?? 0) - (b?.order ?? 0)) : []
@@ -18,10 +20,13 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
   const certificationsItems: Array<any> = getSection('certifications')?.content || []
   const skillsContent: any = getSection('skills')?.content || { groups: [] }
 
-  // Future: apply theme from data.theme when backend includes it for print
+  const theme = getResumeTheme((data as any)?.theme?.id || 'minimal')
+  const style = theme.fontFamily ? { colorScheme: 'light' as const, fontFamily: theme.fontFamily } : { colorScheme: 'light' as const }
+  const contentClass = `${theme.contentClass || 'px-16 py-16'} space-y-8 resume-content ${theme.bodyClass}`
+
   return (
-    <div className="resume-document mx-auto bg-white text-zinc-900" style={{ colorScheme: 'light' }}>
-      <div className="py-12 space-y-8 resume-content">
+    <div className={`resume-document mx-auto ${theme.rootClass}`} style={style}>
+      <div className={contentClass}>
         {/* Personal Info */}
         <div>
           <div className="text-center pb-6 mb-6 border-b border-gray-200">
@@ -44,9 +49,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-px bg-border w-10" />
-                <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Professional Summary</h2>
-                <div className="h-px bg-border flex-1" />
+                <div className={`h-px w-10 ${theme.dividerClass}`} />
+                <h2 className={theme.headingClass}>Professional Summary</h2>
+                <div className={`h-px flex-1 ${theme.dividerClass}`} />
               </div>
             </div>
             {summaryText && (
@@ -58,9 +63,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-px bg-border w-10" />
-                <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Work Experience</h2>
-                <div className="h-px bg-border flex-1" />
+                <div className={`h-px w-10 ${theme.dividerClass}`} />
+                <h2 className={theme.headingClass}>Work Experience</h2>
+                <div className={`h-px flex-1 ${theme.dividerClass}`} />
               </div>
             </div>
             <div>
@@ -100,9 +105,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-px bg-border w-10" />
-                  <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Education</h2>
-                  <div className="h-px bg-border flex-1" />
+                  <div className={`h-px w-10 ${theme.dividerClass}`} />
+                  <h2 className={theme.headingClass}>Education</h2>
+                  <div className={`h-px flex-1 ${theme.dividerClass}`} />
                 </div>
               </div>
               <div className="space-y-5">
@@ -141,9 +146,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-px bg-border w-10" />
-                  <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Achievements</h2>
-                  <div className="h-px bg-border flex-1" />
+                  <div className={`h-px w-10 ${theme.dividerClass}`} />
+                  <h2 className={theme.headingClass}>Achievements</h2>
+                  <div className={`h-px flex-1 ${theme.dividerClass}`} />
                 </div>
               </div>
               <div className="space-y-4">
@@ -171,9 +176,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-px bg-border w-10" />
-                  <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Certifications</h2>
-                  <div className="h-px bg-border flex-1" />
+                  <div className={`h-px w-10 ${theme.dividerClass}`} />
+                  <h2 className={theme.headingClass}>Certifications</h2>
+                  <div className={`h-px flex-1 ${theme.dividerClass}`} />
                 </div>
               </div>
               <div className="space-y-4">
@@ -201,9 +206,9 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-px bg-border w-10" />
-                  <h2 className="shrink-0 text-[12px] sm:text-[13px] font-medium tracking-[0.12em] uppercase text-foreground">Skills</h2>
-                  <div className="h-px bg-border flex-1" />
+                  <div className={`h-px w-10 ${theme.dividerClass}`} />
+                  <h2 className={theme.headingClass}>Skills</h2>
+                  <div className={`h-px flex-1 ${theme.dividerClass}`} />
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

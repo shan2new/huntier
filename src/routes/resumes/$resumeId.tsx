@@ -585,9 +585,9 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full overflow-hidden">
       {/* Document Viewer Background */}
-      <div className="document-viewer">
+      <div className="document-viewer h-full">
         {importing && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-lg p-6 w-[360px] text-center">
@@ -602,8 +602,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             </div>
           </div>
         )}
-        <div className="mx-auto px-8 py-8" style={{ maxWidth: '1600px' }}>
-          <div className="flex flex-row gap-8 h-full">
+        <div className="mx-auto px-8 py-8 h-full" style={{ maxWidth: '1600px' }}>
+          <div className="flex flex-row gap-8 h-full min-h-0">
             {/* Left Sidebar - Toolbar + Progress & Sections */}
             <div className="hidden lg:block w-80 space-y-4 justify-self-start">
               {/* Toolbar moved into sidebar */}
@@ -672,7 +672,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             </div>
 
             {/* Resume Document - Single Continuous Page */}
-            <ScrollArea className="h-[calc(100vh-100px)]">
+            <ScrollArea className="flex-1 h-full">
             <div className="lg:col-start-2 justify-self-center">
               <div className="w-full max-w-[900px]">
                 <div className="relative mb-8 last:mb-0">

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
+import { Building2, Calendar, ChevronDown, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useAuthToken } from "@/lib/auth"
@@ -10,9 +10,12 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -70,6 +73,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { getToken } = useAuthToken()
   const [companyGroups, setCompanyGroups] = React.useState<Array<{ id: string; name: string }>>([])
 
+  type GroupKey =
+    | "overview"
+    | "applications"
+    | "companies"
+    | "network"
+    | "insights"
+    | "personal"
+    | "applicationsMilestones"
+    | "personalAutofill"
+
+  const [openGroups, setOpenGroups] = React.useState<Record<GroupKey, boolean>>({
+    overview: true,
+    applications: true,
+    companies: false,
+    network: false,
+    insights: true,
+    personal: true,
+    applicationsMilestones: true,
+    personalAutofill: false,
+  })
+
+  const toggleGroup = (key: GroupKey) =>
+    setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+
   React.useEffect(() => {
     ;(async () => {
       try {
@@ -104,16 +131,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Overview */}
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
-                <Link to="/dashboard" className="font-medium">
-                  <Home className="mr-2" size={16} />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarGroupAction onClick={() => toggleGroup("overview")} aria-label="Toggle Overview">
+            <ChevronDown className={`transition-transform ${!openGroups.overview ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.overview && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/dashboard"} tooltip="Dashboard">
+                    <Link to="/dashboard" className="font-medium">
+                      <Home className="mr-2" size={16} />
+                      <span>Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-0" />
@@ -121,62 +155,74 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Applications */}
         <SidebarGroup>
           <SidebarGroupLabel>Applications</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/applications"} tooltip="All applications">
-                <Link to="/applications" className="font-medium">
-                  <ClipboardList className="mr-2" size={16} />
-                  <span>All</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            {/* Milestones sub-navigation */}
-            <SidebarMenuItem>
-              <div className="px-2 text-xs text-muted-foreground mt-1">Milestones</div>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem className="mt-2">
-                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/wishlist")}>
-                    <Link to="/applications/wishlist" className="flex items-center gap-2">
-                      <Star size={14} />
-                      <span>Wishlist</span>
+          <SidebarGroupAction onClick={() => toggleGroup("applications")} aria-label="Toggle Applications">
+            <ChevronDown className={`transition-transform ${!openGroups.applications ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.applications && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/applications"} tooltip="All applications">
+                    <Link to="/applications" className="font-medium">
+                      <ClipboardList className="mr-2" size={16} />
+                      <span>All</span>
                     </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/in-progress")}>
-                    <Link to="/applications/in-progress" className="flex items-center gap-2">
-                      <Target size={14} />
-                      <span>Screening</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {/* Milestones sub-navigation */}
+                <SidebarMenuItem>
+                  <div className="px-2 text-xs text-muted-foreground mt-1">Milestones</div>
+                  <SidebarMenuAction onClick={() => toggleGroup("applicationsMilestones")} aria-label="Toggle Milestones">
+                    <ChevronDown className={`transition-transform ${!openGroups.applicationsMilestones ? "-rotate-90" : ""}`} />
+                  </SidebarMenuAction>
+                  {openGroups.applicationsMilestones && (
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem className="mt-2">
+                        <SidebarMenuSubButton asChild isActive={appsActive("/applications/wishlist")}>
+                          <Link to="/applications/wishlist" className="flex items-center gap-2">
+                            <Star size={14} />
+                            <span>Wishlist</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={appsActive("/applications/in-progress")}>
+                          <Link to="/applications/in-progress" className="flex items-center gap-2">
+                            <Target size={14} />
+                            <span>Screening</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={appsActive("/applications/interviewing")}>
+                          <Link to="/applications/interviewing" className="flex items-center gap-2">
+                            <Calendar size={14} />
+                            <span>Interviewing</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={appsActive("/applications/completed")}>
+                          <Link to="/applications/completed" className="flex items-center gap-2">
+                            <Trophy size={14} />
+                            <span>Completed</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/board")} tooltip="Board">
+                    <Link to="/board" className="font-medium">
+                      <Target className="mr-2" size={16} />
+                      <span>Board</span>
                     </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/interviewing")}>
-                    <Link to="/applications/interviewing" className="flex items-center gap-2">
-                      <Calendar size={14} />
-                      <span>Interviewing</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={appsActive("/applications/completed")}>
-                    <Link to="/applications/completed" className="flex items-center gap-2">
-                      <Trophy size={14} />
-                      <span>Completed</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/board")} tooltip="Board">
-                <Link to="/board" className="font-medium">
-                  <Target className="mr-2" size={16} />
-                  <span>Board</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-0" />
@@ -184,85 +230,98 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Companies */}
         <SidebarGroup>
           <SidebarGroupLabel>Companies</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/companies"} tooltip="All companies">
-                <Link to="/companies" className="font-medium">
-                  <Building2 className="mr-2" size={16} />
-                  <span>All</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <div className="px-2 text-xs text-muted-foreground mt-1">Groups</div>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem className="mt-2">
-                  <SidebarMenuSubButton asChild isActive={appsActive("/companies/groups") && location.pathname === "/companies/groups"}>
-                    <Link to="/companies/groups" className="flex items-center gap-2">
-                      <FolderTree size={14} />
-                      <span>All groups</span>
+          <SidebarGroupAction onClick={() => toggleGroup("companies")} aria-label="Toggle Companies">
+            <ChevronDown className={`transition-transform ${!openGroups.companies ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.companies && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === "/companies"} tooltip="All companies">
+                    <Link to="/companies" className="font-medium">
+                      <Building2 className="mr-2" size={16} />
+                      <span>All</span>
                     </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                {companyGroups.slice(0, 6).map((g) => (
-                  <SidebarMenuSubItem key={g.id}>
-                    <SidebarMenuSubButton asChild isActive={location.pathname === `/companies/groups/${g.id}`} >
-                      <Link to="/companies/groups/$groupId" params={{ groupId: g.id }} className="flex items-center gap-2">
-                        <FolderTree size={14} />
-                        <span className="truncate max-w-[140px]">{g.name}</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                ))}
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-          </SidebarMenu>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <div className="px-2 text-xs text-muted-foreground mt-1">Groups</div>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem className="mt-2">
+                      <SidebarMenuSubButton asChild isActive={appsActive("/companies/groups") && location.pathname === "/companies/groups"}>
+                        <Link to="/companies/groups" className="flex items-center gap-2">
+                          <FolderTree size={14} />
+                          <span>All groups</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    {companyGroups.slice(0, 6).map((g) => (
+                      <SidebarMenuSubItem key={g.id}>
+                        <SidebarMenuSubButton asChild isActive={location.pathname === `/companies/groups/${g.id}`} >
+                          <Link to="/companies/groups/$groupId" params={{ groupId: g.id }} className="flex items-center gap-2">
+                            <FolderTree size={14} />
+                            <span className="truncate max-w-[140px]">{g.name}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Network */}
         <SidebarGroup>
           <SidebarGroupLabel>Network</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/contacts")} tooltip="Contacts">
-                <Link to="/contacts" className="font-medium">
-                  <Users className="mr-2" size={16} />
-                  <span>Contacts</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/referrers")} tooltip="Referrers">
-                <Link to="/referrers" className="font-medium">
-                  <Network className="mr-2" size={16} />
-                  <span>Referrers</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarGroupAction onClick={() => toggleGroup("network")} aria-label="Toggle Network">
+            <ChevronDown className={`transition-transform ${!openGroups.network ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.network && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/contacts")} tooltip="Contacts">
+                    <Link to="/contacts" className="font-medium">
+                      <Users className="mr-2" size={16} />
+                      <span>Contacts</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/referrers")} tooltip="Referrers">
+                    <Link to="/referrers" className="font-medium">
+                      <Network className="mr-2" size={16} />
+                      <span>Referrers</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Insights */}
         <SidebarGroup>
           <SidebarGroupLabel>Insights</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/platforms")} tooltip="Platforms">
-                <Link to="/platforms" className="font-medium">
-                  <Globe className="mr-2" size={16} />
-                  <span>Platforms</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/dashboard")} tooltip="Analytics">
-                <Link to="/dashboard" className="font-medium">
-                  <BarChart3 className="mr-2" size={16} />
-                  <span>Analytics</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarGroupAction onClick={() => toggleGroup("insights")} aria-label="Toggle Insights">
+            <ChevronDown className={`transition-transform ${!openGroups.insights ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.insights && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/platforms")} tooltip="Platforms">
+                    <Link to="/platforms" className="font-medium">
+                      <Globe className="mr-2" size={16} />
+                      <span>Platforms</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-0" />
@@ -270,36 +329,48 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Personal */}
         <SidebarGroup>
           <SidebarGroupLabel>Personal</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={appsActive("/resumes")} tooltip="Resumes">
-                <Link to="/resumes" className="font-medium">
-                  <FileText className="mr-2" size={16} />
-                  <span>Resume AI <SparklesGradient size={10} className="ml-2 inline-block align-middle" /> </span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <div className="px-2 text-xs text-muted-foreground mt-1">Autofill</div>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem className="mt-2">
-                  <SidebarMenuSubButton asChild isActive={appsActive("/autofill/inputs")}>
-                    <Link to="/autofill/inputs" className="flex items-center gap-2">
-                      <span>Inputs</span>
+          <SidebarGroupAction onClick={() => toggleGroup("personal")} aria-label="Toggle Personal">
+            <ChevronDown className={`transition-transform ${!openGroups.personal ? "-rotate-90" : ""}`} />
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            {openGroups.personal && (
+              <SidebarMenu className="gap-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/resumes")} tooltip="Resumes">
+                    <Link to="/resumes" className="font-medium">
+                      <FileText className="mr-2" size={16} />
+                      <span>Resume AI <SparklesGradient size={10} className="ml-2 inline-block align-middle" /> </span>
                     </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={appsActive("/autofill/templates")}>
-                    <Link to="/autofill/templates" className="flex items-center gap-2">
-                      <span>Templates</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-            {/* Mail disabled */}
-          </SidebarMenu>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <div className="px-2 text-xs text-muted-foreground mt-1">Autofill</div>
+                  <SidebarMenuAction onClick={() => toggleGroup("personalAutofill")} aria-label="Toggle Autofill">
+                    <ChevronDown className={`transition-transform ${!openGroups.personalAutofill ? "-rotate-90" : ""}`} />
+                  </SidebarMenuAction>
+                  {openGroups.personalAutofill && (
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem className="mt-2">
+                        <SidebarMenuSubButton asChild isActive={appsActive("/autofill/inputs")}>
+                          <Link to="/autofill/inputs" className="flex items-center gap-2">
+                            <span>Forms</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={appsActive("/autofill/templates")}>
+                          <Link to="/autofill/templates" className="flex items-center gap-2">
+                            <span>Mail Templates</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  )}
+                </SidebarMenuItem>
+                {/* Mail disabled */}
+              </SidebarMenu>
+            )}
+          </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>

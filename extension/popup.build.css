@@ -156,6 +156,7 @@
     --tracking-tight: -0.025em;
     --tracking-normal: 0em;
     --tracking-wide: 0.025em;
+    --tracking-wider: 0.05em;
     --tracking-widest: 0.1em;
     --leading-tight: 1.25;
     --leading-relaxed: 1.625;
@@ -875,9 +876,6 @@
   .h-\[calc\(100\%-1px\)\] {
     height: calc(100% - 1px);
   }
-  .h-\[calc\(100vh-100px\)\] {
-    height: calc(100vh - 100px);
-  }
   .h-\[calc\(100vh-150px\)\] {
     height: calc(100vh - 150px);
   }
@@ -1260,6 +1258,9 @@
   .translate-y-\[calc\(-50\%_-_2px\)\] {
     --tw-translate-y: calc(-50% - 2px);
     translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
+  .-rotate-90 {
+    rotate: calc(90deg * -1);
   }
   .rotate-45 {
     rotate: 45deg;
@@ -4314,11 +4315,6 @@
   .sm\:text-left {
     @media (width >= 40rem) {
       text-align: left;
-    }
-  }
-  .sm\:text-\[13px\] {
-    @media (width >= 40rem) {
-      font-size: 13px;
     }
   }
   .data-\[vaul-drawer-direction\=left\]\:sm\:max-w-sm {

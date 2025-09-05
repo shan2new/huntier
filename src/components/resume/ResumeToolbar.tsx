@@ -1,5 +1,5 @@
 
-import { DownloadIcon, Settings } from 'lucide-react'
+import { DownloadIcon, Settings, UploadIcon } from 'lucide-react'
 import type { ResumeThemeId } from '@/lib/themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,9 +53,12 @@ export function ResumeToolbar({
   }
   if (variant === 'card') {
     return (
-      <div className="bg-card rounded-lg shadow-sm border border-border p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-card-foreground flex items-center gap-2"><Settings className="w-4 h-4" /> Settings</h3>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-4 slide-in-left">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-card-foreground flex items-center gap-2">
+            <Settings className="w-4 h-4" /> 
+            Settings
+          </h3>
           {getSaveStatus() && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               {(saving || hasUnsavedChanges) && (
@@ -73,19 +76,30 @@ export function ResumeToolbar({
             </span>
           )}
         </div>
-        <div className="space-y-3">
-          <Input
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="Untitled Resume"
-            className="h-9"
-          />
-          <div className="flex flex-wrap items-center gap-2">
+        
+        <div className="space-y-4">
+          {/* Resume Name */}
+          <div className="space-y-2">
+            <Input
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Untitled Resume"
+              className="h-9 text-sm"
+            />
+          </div>
+
+          {/* Theme */}
+          <div className="space-y-2 w-full flex justify-center">
             <ThemeSelector value={themeId} onChange={onThemeChange} />
-            <DropdownMenu>
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-3 pt-2 border-t border-border">
+            <div className="grid grid-cols-2 gap-2">
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <DownloadIcon className="w-4 h-4" />
+                  <Button size="sm" variant="outline" className="text-xs h-8 w-full">
+                    <DownloadIcon className="w-3 h-3 mr-1" />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
@@ -94,26 +108,43 @@ export function ResumeToolbar({
                   <DropdownMenuItem onClick={onExportDocx}>Word</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div className="flex items-center gap-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file && onImportPdf) onImportPdf(file)
-                      e.currentTarget.value = ''
-                    }}
-                  />
-                  <Button size="sm" variant="outline" className="text-xs" disabled={!!importing} onClick={(ev) => {
+              
+              <label className="inline-flex items-center">
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file && onImportPdf) onImportPdf(file)
+                    e.currentTarget.value = ''
+                  }}
+                />
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs h-8 w-full" 
+                  disabled={!!importing} 
+                  onClick={(ev) => {
                     const input = (ev.currentTarget.previousSibling as HTMLInputElement)
                     input.click()
-                  }}>Import PDF</Button>
-                </label>
-              </div>
-              <Button size="sm" className="text-xs ml-auto" onClick={onSave}>Save</Button>
+                  }}
+                >
+                  <UploadIcon className="w-3 h-3 mr-1" />
+                  {importing ? 'Importing...' : 'Import'}
+                </Button>
+              </label>
             </div>
+            
+            <Button 
+              size="sm" 
+              className="text-xs h-8 w-full" 
+              onClick={onSave}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
         </div>
       </div>
     )

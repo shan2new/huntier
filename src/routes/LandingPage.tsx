@@ -124,7 +124,7 @@ export function LandingPage() {
 						<BlurFade delay={0.5} duration={0.8}>
 							<div className="space-y-8">
 								<motion.h1 
-									className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight"
+									className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight"
 									whileHover={{ scale: 1.02 }}
 									transition={{ duration: 0.3 }}
 								>
@@ -134,23 +134,23 @@ export function LandingPage() {
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.6, duration: 0.6 }}
 									>
-										Job hunting is
+										AI job search workspace
 									</motion.span>
 									<motion.span 
-										className="block text-foreground"
+										className="block text-foreground/90"
 										initial={{ opacity: 0, y: 20 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 0.8, duration: 0.6 }}
 									>
-										exhausting.
+										Track apps, interviews, conversations
 									</motion.span>
 									<motion.span 
-										className="block text-primary mt-2"
+										className="block text-primary mt-1"
 										initial={{ opacity: 0, y: 20 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ delay: 1.0, duration: 0.6 }}
 									>
-										We made it simple.
+										Build resumes. Autofill outreach.
 									</motion.span>
 								</motion.h1>
 								
@@ -180,15 +180,15 @@ export function LandingPage() {
 						
 						<BlurFade delay={0.7} duration={0.8}>
 							<div className="max-w-4xl mx-auto space-y-8">
-								<AnimatedShinyText className="text-lg md:text-xl leading-relaxed font-light">
-									Stop drowning in spreadsheets and scattered notes. Find peace in your job search.
+								<AnimatedShinyText className="text-base md:text-lg leading-relaxed font-light">
+									A calm job hunt — no spreadsheets.
 								</AnimatedShinyText>
 								
 								<div className="grid md:grid-cols-3 gap-6 text-center">
 									{[
-										{ emoji: "😫", text: "Complicated spreadsheets", bad: true },
+										{ emoji: "😫", text: "Spreadsheets", bad: true },
 										{ emoji: "→", text: "becomes", neutral: true },
-										{ emoji: "😌", text: "Calm organization", good: true }
+										{ emoji: "😌", text: "Calm", good: true }
 									].map((item, index) => (
 										<motion.div
 											key={index}
@@ -215,13 +215,36 @@ export function LandingPage() {
 								</div>
 								
 								<motion.p 
-									className="text-base md:text-lg text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto"
+									className="text-sm md:text-base text-muted-foreground/80 leading-relaxed max-w-2xl mx-auto"
 									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
 									transition={{ delay: 2.1, duration: 0.6 }}
 								>
-									<span className="text-primary font-medium">Finally</span>, a job tracker that reduces stress instead of adding to it.
+									Built for focus — not clutter.
 								</motion.p>
+								<div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+									{[
+										{ icon: '📊', text: 'Pipeline tracking' },
+										{ icon: '🗓️', text: 'Interview timeline' },
+										{ icon: '🧠', text: 'AI resume builder' },
+										{ icon: '✉️', text: 'Autofill outreach' },
+										{ icon: '🧩', text: 'Chrome extension' },
+										{ icon: '🏢', text: 'Company CRM' },
+										{ icon: '📝', text: 'Conversations & notes' },
+									].map((item, index) => (
+										<motion.div
+											key={item.text}
+											className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-muted/20 text-foreground/80"
+											initial={{ opacity: 0, y: 10 }}
+											animate={{ opacity: 1, y: 0 }}
+											transition={{ delay: 1.4 + index * 0.05, duration: 0.4 }}
+											whileHover={{ scale: 1.05 }}
+										>
+											<span className="text-base">{item.icon}</span>
+											<span className="text-sm font-medium">{item.text}</span>
+										</motion.div>
+									))}
+								</div>
 							</div>
 						</BlurFade>
 					</div>
@@ -246,7 +269,7 @@ export function LandingPage() {
 											/>
 											<span className="relative flex items-center gap-3">
 												<span className="flex flex-col items-start">
-													<span className="leading-none">Start your PEACEFUL HUNT</span>
+													<span className="leading-none">Join beta</span>
 												</span>
 											</span>
 										</Button>
@@ -264,8 +287,8 @@ export function LandingPage() {
 								transition={{ delay: 1.8, duration: 0.6 }}
 							>
 								{[
-									{ icon: "🔒", text: "Secure & Private" },
-									{ icon: "⚡", text: "Instant Setup" }
+									{ icon: "🔒", text: "Private" },
+									{ icon: "⚡", text: "Instant setup" }
 								].map((item, index) => (
 									<motion.div
 										key={item.text}
@@ -294,19 +317,19 @@ export function LandingPage() {
 										transition={{ delay: 1.3, duration: 0.6 }}
 									>
 										<motion.h2 
-											className="text-heading-32 md:text-heading-40 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
+											className="text-2xl md:text-3xl bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent"
 											whileHover={{ scale: 1.02 }}
 											transition={{ duration: 0.3 }}
 										>
-											Everything in three buckets
+											Three simple buckets
 										</motion.h2>
 										<motion.p 
-											className="text-base md:text-lg text-muted-foreground/70 mt-4 max-w-2xl mx-auto leading-relaxed"
+											className="text-sm md:text-base text-muted-foreground/70 mt-4 max-w-2xl mx-auto leading-relaxed"
 											initial={{ opacity: 0 }}
 											animate={{ opacity: 1 }}
 											transition={{ delay: 1.5, duration: 0.6 }}
 										>
-											No overwhelming dashboards. No confusing metrics. Just the essentials that actually matter.
+											No dashboards. No fluff. Just essentials.
 										</motion.p>
 									</motion.div>
 									
@@ -331,21 +354,21 @@ export function LandingPage() {
 									{[
 										{ 
 											title: "Applications", 
-											desc: "Track where you applied and current status. No endless columns.",
+											desc: "Track status. No endless columns.",
 											icon: "📝",
 											gradient: "from-blue-500/10 to-blue-600/5",
 											highlight: "Simple tracking"
 										},
 										{ 
 											title: "Conversations", 
-											desc: "Log recruiter calls and emails. Remember important details.",
+											desc: "Log calls and emails. Keep context.",
 											icon: "💬",
 											gradient: "from-green-500/10 to-green-600/5",
-											highlight: "Never forget context"
+											highlight: "Context kept"
 										},
 										{ 
 											title: "Interviews", 
-											desc: "Schedule rounds and track feedback. Stay organized.",
+											desc: "Plan rounds. Track feedback.",
 											icon: "🗓️",
 											gradient: "from-purple-500/10 to-purple-600/5",
 											highlight: "Timeline clarity"
@@ -429,7 +452,7 @@ export function LandingPage() {
 							{/* Elegant tagline */}
 							<div className="text-center max-w-lg space-y-4">
 								<p className="text-muted-foreground/80 leading-relaxed">
-									Private beta access for professionals who value clarity and peace of mind during their job search journey.
+									Private beta for a calmer job hunt.
 								</p>
 								
 								{/* Sign in CTA */}

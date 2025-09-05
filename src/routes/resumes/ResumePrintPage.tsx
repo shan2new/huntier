@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ResumePrintDocument from '@/components/resume/ResumePrintDocument'
+import { ResumeThemeProvider } from '@/components/resume/ThemeContext'
+import { getResumeTheme } from '@/lib/themes'
 import '@/components/resume/resume-editor.css'
 
 type Props = { resumeId: string }
@@ -47,11 +49,14 @@ export function ResumePrintPage({ resumeId }: Props) {
   if (!data) {
     return <div className="p-6 text-sm text-gray-500">Loading…</div>
   }
+  const theme = getResumeTheme((data as any)?.theme?.id)
   return (
     <div className="document-viewer">
       <div className="mx-auto px-8 py-8" style={{ maxWidth: '1600px' }}>
         <div className="w-full max-w-[900px] mx-auto">
-          <ResumePrintDocument data={data as any} />
+          <ResumeThemeProvider theme={theme}>
+            <ResumePrintDocument data={data as any} />
+          </ResumeThemeProvider>
         </div>
       </div>
     </div>

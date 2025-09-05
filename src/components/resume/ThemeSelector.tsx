@@ -15,10 +15,10 @@ export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="text-xs">
-          Theme: {current.name}
+        <div className={cn('h-4 w-4 rounded-sm', current.previewAccent)} /> {current.name}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[320px] p-0">
+      <PopoverContent align="center" className="w-[320px] p-0">
         <ScrollArea className="h-[320px] p-2">
           <div className="grid grid-cols-2 gap-2">
             {RESUME_THEME_LIST.map((t) => (

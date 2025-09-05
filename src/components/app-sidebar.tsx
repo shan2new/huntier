@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Sparkles, Star, Target, Trophy, User, Users } from "lucide-react"
+import { BarChart3, Building2, Calendar, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useAuthToken } from "@/lib/auth"

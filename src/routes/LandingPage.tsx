@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { motion, useMotionValue, useSpring } from 'motion/react'
-import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
+import { SignUpButton, useUser } from '@clerk/clerk-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { BlurFade } from '@/components/magicui/blur-fade'
@@ -9,10 +9,12 @@ import { DotPattern } from '@/components/magicui/dot-pattern'
 import { FloatingShapes } from '@/components/magicui/floating-shapes'
 import { ParticleField } from '@/components/magicui/particle-field'
 import logo192 from '/logo192.svg'
+import { useSignInHandler } from '@/lib/auth'
 
 export function LandingPage() {
 	const { isSignedIn } = useUser()
 	const navigate = useNavigate()
+	const openSignIn = useSignInHandler()
 	
 	const mouseX = useMotionValue(0)
 	const mouseY = useMotionValue(0)
@@ -39,7 +41,7 @@ export function LandingPage() {
 	return (
 		<div className="flex flex-col relative overflow-hidden">
 			{/* Enhanced background layers */}
-			<div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background/95"></div>
+			<div className="absolute inset-0 z-0 pointer-events-none bg-gradient-to-br from-background via-background to-background/95"></div>
 			<ParticleField />
 			<DotPattern 
 				width={20} 
@@ -88,9 +90,7 @@ export function LandingPage() {
 					animate={{ opacity: 1, x: 0 }}
 					transition={{ duration: 0.6, delay: 0.2 }}
 				>
-					<SignInButton mode="modal">
-						<Button variant="ghost" size="sm" className="hover:scale-105 transition-transform duration-200">Sign in</Button>
-					</SignInButton>
+					<Button onClick={openSignIn} variant="ghost" size="sm" className="hover:scale-105 transition-transform duration-200">Sign in</Button>
 					<SignUpButton mode="modal">
 						<Button size="sm" className="hover:scale-105 transition-transform duration-200 shadow-soft">Join beta</Button>
 					</SignUpButton>
@@ -433,25 +433,24 @@ export function LandingPage() {
 								</p>
 								
 								{/* Sign in CTA */}
-								<SignInButton mode="modal">
-									<motion.button 
-										className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-accent/30 to-accent/20 hover:from-accent/40 hover:to-accent/30 border border-zinc-200/30 dark:border-zinc-800/30 text-sm font-medium text-foreground hover:text-foreground transition-all duration-200"
-										whileHover={{ scale: 1.02, y: -2 }}
+								<motion.button 
+									onClick={openSignIn}
+									className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-accent/30 to-accent/20 hover:from-accent/40 hover:to-accent/30 border border-zinc-200/30 dark:border-zinc-800/30 text-sm font-medium text-foreground hover:text-foreground transition-all duration-200"
+									whileHover={{ scale: 1.02, y: -2 }}
+									transition={{ duration: 0.2 }}
+								>
+									<span>Already have an account?</span>
+									<motion.svg 
+										className="w-4 h-4"
+										initial={{ x: 0 }}
+										whileHover={{ x: 2 }}
 										transition={{ duration: 0.2 }}
+										fill="currentColor" 
+										viewBox="0 0 20 20"
 									>
-										<span>Already have an account?</span>
-										<motion.svg 
-											className="w-4 h-4"
-											initial={{ x: 0 }}
-											whileHover={{ x: 2 }}
-											transition={{ duration: 0.2 }}
-											fill="currentColor" 
-											viewBox="0 0 20 20"
-										>
-											<path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-										</motion.svg>
-									</motion.button>
-								</SignInButton>
+										<path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+									</motion.svg>
+								</motion.button>
 							</div>
 							
 							{/* Bottom section */}

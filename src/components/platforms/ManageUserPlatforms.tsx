@@ -124,7 +124,7 @@ export function ManageUserPlatforms({ analytics }: { analytics?: Record<string, 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
       <Card className="border border-border">
-        <CardHeader className="border-b border-border flex flex-row items-center justify-between gap-4 py-3">
+        <CardHeader className="border-b border-border flex flex-row items-center justify-between gap-4 py-3 px-2">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-primary/10">
               <Globe className="h-4 w-4 text-primary" />

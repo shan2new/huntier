@@ -216,7 +216,7 @@ export function BoardPage() {
                   isDropTarget ? "ring-2 ring-primary ring-offset-2" : "",
                   "bg-accent/40"
                 )}>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 px-2">
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center space-x-2.5">
                         <div className="p-1.5 rounded-lg bg-primary/10">

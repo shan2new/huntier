@@ -265,7 +265,7 @@ export function ProfilePage() {
         >
           {/* User Information */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <User className="h-5 w-5 text-primary" />
@@ -290,7 +290,7 @@ export function ProfilePage() {
 
           {/* Profile Settings */}
           <Card>
-            <CardHeader>
+            <CardHeader className="px-2">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <Settings className="h-5 w-5 text-primary" />
@@ -573,7 +573,7 @@ export function ProfilePage() {
           className="lg:col-span-2"
         >
           <Card>
-            <CardHeader>
+            <CardHeader className="px-2">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-primary/10">

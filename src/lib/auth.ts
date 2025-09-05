@@ -37,3 +37,14 @@ export function useAuthToken() {
 		[getValidToken, clearTokenCache],
 	)
 }
+
+// Lightweight, resilient sign-in opener that falls back to the path-based auth page if
+// Clerk's modal cannot open for any reason (e.g., script not yet loaded).
+export function useSignInHandler() {
+	return useCallback(() => {
+		// Use path-based auth screen to avoid any modal overlays/portals interfering
+		if (typeof window !== 'undefined') {
+			window.location.href = '/auth'
+		}
+	}, [])
+}

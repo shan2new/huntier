@@ -143,7 +143,7 @@ export function ReferrersPage() {
       {/* Referrers List */}
       <MotionEffect fade slide={{ direction: 'up', offset: 20 }} delay={0.2} className="px-6">
         <Card className="border border-border mx-auto w-full max-w-6xl">
-          <CardHeader className="border-b border-border">
+          <CardHeader className="border-b border-border px-2">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="p-2 rounded-lg bg-primary/10">

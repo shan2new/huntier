@@ -172,8 +172,8 @@ export function ExperienceSection({
                     <InlineEditable 
                       value={bullet} 
                       onChange={(v) => onChangeBullet(idx, bulletIdx, v)} 
-                      placeholder="• Led cross-functional team to deliver key feature, improving user engagement by 25%" 
-                      className={`text-sm leading-relaxed text-gray-700 hover:bg-gray-100 px-2 py-1 -mx-2 -my-1 rounded transition-colors ${highlightKey === `${idx}:${bulletIdx}` ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''}`}
+                      placeholder="Led cross-functional team to deliver key feature, improving user engagement by 25%" 
+                      className={`text-sm leading-relaxed text-gray-700 hover:bg-gray-100 px-2 py-1 -mx-2 -my-1 rounded transition-colors min-h-[1.625rem] ${highlightKey === `${idx}:${bulletIdx}` ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''}`}
                       multiline 
                     />
                   </div>

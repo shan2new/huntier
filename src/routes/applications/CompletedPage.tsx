@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Archive, Award, Building2, Clock, Plus } from 'lucide-react'
+import { Archive, Award, Building2, Clock, MoreVertical, Plus } from 'lucide-react'
 import type { ApplicationListItem } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -127,7 +127,9 @@ export function CompletedApplicationsPage() {
                           {!editMode && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md border border-transparent hover:border-border">Actions</button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem>

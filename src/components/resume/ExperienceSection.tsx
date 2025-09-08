@@ -175,6 +175,12 @@ export function ExperienceSection({
                       placeholder="Led cross-functional team to deliver key feature, improving user engagement by 25%" 
                       className={`text-sm leading-relaxed text-gray-700 hover:bg-gray-100 px-2 py-1 -mx-2 -my-1 rounded transition-colors min-h-[1.625rem] ${highlightKey === `${idx}:${bulletIdx}` ? 'bg-yellow-50 ring-1 ring-yellow-200' : ''}`}
                       multiline 
+                      maxLines={4}
+                      maxChars={280}
+                      onRewrite={onEnhanceBullet ? async (current) => {
+                        const next = await onEnhanceBullet(idx, bulletIdx, current)
+                        return next
+                      } : undefined}
                     />
                   </div>
                   <div className="opacity-0 group-hover/bullet:opacity-100 transition-all duration-200 flex flex-col items-center self-start ml-2 gap-1">

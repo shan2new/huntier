@@ -987,6 +987,41 @@ export async function aiKeywordsWithRefresh(id: string, getToken: () => Promise<
   })
 }
 
+// JD analysis: accepts text or url and optional files
+export type JDAnalysisItem = {
+  section: 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'achievements'
+  type: 'missing_keyword' | 'skill_alignment' | 'rewrite' | 'ats' | 'role_level' | 'reorder'
+  score?: number
+  message: string
+  suggestion?: string
+  path?: Array<number>
+}
+
+export async function analyzeJDWithRefresh(
+  resumeId: string,
+  getToken: () => Promise<string>,
+  body: { jdText?: string; jdUrl?: string; files?: Array<File> }
+): Promise<{ items: Array<JDAnalysisItem> }> {
+  if (body.files && body.files.length) {
+    const form = new FormData()
+    body.files.forEach((f) => form.append('files', f))
+    if (body.jdText) form.append('jdText', body.jdText)
+    if (body.jdUrl) form.append('jdUrl', body.jdUrl)
+    const token = await getToken()
+    const res = await fetch(`${BASE}/v1/resumes/${resumeId}/ai/analyze-jd`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
+    if (!res.ok) throw new Error(`Analyze JD failed: ${res.status}`)
+    return res.json()
+  }
+  return apiWithTokenRefresh(`/v1/resumes/${resumeId}/ai/analyze-jd`, getToken, {
+    method: 'POST',
+    body: JSON.stringify({ jdText: body.jdText, jdUrl: body.jdUrl }),
+  })
+}
+
 // Enhance a small text snippet (summary, bullet, paragraph) using HybridFallback via OpenRouter
 export async function aiEnhanceTextWithRefresh(
   id: string,

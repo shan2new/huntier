@@ -14,12 +14,18 @@ import { SkillsSection } from '@/components/resume/SkillsSection'
 import { EducationSection } from '@/components/resume/EducationSection'
 import { AchievementsSection } from '@/components/resume/AchievementsSection'
 import { CertificationsSection } from '@/components/resume/CertificationsSection'
+import { ProjectsSection } from '@/components/resume/ProjectsSection'
 import { ResumeProgress } from '@/components/resume/ResumeProgress'
 import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
 import '@/components/resume/resume-editor.css'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ResumeThemeProvider } from '@/components/resume/ThemeContext'
 import { getResumeTheme } from '@/lib/themes'
+import { getResumeFont } from '@/lib/fonts'
+import { getResumeTemplate } from '@/lib/templates'
+import { SidebarBand } from '@/components/resume/SidebarBand'
+import { JDInputHub } from '@/components/resume/JDInputHub'
+import { analyzeJDWithRefresh, type JDAnalysisItem } from '@/lib/api'
 
 export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const { getToken } = useAuthToken()
@@ -28,6 +34,9 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [jdHubOpen, setJdHubOpen] = useState(false)
+  const [analyzingJD, setAnalyzingJD] = useState(false)
+  const [jdHints, setJdHints] = useState<Array<JDAnalysisItem>>([] as Array<JDAnalysisItem>)
   // Removed LinkedIn import; importing state no longer used
   const [autoImportAttempted, setAutoImportAttempted] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -40,7 +49,8 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       fullName: '',
       email: '',
       phone: '',
-      location: ''
+      location: '',
+      photoUrl: ''
     },
     summary: '',
     experience: [] as Array<any>,
@@ -178,6 +188,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
         ...prev.personal_info,
         fullName: prev.personal_info.fullName || (user.fullName || ''),
         email: prev.personal_info.email || (user.primaryEmailAddress?.emailAddress || ''),
+        photoUrl: prev.personal_info.photoUrl || (user.imageUrl || ''),
       }
     }))
   }, [user])
@@ -319,6 +330,13 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     },
+    {
+      type: 'projects',
+      title: 'Projects',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16"/>
+      </svg>
+    },
     { 
       type: 'achievements', 
       title: 'Achievements',
@@ -369,6 +387,62 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
       ...prev,
       summary: text,
       sections: (prev.sections).map((s: any) => s.type === 'summary' ? { ...s, content: { text } } : s),
+    }))
+  }
+
+  // Projects handlers
+  const addProjectItem = () => {
+    const newItem = { name: '', url: '', description: '', highlights: [''] }
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections)
+        .map((s: any) => s.type === 'projects'
+          ? { ...s, content: (Array.isArray(s.content) ? [...s.content, newItem] : [newItem]) }
+          : s
+        )
+        .concat((prev.sections).some((s: any) => s.type === 'projects') ? [] : [{ id: 'projects', type: 'projects', title: 'Projects', order: (prev.sections).length, content: [newItem] }])
+    }))
+  }
+  const removeProjectItem = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections).map((s: any) => s.type === 'projects' ? { ...s, content: (s.content as Array<any>).filter((_: any, i: number) => i !== index) } : s)
+    }))
+  }
+  const setProjectField = (index: number, field: string, value: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections).map((s: any) => s.type === 'projects'
+        ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === index ? { ...it, [field]: value } : it) }
+        : s
+      )
+    }))
+  }
+  const addProjectHighlight = (index: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections).map((s: any) => s.type === 'projects'
+        ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === index ? { ...it, highlights: [ ...(it.highlights || []), '' ] } : it) }
+        : s
+      )
+    }))
+  }
+  const removeProjectHighlight = (index: number, highlightIndex: number) => {
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections).map((s: any) => s.type === 'projects'
+        ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === index ? { ...it, highlights: (it.highlights || []).filter((_: string, hi: number) => hi !== highlightIndex) } : it) }
+        : s
+      )
+    }))
+  }
+  const setProjectHighlight = (index: number, highlightIndex: number, text: string) => {
+    setResumeData(prev => ({
+      ...prev,
+      sections: (prev.sections).map((s: any) => s.type === 'projects'
+        ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === index ? { ...it, highlights: (it.highlights || []).map((b: string, bi: number) => bi === highlightIndex ? text : b) } : it) }
+        : s
+      )
     }))
   }
 
@@ -634,7 +708,7 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             </div>
           </div>
         )}
-        <div className="mx-auto px-8 py-8 h-full" style={{ maxWidth: '1600px' }}>
+        <div className="flex justify-center px-8 py-8 h-full max-w-[1600px]">
           <div className="flex flex-row gap-8 h-full min-h-0">
             {/* Left Sidebar - Toolbar + Progress & Sections */}
             <div className="hidden lg:block w-80 space-y-4 justify-self-start">
@@ -646,6 +720,11 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                 onExportDocx={() => download('docx')}
                 themeId={resumeData.theme.id}
                 onThemeChange={(id: ResumeThemeId) => setResumeData(prev => ({ ...prev, theme: { ...prev.theme, id } }))}
+                fontId={(resumeData.theme as any)?.font}
+                onFontChange={(fid) => setResumeData(prev => ({ ...prev, theme: { ...prev.theme, font: fid } }))}
+                templateId={resumeData.template_id as any}
+                onTemplateChange={(tid) => setResumeData(prev => ({ ...prev, template_id: tid }))}
+                onOpenJdHub={() => setJdHubOpen(true)}
                 importing={importing}
                 exporting={exporting}
                 onImportPdf={async (file) => {
@@ -704,14 +783,172 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
             </div>
 
             {/* Resume Document - Single Continuous Page */}
-            <ScrollArea className="flex-1 h-full">
+            <ScrollArea className="h-full max-w-[768px]">
             <div className="lg:col-start-2 justify-self-center">
-              <div className="w-full max-w-[900px]">
+              <div>
                 <div className="relative mb-8 last:mb-0">
                   {(() => {
                     const theme = getResumeTheme(resumeData.theme.id as any)
-                    const style = theme.fontFamily ? { colorScheme: 'light' as const, fontFamily: theme.fontFamily } : { colorScheme: 'light' as const }
+                    const chosenFont = getResumeFont((resumeData.theme as any).font)
+                    const style = { colorScheme: 'light' as const, fontFamily: (chosenFont.stack || theme.fontFamily) }
                     const contentClass = `${theme.contentClass || 'px-16 py-16'} space-y-8 resume-content ${theme.bodyClass}`
+                    const template = getResumeTemplate(resumeData.template_id as any)
+                    const spanClass = (n: number) => (n === 1 ? 'col-span-1' : n === 2 ? 'col-span-2' : 'col-span-3')
+                    const renderSection = (section: any, index: number) => {
+                      switch (section.type) {
+                        case 'summary':
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="summary"
+                            >
+                              <SummarySection text={section.content?.text || ''} onChange={setSummaryText} onEnhance={enhanceSummary} />
+                            </motion.div>
+                          )
+                        case 'experience': {
+                          const expItems = section.content || []
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="experience"
+                            >
+                              <ExperienceSection
+                                items={expItems}
+                                onAddItem={addExperienceItem}
+                                onRemoveItem={removeExperienceItem}
+                                onChangeField={setExperienceField}
+                                onAddBullet={addExperienceBullet}
+                                onRemoveBullet={removeExperienceBullet}
+                                onChangeBullet={setExperienceBullet}
+                                onEnhanceBullet={enhanceExperienceBullet}
+                                onSuggestBullets={suggestBullets}
+                              />
+                            </motion.div>
+                          )
+                        }
+                        case 'education': {
+                          const eduItems = section.content || []
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="education"
+                            >
+                              <EducationSection
+                                items={eduItems}
+                                onAddItem={addEducationItem}
+                                onRemoveItem={removeEducationItem}
+                                onChangeField={(idx, field, value) => setEducationField(idx, field as any, value)}
+                              />
+                            </motion.div>
+                          )
+                        }
+                        case 'achievements': {
+                          const achItems = section.content || []
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="achievements"
+                            >
+                              <AchievementsSection
+                                items={achItems}
+                                onAddItem={addAchievementItem}
+                                onRemoveItem={removeAchievementItem}
+                                onChangeField={(idx, field, value) => setAchievementField(idx, field as any, value)}
+                              />
+                            </motion.div>
+                          )
+                        }
+                        case 'projects': {
+                          const projItems = section.content || []
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="projects"
+                            >
+                              <ProjectsSection
+                                items={projItems}
+                                onAddItem={addProjectItem}
+                                onRemoveItem={removeProjectItem}
+                                onChangeField={(idx, field, value) => setProjectField(idx, field as any, value)}
+                                onAddHighlight={addProjectHighlight}
+                                onRemoveHighlight={removeProjectHighlight}
+                                onChangeHighlight={setProjectHighlight}
+                              />
+                            </motion.div>
+                          )
+                        }
+                        case 'skills':
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="skills"
+                            >
+                              <SkillsSection
+                                tags={skillsTags}
+                                onChange={setSkillsFromTags}
+                              />
+                            </motion.div>
+                          )
+                        case 'certifications': {
+                          const certItems = section.content || []
+                          return (
+                            <motion.div
+                              key={section.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                              transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
+                              data-section="certifications"
+                            >
+                              <CertificationsSection
+                                items={certItems}
+                                onAddItem={() => setResumeData(prev => ({
+                                  ...prev,
+                                  certifications: [ ...(prev as any).certifications || [], { name: '', issuer: '', date: '', description: '' } ],
+                                  sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: [ ...(s.content as Array<any>), { name: '', issuer: '', date: '', description: '' } ] } : s),
+                                }))}
+                                onRemoveItem={(idx) => setResumeData(prev => ({
+                                  ...prev,
+                                  certifications: ((prev as any).certifications || []).filter((_: any, i: number) => i !== idx),
+                                  sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).filter((_: any, i: number) => i !== idx) } : s),
+                                }))}
+                                onChangeField={(idx, field, value) => setResumeData(prev => ({
+                                  ...prev,
+                                  certifications: ((prev as any).certifications || []).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it),
+                                  sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it) } : s),
+                                }))}
+                              />
+                            </motion.div>
+                          )
+                        }
+                        default:
+                          return null
+                      }
+                    }
                     return (
                       <ResumeThemeProvider theme={theme}>
                         <div 
@@ -720,7 +957,14 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                         >
                           <div className={contentClass}>
                       <div data-section="personal-info">
-                        <PersonalInfoSection personalInfo={resumeData.personal_info} onChange={(field, value) => updatePersonalInfo(field, value)} />
+                        <PersonalInfoSection 
+                          personalInfo={resumeData.personal_info} 
+                          onChange={(field, value) => updatePersonalInfo(field, value)} 
+                          align={template.headerAlign} 
+                          divider={template.headerDivider !== false}
+                          headerStyle={template.headerStyle || 'default'}
+                          showPhotoControls={!!template.leftBand?.enabled}
+                        />
                       </div>
 
                       {(!resumeData.personal_info.fullName && !resumeData.summary && resumeData.sections.length <= 1) && (
@@ -743,138 +987,39 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
                       )}
 
                       <AnimatePresence>
-                      {([...resumeData.sections].sort((a, b) => a.order - b.order)).map((section, index) => {
-                        switch (section.type) {
-                          case 'summary':
+                        {(() => {
+                          const sorted = [...resumeData.sections].sort((a, b) => a.order - b.order)
+                          if (template.layout.kind === 'singleColumn') {
                             return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="summary"
-                              >
-                                <SummarySection text={section.content?.text || ''} onChange={setSummaryText} onEnhance={enhanceSummary} />
-                              </motion.div>
+                              <>
+                                {sorted.map((s, i) => renderSection(s, i))}
+                                {/* keep jdHints referenced to satisfy TS and prep for overlay integration */}
+                                {jdHints && null}
+                              </>
                             )
-                          case 'experience': {
-                            const expItems = section.content || []
+                          } else {
+                            const leftTypes = new Set(template.layout.left)
+                            const rightTypes = new Set(template.layout.right)
+                            const left = sorted.filter((s) => leftTypes.has(s.type))
+                            const right = sorted.filter((s) => rightTypes.has(s.type) || !leftTypes.has(s.type))
                             return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="experience"
-                              >
-                                <ExperienceSection
-                                  items={expItems}
-                                  onAddItem={addExperienceItem}
-                                  onRemoveItem={removeExperienceItem}
-                                  onChangeField={setExperienceField}
-                                  onAddBullet={addExperienceBullet}
-                                  onRemoveBullet={removeExperienceBullet}
-                                  onChangeBullet={setExperienceBullet}
-                                  onEnhanceBullet={enhanceExperienceBullet}
-                                  onSuggestBullets={suggestBullets}
-                                />
-                              </motion.div>
+                              <div className="grid grid-cols-3 gap-8">
+                                <div className={`${spanClass(template.layout.leftColSpan || 1)} space-y-8`}>
+                                  {template.leftBand?.enabled && (
+                                    <SidebarBand 
+                                      photoUrl={(resumeData.personal_info as any)?.photoUrl || null}
+                                      nameInitial={(resumeData.personal_info as any)?.fullName ? String((resumeData.personal_info as any).fullName).trim().charAt(0).toUpperCase() : null}
+                                    />
+                                  )}
+                                  {left.map((s, i) => renderSection(s, i))}
+                                </div>
+                                <div className={`${spanClass(template.layout.rightColSpan || 2)} space-y-8`}>
+                                  {right.map((s, i) => renderSection(s, i))}
+                                </div>
+                              </div>
                             )
                           }
-                          case 'education': {
-                            const eduItems = section.content || []
-                            return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="education"
-                              >
-                                <EducationSection
-                                  items={eduItems}
-                                  onAddItem={addEducationItem}
-                                  onRemoveItem={removeEducationItem}
-                                  onChangeField={(idx, field, value) => setEducationField(idx, field as any, value)}
-                                />
-                              </motion.div>
-                            )
-                          }
-                          case 'achievements': {
-                            const achItems = section.content || []
-                            return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="achievements"
-                              >
-                                <AchievementsSection
-                                  items={achItems}
-                                  onAddItem={addAchievementItem}
-                                  onRemoveItem={removeAchievementItem}
-                                  onChangeField={(idx, field, value) => setAchievementField(idx, field as any, value)}
-                                />
-                              </motion.div>
-                            )
-                          }
-                          case 'skills':
-                            return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="skills"
-                              >
-                                <SkillsSection
-                                  tags={skillsTags}
-                                  onChange={setSkillsFromTags}
-                                />
-                              </motion.div>
-                            )
-                          case 'certifications': {
-                            const certItems = section.content || []
-                            return (
-                              <motion.div
-                                key={section.id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                                transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                                data-section="certifications"
-                              >
-                                <CertificationsSection
-                                  items={certItems}
-                                  onAddItem={() => setResumeData(prev => ({
-                                    ...prev,
-                                    certifications: [ ...(prev as any).certifications || [], { name: '', issuer: '', date: '', description: '' } ],
-                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: [ ...(s.content as Array<any>), { name: '', issuer: '', date: '', description: '' } ] } : s),
-                                  }))}
-                                  onRemoveItem={(idx) => setResumeData(prev => ({
-                                    ...prev,
-                                    certifications: ((prev as any).certifications || []).filter((_: any, i: number) => i !== idx),
-                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).filter((_: any, i: number) => i !== idx) } : s),
-                                  }))}
-                                  onChangeField={(idx, field, value) => setResumeData(prev => ({
-                                    ...prev,
-                                    certifications: ((prev as any).certifications || []).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it),
-                                    sections: (prev.sections).map((s: any) => s.type === 'certifications' ? { ...s, content: (s.content as Array<any>).map((it: any, i: number) => i === idx ? { ...it, [field]: value } : it) } : s),
-                                  }))}
-                                />
-                              </motion.div>
-                            )
-                          }
-                          default:
-                            return null
-                        }
-                      })}
+                        })()}
                       </AnimatePresence>
                           </div>
                         </div>
@@ -888,6 +1033,25 @@ export function ResumeBuilder({ resumeId }: { resumeId: string }) {
           </div>
         </div>
       </div>
+      <JDInputHub
+        open={jdHubOpen}
+        onClose={() => setJdHubOpen(false)}
+        busy={analyzingJD}
+        onSubmit={async ({ url, text, files }) => {
+          if (!resumeData.id) return
+          try {
+            setAnalyzingJD(true)
+            const res = await analyzeJDWithRefresh(resumeData.id, getToken, { jdText: text, jdUrl: url, files })
+            setJdHints(res.items || [])
+            setJdHubOpen(false)
+          } catch (e) {
+            console.error('JD analyze failed', e)
+            toast.error('Failed to analyze JD', { description: 'Please try again.' })
+          } finally {
+            setAnalyzingJD(false)
+          }
+        }}
+      />
     </div>
   )
 }

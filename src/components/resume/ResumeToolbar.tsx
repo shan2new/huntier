@@ -1,10 +1,14 @@
 
 import { DownloadIcon, Settings, UploadIcon } from 'lucide-react'
+import type { ResumeFontId } from '@/types/resume'
 import type { ResumeThemeId } from '@/lib/themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ThemeSelector } from '@/components/resume/ThemeSelector'
+import { FontSelector } from '@/components/resume/FontSelector'
+import { TemplateSelector } from '@/components/resume/TemplateSelector'
+import type { ResumeTemplateId } from '@/types/resume'
 
 type ResumeToolbarProps = {
   name: string
@@ -21,6 +25,11 @@ type ResumeToolbarProps = {
   exporting?: boolean
   themeId?: ResumeThemeId | string
   onThemeChange?: (id: ResumeThemeId) => void
+  fontId?: ResumeFontId | string
+  onFontChange?: (id: ResumeFontId) => void
+  templateId?: ResumeTemplateId | string | null
+  onTemplateChange?: (id: ResumeTemplateId) => void
+  onOpenJdHub?: () => void
 }
 
 export function ResumeToolbar({
@@ -38,6 +47,11 @@ export function ResumeToolbar({
   exporting,
   themeId,
   onThemeChange,
+  fontId,
+  onFontChange,
+  templateId,
+  onTemplateChange,
+  onOpenJdHub,
 }: ResumeToolbarProps) {
   const getSaveStatus = () => {
     if (saving) return 'Saving...'
@@ -88,14 +102,16 @@ export function ResumeToolbar({
             />
           </div>
 
-          {/* Theme */}
-          <div className="space-y-2 w-full flex justify-center">
+          {/* Theme & Template */}
+          <div className="space-y-2 w-full flex justify-center gap-2">
             <ThemeSelector value={themeId} onChange={onThemeChange} />
+            <TemplateSelector value={templateId as any} onChange={onTemplateChange} />
           </div>
 
           {/* Actions */}
           <div className="space-y-3 pt-2 border-t border-border">
             <div className="grid grid-cols-2 gap-2">
+              <Button size="sm" className="text-xs h-8 w-full" variant="secondary" onClick={onOpenJdHub}>Analyze JD</Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="text-xs h-8 w-full" disabled={!!exporting} aria-busy={!!exporting}>
@@ -147,6 +163,10 @@ export function ResumeToolbar({
                 </Button>
               </label>
             </div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1" />
+              <div className="shrink-0"><FontSelector value={fontId} onChange={onFontChange} /></div>
+            </div>
             
             <Button 
               size="sm" 
@@ -196,6 +216,9 @@ export function ResumeToolbar({
           {/* Right side - Actions */}
           <div className="flex items-center gap-3">
             <ThemeSelector value={themeId} onChange={onThemeChange} />
+            <FontSelector value={fontId} onChange={onFontChange} />
+            <TemplateSelector value={templateId as any} onChange={onTemplateChange} />
+            <Button variant="outline" className="text-sm" onClick={onOpenJdHub}>Analyze JD</Button>
 
             {/* Export Dropdown */}
             <div className="relative group">

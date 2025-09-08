@@ -9,6 +9,7 @@ export type ResumeThemeId =
   | 'slate'
   | 'emerald'
   | 'royal'
+  | 'latex'
 
 export type ResumeTheme = {
   id: ResumeThemeId
@@ -165,6 +166,21 @@ export const RESUME_THEMES: Record<ResumeThemeId, ResumeTheme> = {
     chipClass: 'px-2 py-1 text-[11px] rounded-md border border-violet-200 bg-violet-50 text-violet-800',
     dividerClass: 'h-px bg-violet-200',
     fontFamily: 'Inter, ui-sans-serif, system-ui',
+  },
+  latex: {
+    id: 'latex',
+    name: 'LaTeX',
+    description: 'Compact, typeset-inspired layout with small caps headings',
+    previewAccent: 'bg-zinc-800',
+    rootClass: 'bg-white text-zinc-900',
+    contentClass: 'px-12 py-12',
+    headingClass: 'tracking-[0.18em] uppercase text-[11.5px] font-medium text-zinc-800',
+    bodyClass: 'text-[12.75px] leading-[1.7] text-zinc-800',
+    accentClass: 'text-zinc-600',
+    chipClass: 'px-2 py-0.5 text-[10.5px] rounded border border-zinc-300 bg-zinc-50 text-zinc-800',
+    dividerClass: 'h-px bg-zinc-200',
+    // Use Outfit as preferred per project styling
+    fontFamily: 'Outfit, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial',
   },
 }
 

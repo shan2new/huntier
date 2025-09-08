@@ -226,7 +226,7 @@ export function ApplicationsPage() {
                                 }}
                               >
                                 <div>
-                                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                                     <div className="flex-1 space-y-2 min-w-0">
                                       <div className="flex items-center space-x-3">
                                         <div className="flex-shrink-0 flex items-center gap-2">
@@ -259,8 +259,8 @@ export function ApplicationsPage() {
                                             </h3>
                                             <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
                                           </div>
-                                          <div className="flex items-center space-x-3 text-xs text-muted-foreground min-w-0">
-                                            <span className="truncate">{app.role}</span>
+                                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground min-w-0">
+                                            <span className="truncate max-w-[65vw] md:max-w-none">{app.role}</span>
                                             {formatSalary(app.compensation) && (
                                               <>
                                                 <span>•</span>
@@ -270,7 +270,7 @@ export function ApplicationsPage() {
                                             {app.platform && (
                                               <>
                                                 <span>•</span>
-                                                <span className="flex items-center space-x-1">
+                                                <span className="flex items-center space-x-1 min-w-0">
                                                   {app.platform.logo_url ? (
                                                     <img
                                                       src={app.platform.logo_url}
@@ -280,7 +280,7 @@ export function ApplicationsPage() {
                                                   ) : (
                                                     <Building2 className="h-4 w-4" />
                                                   )}
-                                                  <span className="truncate max-w-[10rem]">{app.platform.name}</span>
+                                                  <span className="truncate max-w-[8rem] md:max-w-[10rem]">{app.platform.name}</span>
                                                 </span>
                                               </>
                                             )}
@@ -294,7 +294,8 @@ export function ApplicationsPage() {
                                       </div>
                                     </div>
 
-                                    <div className="flex items-center space-x-2.5 sm:self-start sm:justify-end">
+                                    {/* Desktop actions */}
+                                    <div className="hidden md:flex items-center space-x-2.5 self-start justify-end">
                                       <div className="flex items-center space-x-1.5 whitespace-nowrap">
                                         <Badge className="text-xs font-medium px-2 py-0.5 bg-secondary text-secondary-foreground">
                                           {sourceConfig[app.source]?.label}
@@ -339,6 +340,54 @@ export function ApplicationsPage() {
                                           </DropdownMenuContent>
                                         </DropdownMenu>
                                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                      </div>
+                                    </div>
+
+                                    {/* Mobile actions under content */}
+                                    <div className="md:hidden mt-2 flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5">
+                                        <Badge className="text-xs font-medium px-2 py-0.5 bg-secondary text-secondary-foreground">
+                                          {sourceConfig[app.source]?.label}
+                                        </Badge>
+                                        <Badge className="text-xs font-medium px-2 py-0.5" variant="outline">
+                                          <div className="flex items-center gap-1.5">
+                                            {(() => {
+                                              const config = milestoneConfig[app.milestone]
+                                              if (config) {
+                                                const IconComponent = config.icon
+                                                return <IconComponent className="h-3.5 w-3.5" />
+                                              }
+                                              return null
+                                            })()}
+                                            <span>{app.stage.name}</span>
+                                          </div>
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                              <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                              onClick={async (e) => {
+                                                e.stopPropagation()
+                                                try {
+                                                  const tokenFn = async () => (await getToken()) || ''
+                                                  await patchApplicationWithRefresh(tokenFn, app.id, { is_archived: true })
+                                                  setApps(prev => prev.filter(a => a.id !== app.id))
+                                                  toast.success('Archived application')
+                                                } catch (err) {
+                                                  toast.error('Failed to archive')
+                                                }
+                                              }}
+                                            >
+                                              <Archive className="h-3.5 w-3.5 mr-2" /> Archive
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
                                       </div>
                                     </div>
                                   </div>

@@ -55,16 +55,24 @@ export function EntityListItem({
             <div className="flex items-center gap-2 min-w-0">
               <div className="font-medium text-base truncate">{title}</div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground min-w-0">
               {subtitle}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Desktop actions (hover-revealed) */}
+        <div className="hidden md:flex items-center gap-2 md:opacity-0 group-hover:md:opacity-100 transition-opacity shrink-0">
           {meta}
           {actions}
         </div>
       </div>
+      {/* Mobile actions/meta stacked below */}
+      {(meta || actions) ? (
+        <div className="mt-2 flex items-center justify-between md:hidden text-xs">
+          <div className="text-muted-foreground">{meta}</div>
+          <div className="flex items-center gap-2">{actions}</div>
+        </div>
+      ) : null}
     </motion.div>
   )
 }

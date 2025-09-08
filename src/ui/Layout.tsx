@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@clerk/clerk-react'
 import { motion } from 'motion/react'
 import type { UserProfile } from '@/lib/api'
@@ -9,15 +9,21 @@ import { SplashLoader } from '@/components/SplashLoader'
 import { ProfileCompletionDialog } from '@/components/ProfileCompletionDialog'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarRail } from '@/components/ui/sidebar'
+import { useIsMobile } from '@/hooks/use-mobile'
+import MobileTopBar from '@/components/mobile/MobileTopBar'
+import BottomNav from '@/components/mobile/BottomNav'
 
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [, setTheme] = useState<'light' | 'dark'>('light')
   const { getToken } = useAuthToken()
   const [, setProfile] = useState<UserProfile | null>(null)
   const [showProfileDialog, setShowProfileDialog] = useState(false)
+  const isMobile = useIsMobile()
+  const excludeMobileShell = location.pathname.startsWith('/resumes/')
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -91,14 +97,16 @@ export function Layout() {
         <SidebarRail />
         <SidebarInset className="h-full w-full">
           <div className="flex flex-col h-full w-full">
+            {isMobile && !excludeMobileShell ? <MobileTopBar /> : null}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="h-full w-full py-6"
+              className={`h-full w-full ${isMobile && !excludeMobileShell ? 'pt-4 pb-16 px-3' : 'py-6'}`}
             >
               <Outlet />
             </motion.div>
+            {isMobile && !excludeMobileShell ? <BottomNav /> : null}
           </div>
         </SidebarInset>
     </SidebarProvider>

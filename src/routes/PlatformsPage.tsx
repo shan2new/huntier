@@ -107,7 +107,7 @@ export function PlatformsPage() {
       </div>
 
       {/* Unified listing (ManageUserPlatforms shows analytics inline) */}
-      <ScrollArea className="h-[calc(100vh-300px)]">
+      <ScrollArea className="h-[calc(100vh-300px)] md:h-[calc(100vh-150px)]">
         <ManageUserPlatforms analytics={Object.fromEntries(rows.map(r => [r.platform_id, { totals: r.totals, in_progress: r.in_progress, offers: r.offers, rejects: r.rejects }]))} />
       </ScrollArea>
     </motion.div>

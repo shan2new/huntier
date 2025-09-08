@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Building2, Calendar, ChevronDown, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
+import { Archive, Building2, Calendar, ChevronDown, ChevronsUpDown, ClipboardList, FileText, FolderTree, Globe, Home, LogOut, Network, Star, Target, Trophy, User, Users } from "lucide-react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { useAuth, useUser } from "@clerk/clerk-react"
 import { useAuthToken } from "@/lib/auth"
@@ -217,6 +217,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Link to="/board" className="font-medium">
                       <Target className="mr-2" size={16} />
                       <span>Board</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={appsActive("/applications/archived")} tooltip="Archived">
+                    <Link to="/applications/archived" className="font-medium">
+                      <Archive className="mr-2" size={16} />
+                      <span>Archived</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/clerk-react'
 import { AlertCircle, Briefcase, Circle, MapPin, Sparkles } from 'lucide-react'
 import type { ApplicationListItem, Company, Platform } from '@/lib/api'
 import type { StageObject } from '@/types/application'
-import {
+import { 
   addApplicationContactWithRefresh,
   deleteApplicationWithRefresh,
   getApplicationWithRefresh,
@@ -279,6 +279,23 @@ function UpdateApplicationModal({
     }
   }
 
+  const handleArchiveToggle = async () => {
+    if (!app) return
+    setIsSubmitting(true)
+    setError('')
+    try {
+      const getTokenStr = async () => (await getToken()) || ''
+      const updated = await patchApplicationWithRefresh<ApplicationListItem>(getTokenStr, applicationId, { is_archived: !(app as any).is_archived })
+      setApp(updated as any)
+      onUpdated?.(updated)
+      onClose()
+    } catch (err) {
+      setError('Failed to update application')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleDelete = async () => {
     setIsSubmitting(true)
     setError('')
@@ -529,6 +546,7 @@ function UpdateApplicationModal({
             onSave={() => void handleSave()}
             onAskDelete={() => setShowDeleteConfirm(true)}
             onStageVizOpen={() => setStageVisualizationOpen(true)}
+            onArchiveToggle={() => void handleArchiveToggle()}
             onActivity={(occurredAt) => {
               setApp(prev => prev ? { ...prev, last_activity_at: occurredAt } : prev)
               // Also update stage badge/derived UI – parent gets the updated app from server on next fetch,

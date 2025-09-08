@@ -81,6 +81,7 @@ interface Props {
   onAskDelete: () => void
   onStageVizOpen: () => void
   onActivity?: (occurredAtIso: string) => void
+  onArchiveToggle?: () => void
 }
 
 export function UpdateApplicationModalDesktop(props: Props) {
@@ -121,6 +122,7 @@ export function UpdateApplicationModalDesktop(props: Props) {
     onSave,
     onAskDelete,
     onStageVizOpen,
+    onArchiveToggle,
   } = props
 
   return (
@@ -406,15 +408,17 @@ export function UpdateApplicationModalDesktop(props: Props) {
           </div>
         )}
         <div className="flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={onAskDelete} 
-            disabled={isSubmitting}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive/90 transition-colors"
-          >
-            Delete
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={onAskDelete} 
+              disabled={isSubmitting}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive/90 transition-colors"
+            >
+              Delete
+            </Button>
+          </div>
           
           <div className="flex items-center gap-2">
             <Button 
@@ -426,6 +430,17 @@ export function UpdateApplicationModalDesktop(props: Props) {
             >
               Cancel
             </Button>
+            {app && (
+              <Button 
+                variant="secondary" 
+                size="sm"
+                onClick={onArchiveToggle}
+                disabled={isSubmitting}
+                className="border-border/60"
+              >
+                {(app as any).is_archived ? 'Unarchive' : 'Archive'}
+              </Button>
+            )}
             <Button 
               onClick={onSave} 
               disabled={isSubmitting} 

@@ -42,6 +42,7 @@ export type ApplicationListItem = {
   progress_updated_at?: string
   notes?: string | null
   compensation?: ApplicationCompensation | null
+  is_archived?: boolean | null
 }
 
 const BASE = (import.meta as any).env.VITE_API_URL || 'http://localhost:3001/api'
@@ -206,6 +207,17 @@ export async function deleteApplicationWithRefresh(
 ): Promise<void> {
   return apiWithTokenRefresh(`/v1/applications/${id}`, getToken, {
     method: 'DELETE'
+  })
+}
+
+// Bulk applications update
+export async function bulkUpdateApplicationsWithRefresh(
+  getToken: () => Promise<string>,
+  body: { ids: Array<string>; action: 'archive' | 'unarchive' | 'delete' | 'update'; data?: any }
+): Promise<{ updated: number; deleted: number }> {
+  return apiWithTokenRefresh(`/v1/applications/bulk`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(body)
   })
 }
 

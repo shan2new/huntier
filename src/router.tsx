@@ -9,6 +9,7 @@ import { ApplicationsPage } from './routes/ApplicationsPage'
 import { InProgressApplicationsPage } from './routes/applications/InProgressPage'
 import { InterviewingApplicationsPage } from './routes/applications/InterviewingPage'
 import { CompletedApplicationsPage } from './routes/applications/CompletedPage'
+import { ArchivedApplicationsPage } from './routes/applications/ArchivedPage'
 import { WishlistApplicationsPage } from './routes/applications/WishlistPage'
 import { BoardPage } from './routes/BoardPage'
 import { ApplicationDetailPage } from './routes/ApplicationDetailPage'
@@ -62,6 +63,7 @@ const appsInProgressRoute = createRoute({ getParentRoute: () => appLayout, path:
 const appsInterviewingRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/interviewing', component: InterviewingApplicationsPage })
 const appsCompletedRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/completed', component: CompletedApplicationsPage })
 const appsWishlistRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/wishlist', component: WishlistApplicationsPage })
+const appsArchivedRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/archived', component: ArchivedApplicationsPage })
 const appDetailRoute = createRoute({ getParentRoute: () => appLayout, path: '/applications/$id', component: ApplicationDetailPage })
 const boardRoute = createRoute({ getParentRoute: () => appLayout, path: '/board', component: BoardPage })
 const platformsRoute = createRoute({ getParentRoute: () => appLayout, path: '/platforms', component: PlatformsPage })
@@ -104,6 +106,7 @@ const routeTree = rootRoute.addChildren([
 		dashboardRoute,
 		appsRoute,
 		appsWishlistRoute,
+		appsArchivedRoute,
 		appsInProgressRoute,
 		appsInterviewingRoute,
 		appsCompletedRoute,

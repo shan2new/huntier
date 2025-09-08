@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Building2, Clock, Plus, Target } from 'lucide-react'
+import { AlertCircle, Archive, Building2, Clock, Plus, Target } from 'lucide-react'
+import { useAuth } from '@clerk/clerk-react'
 import type { ApplicationListItem } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Checkbox } from '@/components/ui/checkbox'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
+import { bulkUpdateApplicationsWithRefresh, patchApplicationWithRefresh } from '@/lib/api'
 
 // Human-friendly labels and priority for in-progress stages
 const STAGE_LABELS: Record<string, string> = {
@@ -56,6 +60,9 @@ export function InProgressApplicationsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [updateModalOpen, setUpdateModalOpen] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | undefined>()
+  const [editMode, setEditMode] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const { getToken } = useAuth()
 
   useEffect(() => {
     ;(async () => {
@@ -112,7 +119,46 @@ export function InProgressApplicationsPage() {
             <p className="text-xs text-muted-foreground">Exploration & Screening</p>
           </div>
         </div>
-        <Badge variant="secondary" className="text-xs">{filtered.length} apps</Badge>
+        <div className="flex items-center gap-2">
+          {!editMode ? (
+            <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>Edit</Button>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={() => { setEditMode(false); setSelected(new Set()) }}>Cancel</Button>
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                disabled={selected.size===0}
+                onClick={async () => {
+                  if (!selected.size) return
+                  const ids = Array.from(selected)
+                  await bulkUpdateApplicationsWithRefresh(async () => (await getToken()) || '', { ids, action: 'archive' })
+                  setApps(prev => prev.filter(a => !ids.includes(a.id)))
+                  setSelected(new Set())
+                  setEditMode(false)
+                }}
+              >
+                Archive
+              </Button>
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                disabled={selected.size===0}
+                onClick={async () => {
+                  if (!selected.size) return
+                  const ids = Array.from(selected)
+                  await bulkUpdateApplicationsWithRefresh(async () => (await getToken()) || '', { ids, action: 'delete' })
+                  setApps(prev => prev.filter(a => !ids.includes(a.id)))
+                  setSelected(new Set())
+                  setEditMode(false)
+                }}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+          <Badge variant="secondary" className="text-xs">{filtered.length} apps</Badge>
+        </div>
       </div>
 
       {loading ? (
@@ -146,11 +192,31 @@ export function InProgressApplicationsPage() {
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0, transition: { duration: 0.2 } }}
                               transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                              className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
-                              onClick={() => { setSelectedAppId(app.id); setUpdateModalOpen(true) }}
+                              className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10 relative"
+                              onClick={() => {
+                                if (editMode) {
+                                  const next = new Set(selected)
+                                  if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                                  setSelected(next)
+                                  return
+                                }
+                                setSelectedAppId(app.id); setUpdateModalOpen(true)
+                              }}
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
+                                  {editMode && (
+                                    <Checkbox
+                                      checked={selected.has(app.id)}
+                                      onCheckedChange={() => {
+                                        const next = new Set(selected)
+                                        if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                                        setSelected(next)
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-4 w-4 mr-1"
+                                    />
+                                  )}
                                   {app.company?.logo_url ? (
                                     <img src={app.company.logo_url} alt={app.company.name} className="h-8 w-8 rounded-md border border-border object-cover" />
                                   ) : (
@@ -172,6 +238,26 @@ export function InProgressApplicationsPage() {
                                       ) : null}
                                     </div>
                                   </div>
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {!editMode && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md border border-transparent hover:border-border">Actions</button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={async (e) => {
+                                            e.stopPropagation()
+                                            await patchApplicationWithRefresh(async () => (await getToken()) || '', app.id, { is_archived: true })
+                                            setApps(prev => prev.filter(a => a.id !== app.id))
+                                          }}
+                                        >
+                                          <Archive className="h-3.5 w-3.5 mr-2" /> Archive
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  )}
                                 </div>
                               </div>
                             </motion.div>

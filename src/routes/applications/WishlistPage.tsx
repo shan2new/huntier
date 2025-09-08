@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Building2, Clock, Plus, Star } from 'lucide-react'
+import { Archive, Building2, Clock, Plus, Star } from 'lucide-react'
 import type { ApplicationListItem } from '@/lib/api'
 import { useApi } from '@/lib/use-api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,6 +10,10 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Checkbox } from '@/components/ui/checkbox'
+import { useAuth } from '@clerk/clerk-react'
+import { bulkUpdateApplicationsWithRefresh, patchApplicationWithRefresh } from '@/lib/api'
 
 export function WishlistApplicationsPage() {
   const { apiCall } = useApi()
@@ -18,6 +22,9 @@ export function WishlistApplicationsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [updateModalOpen, setUpdateModalOpen] = useState(false)
   const [selectedAppId, setSelectedAppId] = useState<string | undefined>()
+  const { getToken } = useAuth()
+  const [editMode, setEditMode] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     ;(async () => {
@@ -48,7 +55,46 @@ export function WishlistApplicationsPage() {
             <p className="text-xs text-muted-foreground">Saved opportunities</p>
           </div>
         </div>
-        <Badge variant="secondary" className="text-xs">{filtered.length} apps</Badge>
+        <div className="flex items-center gap-2">
+          {!editMode ? (
+            <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>Edit</Button>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" onClick={() => { setEditMode(false); setSelected(new Set()) }}>Cancel</Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={selected.size === 0}
+                onClick={async () => {
+                  if (!selected.size) return
+                  const ids = Array.from(selected)
+                  await bulkUpdateApplicationsWithRefresh(async () => (await getToken()) || '', { ids, action: 'archive' })
+                  setApps(prev => prev.filter(a => !ids.includes(a.id)))
+                  setSelected(new Set())
+                  setEditMode(false)
+                }}
+              >
+                Archive
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={selected.size === 0}
+                onClick={async () => {
+                  if (!selected.size) return
+                  const ids = Array.from(selected)
+                  await bulkUpdateApplicationsWithRefresh(async () => (await getToken()) || '', { ids, action: 'delete' })
+                  setApps(prev => prev.filter(a => !ids.includes(a.id)))
+                  setSelected(new Set())
+                  setEditMode(false)
+                }}
+              >
+                Delete
+              </Button>
+            </>
+          )}
+          <Badge variant="secondary" className="text-xs">{filtered.length} apps</Badge>
+        </div>
       </div>
 
       {loading ? (
@@ -73,14 +119,32 @@ export function WishlistApplicationsPage() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, transition: { duration: 0.2 } }}
                         transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                        className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
+                        className="group cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10 relative"
                         onClick={() => {
+                          if (editMode) {
+                            const next = new Set(selected)
+                            if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                            setSelected(next)
+                            return
+                          }
                           setSelectedAppId(app.id)
                           setUpdateModalOpen(true)
                         }}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
+                            {editMode && (
+                              <Checkbox
+                                checked={selected.has(app.id)}
+                                onCheckedChange={() => {
+                                  const next = new Set(selected)
+                                  if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                                  setSelected(next)
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-4 w-4 mr-1"
+                              />
+                            )}
                             {app.company?.logo_url ? (
                               <img
                                 src={app.company.logo_url}
@@ -103,6 +167,26 @@ export function WishlistApplicationsPage() {
                                 </span>
                               </div>
                             </div>
+                          </div>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!editMode && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md border border-transparent hover:border-border">Actions</button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={async (e) => {
+                                      e.stopPropagation()
+                                      await patchApplicationWithRefresh(async () => (await getToken()) || '', app.id, { is_archived: true })
+                                      setApps(prev => prev.filter(a => a.id !== app.id))
+                                    }}
+                                  >
+                                    <Archive className="h-3.5 w-3.5 mr-2" /> Archive
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
                         </div>
                       </motion.div>

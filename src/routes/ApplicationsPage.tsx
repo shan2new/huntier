@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, Award, Building2, ChevronRight, Clock, ExternalLink, Gift, Handshake, Phone, Plus, Search, Telescope, UserPlus, Users } from 'lucide-react'
+import { Activity, Award, Building2, ChevronRight, Clock, ExternalLink, Gift, Handshake, Phone, Plus, Search, Telescope, UserPlus, Users, Archive } from 'lucide-react'
 import { useApi } from '../lib/use-api'
 import type { ApplicationListItem } from '../lib/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,6 +10,11 @@ import { CreateApplicationModal } from '@/components/CreateApplicationModal'
 import { UpdateApplicationModal } from '@/components/UpdateApplicationModal'
 import { formatDateIndian } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { toast } from 'sonner'
+import { useAuth } from '@clerk/clerk-react'
+import { patchApplicationWithRefresh } from '@/lib/api'
 
 // Helper function to format salary information
 function formatSalary(compensation: any) {
@@ -63,6 +68,7 @@ const sourceConfig: Partial<Record<string, { icon: any; label: string }>> = {
 }
 
 export function ApplicationsPage() {
+  const { getToken } = useAuth()
   const { apiCall } = useApi()
   const [apps, setApps] = useState<Array<ApplicationListItem>>([])  
   const [loading, setLoading] = useState(true)
@@ -85,6 +91,8 @@ export function ApplicationsPage() {
       }
     })()
   }, [search, apiCall])
+  const [editMode, setEditMode] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const pipelineGroups = useMemo(() => {
     const inProgress = apps.filter(
       (app) => app.milestone === 'exploration' || app.milestone === 'screening'
@@ -135,7 +143,18 @@ export function ApplicationsPage() {
                       <p className="text-xs text-muted-foreground">{group.items.length} apps</p>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5">{group.items.length}</Badge>
+                  <div className="flex items-center gap-2">
+                    {!editMode ? (
+                      <Button size="sm" variant="outline" className="h-7" onClick={() => setEditMode(true)}>Edit</Button>
+                    ) : (
+                      <>
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => { setEditMode(false); setSelected(new Set()) }}>Cancel</Button>
+                        <Button size="sm" variant="secondary" className="h-7" disabled={selected.size===0}>Archive</Button>
+                        <Button size="sm" variant="destructive" className="h-7" disabled={selected.size===0}>Delete</Button>
+                      </>
+                    )}
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5">{group.items.length}</Badge>
+                  </div>
                 </div>
                 {/* Removed inline application previews from summary cards for a cleaner overview */}
               </CardContent>
@@ -194,8 +213,14 @@ export function ApplicationsPage() {
                               className="group"
                             >
                               <div 
-                                className="cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10"
+                                className="cursor-pointer px-4 py-3 md:px-6 md:py-4 hover:bg-muted/10 relative"
                                 onClick={() => {
+                                  if (editMode) {
+                                    const next = new Set(selected)
+                                    if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                                    setSelected(next)
+                                    return
+                                  }
                                   setSelectedAppId(app.id)
                                   setUpdateModalOpen(true)
                                 }}
@@ -204,7 +229,19 @@ export function ApplicationsPage() {
                                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                                     <div className="flex-1 space-y-2 min-w-0">
                                       <div className="flex items-center space-x-3">
-                                        <div className="flex-shrink-0">
+                                        <div className="flex-shrink-0 flex items-center gap-2">
+                                          {editMode && (
+                                            <Checkbox
+                                              checked={selected.has(app.id)}
+                                              onCheckedChange={() => {
+                                                const next = new Set(selected)
+                                                if (next.has(app.id)) next.delete(app.id); else next.add(app.id)
+                                                setSelected(next)
+                                              }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="h-4 w-4"
+                                            />
+                                          )}
                                           {app.company?.logo_url ? (
                                             <img
                                               src={app.company.logo_url}
@@ -276,7 +313,29 @@ export function ApplicationsPage() {
                                           </div>
                                         </Badge>
                                       </div>
-                                      <div className="flex items-center">
+                                      <div className="flex items-center gap-1">
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <button className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-md border border-transparent hover:border-border">Actions</button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                              onClick={async (e) => {
+                                                e.stopPropagation()
+                                                try {
+                                                  const tokenFn = async () => (await getToken()) || ''
+                                                  await patchApplicationWithRefresh(tokenFn, app.id, { is_archived: true })
+                                                  setApps(prev => prev.filter(a => a.id !== app.id))
+                                                  toast.success('Archived application')
+                                                } catch (err) {
+                                                  toast.error('Failed to archive')
+                                                }
+                                              }}
+                                            >
+                                              <Archive className="h-3.5 w-3.5 mr-2" /> Archive
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
                                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                                       </div>
                                     </div>

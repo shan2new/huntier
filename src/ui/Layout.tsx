@@ -11,7 +11,6 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarRail } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 import MobileTopBar from '@/components/mobile/MobileTopBar'
-import BottomNav from '@/components/mobile/BottomNav'
 
 
 export function Layout() {
@@ -102,11 +101,10 @@ export function Layout() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className={`h-full w-full ${isMobile && !excludeMobileShell ? 'pt-4 pb-16 px-3' : 'py-6'}`}
+              className={`h-full w-full ${isMobile && !excludeMobileShell ? 'pt-4 pb-6 px-3' : 'py-6'}`}
             >
               <Outlet />
             </motion.div>
-            {isMobile && !excludeMobileShell ? <BottomNav /> : null}
           </div>
         </SidebarInset>
     </SidebarProvider>

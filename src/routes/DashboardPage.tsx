@@ -72,7 +72,7 @@ function FunnelWidget() {
     return [
       { key: 'exploration', label: 'Exploration' },
       { key: 'interviewing', label: 'Interviewing' },
-      { key: 'post_interview', label: 'Post-interview' },
+      { key: 'post_interview', label: 'Completed' },
     ] as Array<{ key: keyof FunnelAnalytics; label: string }>
   }, [])
 

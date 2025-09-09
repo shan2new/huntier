@@ -16,12 +16,11 @@ const ResizablePanel = ResizablePrimitive.Panel
 const ResizableHandle = ({ withHandle, className, ...props }: React.ComponentProps<typeof ResizablePrimitive.PanelResizeHandle> & { withHandle?: boolean }) => (
   <ResizablePrimitive.PanelResizeHandle
     className={cn(
-      "relative z-30 flex items-center justify-center shrink-0 select-none",
-      // Render a clearly visible divider line
-      "bg-muted-foreground/30 hover:bg-muted-foreground/50 transition-colors",
+      "relative z-30 flex items-center justify-center shrink-0 select-none transition-colors",
+      // Look like a normal border; show grab affordance only on hover
+      "bg-transparent hover:bg-border",
       "data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full",
-      // Slightly thicker vertical divider for visibility
-      "data-[panel-group-direction=horizontal]:h-full data-[panel-group-direction=horizontal]:w-1",
+      "data-[panel-group-direction=horizontal]:h-full data-[panel-group-direction=horizontal]:w-px",
       "data-[panel-group-direction=vertical]:cursor-row-resize data-[panel-group-direction=horizontal]:cursor-col-resize",
       className
     )}
@@ -30,14 +29,15 @@ const ResizableHandle = ({ withHandle, className, ...props }: React.ComponentPro
     {withHandle && (
       <div
         className={cn(
-          "z-10 flex items-center justify-center rounded-sm border bg-green",
-          "data-[panel-group-direction=vertical]:h-4 data-[panel-group-direction=vertical]:w-3",
-          "data-[panel-group-direction=horizontal]:h-3 data-[panel-group-direction=horizontal]:w-4"
+          "pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity",
+          "z-10 flex items-center justify-center rounded-sm",
+          "data-[panel-group-direction=vertical]:h-3 data-[panel-group-direction=vertical]:w-3",
+          "data-[panel-group-direction=horizontal]:h-3 data-[panel-group-direction=horizontal]:w-3"
         )}
       >
         <div
           className={cn(
-            "bg-green-500 rounded-sm",
+            "bg-border rounded-sm",
             "data-[panel-group-direction=vertical]:h-2 data-[panel-group-direction=vertical]:w-0.5",
             "data-[panel-group-direction=horizontal]:h-0.5 data-[panel-group-direction=horizontal]:w-2"
           )}

@@ -23,6 +23,7 @@ const slice = createSlice({
   name: 'resume',
   initialState,
   reducers: {
+    resetAll() { return initialState },
     // basic fields
     setAll(state, action: PayloadAction<any>) {
       state.data = action.payload
@@ -95,7 +96,9 @@ const slice = createSlice({
 
     // Load success
     loadSuccess(state, action: PayloadAction<any>) {
-      state.data = action.payload
+      const d: any = action.payload || {}
+      const hasSections = Array.isArray(d.sections) && d.sections.length > 0
+      state.data = hasSections ? d : { ...d, sections: buildSectionsFromData(d) }
       state.hasUnsavedChanges = false
     },
 
@@ -253,6 +256,7 @@ const slice = createSlice({
 })
 
 export const {
+  resetAll,
   setAll,
   setName,
   setTemplateId,

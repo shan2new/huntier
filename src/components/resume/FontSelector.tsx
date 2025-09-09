@@ -8,16 +8,24 @@ import type { ResumeFontId } from '@/types/resume'
 type FontSelectorProps = {
   value?: ResumeFontId | string
   onChange?: (id: ResumeFontId) => void
+  mode?: 'default' | 'icon'
 }
 
-export function FontSelector({ value, onChange }: FontSelectorProps) {
+export function FontSelector({ value, onChange, mode = 'default' }: FontSelectorProps) {
   const current = getResumeFont((value as any) || 'inter')
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="text-xs">
-          Font: {current.name}
-        </Button>
+        {mode === 'icon' ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Font">
+            <span className="text-[10px] font-medium leading-none">Aa</span>
+            <span className="sr-only">Font</span>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="text-xs">
+            Font: {current.name}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="center" className="w-[320px] p-0">
         <ScrollArea className="h-[320px] p-2">

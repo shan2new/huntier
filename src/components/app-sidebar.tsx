@@ -22,6 +22,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarSeparator,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -109,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const appsActive = (path: string) => location.pathname.startsWith(path)
 
   return (
-    <Sidebar variant="floating" collapsible="icon" {...props}>
+    <Sidebar variant="floating" collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -119,11 +120,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img src="/logo512.svg" alt="Huntier" />
                 </div>
                 <div className="flex items-center gap-2 leading-none">
-                  <span className="text-lg font-bold">Huntier</span>
+                  <span className="text-lg font-bold group-data-[collapsible=icon]:hidden">Huntier</span>
                   <Badge variant="secondary" className="h-4 px-1 py-0 text-[10px] rounded-xs">Beta</Badge>
                 </div>
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarTrigger className="ml-auto" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -171,7 +175,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuItem>
                 {/* Milestones sub-navigation */}
                 <SidebarMenuItem>
-                  <div className="px-2 text-xs text-muted-foreground mt-1">Milestones</div>
+                  <div className="px-2 text-xs text-muted-foreground mt-1 group-data-[collapsible=icon]:hidden">Milestones</div>
                   <SidebarMenuAction onClick={() => toggleGroup("applicationsMilestones")} aria-label="Toggle Milestones">
                     <ChevronDown className={`transition-transform ${!openGroups.applicationsMilestones ? "-rotate-90" : ""}`} />
                   </SidebarMenuAction>
@@ -253,7 +257,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <div className="px-2 text-xs text-muted-foreground mt-1">Groups</div>
+                  <div className="px-2 text-xs text-muted-foreground mt-1 group-data-[collapsible=icon]:hidden">Groups</div>
                   <SidebarMenuSub>
                     <SidebarMenuSubItem className="mt-2">
                       <SidebarMenuSubButton asChild isActive={appsActive("/companies/groups") && location.pathname === "/companies/groups"}>
@@ -352,7 +356,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <div className="px-2 text-xs text-muted-foreground mt-1">Autofill</div>
+                  <div className="px-2 text-xs text-muted-foreground mt-1 group-data-[collapsible=icon]:hidden">Autofill</div>
                   <SidebarMenuAction onClick={() => toggleGroup("personalAutofill")} aria-label="Toggle Autofill">
                     <ChevronDown className={`transition-transform ${!openGroups.personalAutofill ? "-rotate-90" : ""}`} />
                   </SidebarMenuAction>

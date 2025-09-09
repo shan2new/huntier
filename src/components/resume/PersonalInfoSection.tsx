@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
-import { ResumeInlineEditable } from '@/components/resume/ResumeInlineEditable'
+import { useRef } from 'react'
 import { Link, Mail, MapPin, Phone } from 'lucide-react'
+import { ResumeInlineEditable } from '@/components/resume/ResumeInlineEditable'
 import { Button } from '@/components/ui/button'
 
 type PersonalInfo = {
@@ -22,31 +22,6 @@ type PersonalInfoSectionProps = {
 }
 
 export function PersonalInfoSection({ personalInfo, onChange, align = 'center', divider = true, headerStyle = 'default', showPhotoControls = false }: PersonalInfoSectionProps) {
-  // Auto-detect location from browser if not set
-  useEffect(() => {
-    if (!personalInfo.location && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            // Use a reverse geocoding service to get city/country from coordinates
-            const response = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
-            )
-            const data = await response.json()
-            if (data.city && data.countryName) {
-              onChange('location', `${data.city}, ${data.countryName}`)
-            }
-          } catch (error) {
-            console.error('Failed to get location:', error)
-          }
-        },
-        (error) => {
-          console.error('Geolocation error:', error)
-        }
-      )
-    }
-  }, [personalInfo.location, onChange])
-
   const fileRef = useRef<HTMLInputElement | null>(null)
   const onPickFile = () => fileRef.current?.click()
   const onFileSelected = (file: File) => {

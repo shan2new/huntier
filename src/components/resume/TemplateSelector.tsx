@@ -8,16 +8,24 @@ import { cn } from '@/lib/utils'
 type TemplateSelectorProps = {
   value?: ResumeTemplateId | string | null
   onChange?: (id: ResumeTemplateId) => void
+  mode?: 'default' | 'icon'
 }
 
-export function TemplateSelector({ value, onChange }: TemplateSelectorProps) {
+export function TemplateSelector({ value, onChange, mode = 'default' }: TemplateSelectorProps) {
   const current = getResumeTemplate((value as any) || 'single')
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="text-xs">
-          {current.name}
-        </Button>
+        {mode === 'icon' ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Template">
+            <span className="i-lucide-layout-grid h-4 w-4" />
+            <span className="sr-only">Template</span>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="text-xs">
+            {current.name}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="center" className="w-[320px] p-0">
         <ScrollArea className="h-[280px] p-2">

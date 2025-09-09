@@ -1,5 +1,5 @@
 
-import { DownloadIcon, Settings, UploadIcon } from 'lucide-react'
+import { DownloadIcon, Settings, UploadIcon, Trash2, FileUp, FileDown, Sparkles, Save } from 'lucide-react'
 import type { ResumeFontId } from '@/types/resume'
 import type { ResumeThemeId } from '@/lib/themes'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,9 @@ type ResumeToolbarProps = {
   templateId?: ResumeTemplateId | string | null
   onTemplateChange?: (id: ResumeTemplateId) => void
   onOpenJdHub?: () => void
+  onClearChat?: () => void
+  iconMode?: boolean
+  extraActions?: React.ReactNode
 }
 
 export function ResumeToolbar({
@@ -52,6 +55,9 @@ export function ResumeToolbar({
   templateId,
   onTemplateChange,
   onOpenJdHub,
+  onClearChat,
+  iconMode = false,
+  extraActions,
 }: ResumeToolbarProps) {
   const getSaveStatus = () => {
     if (saving) return 'Saving...'
@@ -112,6 +118,9 @@ export function ResumeToolbar({
           <div className="space-y-3 pt-2 border-t border-border">
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" className="text-xs h-8 w-full" variant="secondary" onClick={onOpenJdHub}>Analyze JD</Button>
+              <Button size="sm" className="text-xs h-8 w-full" variant="outline" onClick={onClearChat}>
+                <Trash2 className="w-3 h-3 mr-1" /> Clear Chat
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="text-xs h-8 w-full" disabled={!!exporting} aria-busy={!!exporting}>
@@ -183,20 +192,19 @@ export function ResumeToolbar({
   }
 
   return (
-    <div className="resume-toolbar">
-      <div className="px-6 py-3">
-        <div className="flex items-center justify-between">
-          {/* Left side - Title */}
-          <div className="flex items-center gap-4">
+    <div className="resume-toolbar border-b border-border bg-background/70 backdrop-blur">
+      <div className="px-6 py-2">
+        <div className="flex items-center gap-3">
+          {/* Title + Save status */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <input
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              className="text-lg font-medium text-foreground bg-transparent border-0 outline-none focus:ring-0 px-0"
+              className="text-base font-medium text-foreground bg-transparent border-0 outline-none focus:ring-0 px-0 truncate"
               placeholder="Untitled Resume"
-              style={{ minWidth: '200px' }}
             />
             {getSaveStatus() && (
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
                 {(saving || hasUnsavedChanges) && (
                   <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -213,51 +221,37 @@ export function ResumeToolbar({
             )}
           </div>
 
-          {/* Right side - Actions */}
-          <div className="flex items-center gap-3">
-            <ThemeSelector value={themeId} onChange={onThemeChange} />
-            <FontSelector value={fontId} onChange={onFontChange} />
-            <TemplateSelector value={templateId as any} onChange={onTemplateChange} />
-            <Button variant="outline" className="text-sm" onClick={onOpenJdHub}>Analyze JD</Button>
-
-            {/* Export Dropdown */}
-            <div className="relative group">
-              <Button 
-                variant="ghost"
-                className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              >
-                {exporting && (
-                  <svg className="animate-spin h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                )}
-                Export
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </Button>
-              <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
-                <button
-                  onClick={onExportPdf}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  PDF
-                </button>
-                <button
-                  onClick={onExportDocx}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Word
-                </button>
-              </div>
-            </div>
-            {/* Import PDF */}
-            <div>
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            <ThemeSelector value={themeId} onChange={onThemeChange} mode={iconMode ? 'icon' : 'default'} />
+            <FontSelector value={fontId} onChange={onFontChange} mode={iconMode ? 'icon' : 'default'} />
+            <TemplateSelector value={templateId as any} onChange={onTemplateChange} mode={iconMode ? 'icon' : 'default'} />
+            {extraActions}
+            <Button variant={iconMode ? 'ghost' : 'outline'} size={iconMode ? 'icon' : 'sm'} onClick={onOpenJdHub} aria-label="Analyze JD">
+              {iconMode ? <Sparkles className="h-4 w-4" /> : 'Analyze JD'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={iconMode ? 'ghost' : 'outline'} size={iconMode ? 'icon' : 'sm'} disabled={!!exporting} aria-busy={!!exporting} aria-label="Export">
+                  {iconMode ? (
+                    exporting ? <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> : <FileDown className="h-4 w-4" />
+                  ) : (
+                    <>
+                      {exporting && <svg className="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>}
+                      Export
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-32">
+                <DropdownMenuItem onClick={onExportPdf} disabled={!!exporting}>PDF</DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportDocx} disabled={!!exporting}>Word</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <label className="inline-flex items-center">
               <input
                 type="file"
                 accept="application/pdf"
-                id="resume-import-pdf"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0]
@@ -265,10 +259,16 @@ export function ResumeToolbar({
                   e.currentTarget.value = ''
                 }}
               />
-              <label htmlFor="resume-import-pdf">
-                <Button variant="outline" className="text-sm" disabled={!!importing}>Import PDF</Button>
-              </label>
-            </div>
+              <Button variant={iconMode ? 'ghost' : 'outline'} size={iconMode ? 'icon' : 'sm'} disabled={!!importing} aria-label="Import PDF" onClick={(ev) => {
+                const input = (ev.currentTarget.previousSibling as HTMLInputElement)
+                input.click()
+              }}>
+                {iconMode ? <FileUp className="h-4 w-4" /> : 'Import PDF'}
+              </Button>
+            </label>
+            <Button size={iconMode ? 'icon' : 'sm'} className={iconMode ? 'h-8 w-8' : 'text-xs h-8'} onClick={onSave} disabled={saving} aria-label="Save">
+              {iconMode ? <Save className="h-4 w-4" /> : (saving ? 'Saving...' : 'Save Changes')}
+            </Button>
           </div>
         </div>
       </div>

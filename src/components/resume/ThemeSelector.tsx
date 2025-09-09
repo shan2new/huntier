@@ -7,16 +7,24 @@ import { cn } from '@/lib/utils'
 type ThemeSelectorProps = {
   value?: ResumeThemeId | string
   onChange?: (id: ResumeThemeId) => void
+  mode?: 'default' | 'icon'
 }
 
-export function ThemeSelector({ value, onChange }: ThemeSelectorProps) {
+export function ThemeSelector({ value, onChange, mode = 'default' }: ThemeSelectorProps) {
   const current = getResumeTheme((value as any) || 'minimal')
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="text-xs">
-        <div className={cn('h-4 w-4 rounded-sm', current.previewAccent)} /> {current.name}
-        </Button>
+        {mode === 'icon' ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Theme">
+            <div className={cn('h-4 w-4 rounded-sm', current.previewAccent)} />
+            <span className="sr-only">Theme</span>
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="text-xs">
+            <div className={cn('h-4 w-4 rounded-sm', current.previewAccent)} /> {current.name}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="center" className="w-[320px] p-0">
         <ScrollArea className="h-[320px] p-2">

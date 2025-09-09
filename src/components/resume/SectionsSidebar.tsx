@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Briefcase, Code2, FileText, GraduationCap, GripVertical, Minus, Plus, SquareStack, Trophy, Users, Award } from 'lucide-react'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Button } from '@/components/ui/button'
 
 type Section = {
   id: string
@@ -90,27 +92,29 @@ export function SectionsSidebar({
           next = type
         }
       })
-      if (next !== activeType) setActiveType(next)
+      setActiveType((prev) => (prev === next ? prev : next))
     }
     handler()
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
-  }, [activeType, added])
+  }, [added])
 
+  // Compact popover menu for top toolbar usage
   return (
-    <div className="bg-card rounded-lg shadow-sm border border-border p-4 slide-in-left sections-sidebar">
-      <div className="flex items-baseline gap-2 mb-3">
-        <SquareStack className="w-4 h-4" />
-        <h3 className="text-sm font-medium text-card-foreground">Sections</h3>    
-      </div>
-
-      <div className="space-y-6">
-        <div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sections">
+          <SquareStack className="w-4 h-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[320px] p-3">
+        <div className="space-y-4">
+          <div className="text-xs font-medium text-muted-foreground">Current sections</div>
           <ul className="space-y-2">
             {added.map((s, index) => (
               <li
                 key={s.type}
-                className={`group flex items-center justify-between rounded-md border border-border bg-background px-2 py-2 transition-all sections-sidebar-item ${dragIndex === index ? 'opacity-60' : ''} ${activeType === s.type ? 'bg-muted/50 border-primary' : ''}`}
+                className={`group flex items-center justify-between rounded-md border border-border bg-background px-2 py-2 transition-all ${dragIndex === index ? 'opacity-60' : ''} ${activeType === s.type ? 'bg-muted/50 border-primary' : ''}`}
                 draggable={s.type !== 'summary'}
                 onDragStart={s.type !== 'summary' ? handleDragStart(index) : undefined}
                 onDragOver={s.type !== 'summary' ? handleDragOver(index) : undefined}
@@ -144,36 +148,36 @@ export function SectionsSidebar({
               </li>
             ))}
           </ul>
-        </div>
 
-        {more.length > 0 && (
-          <div>
-            <div className="text-xs font-medium text-muted-foreground mb-2">More</div>
-            <ul className="space-y-2">
-              {more.map((m) => (
-                <li
-                  key={m.type}
-                  className="group flex items-center justify-between rounded-md border border-border bg-background px-2 py-2 transition-all sections-sidebar-item"
-                >
-                  <div className="flex items-center gap-2 text-sm text-card-foreground/90">
-                    <span className="text-muted-foreground">{m.icon ?? iconForType[m.type] ?? <FileText className="h-4 w-4" />}</span>
-                    <span className="truncate max-w-[10rem]">{m.title}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="rounded-md p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => onAddSection(m.type, m.title)}
-                    aria-label={`Add ${m.title}`}
+          {more.length > 0 && (
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-2">Add more</div>
+              <ul className="space-y-2">
+                {more.map((m) => (
+                  <li
+                    key={m.type}
+                    className="group flex items-center justify-between rounded-md border border-border bg-background px-2 py-2 transition-all"
                   >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
+                    <div className="flex items-center gap-2 text-sm text-card-foreground/90">
+                      <span className="text-muted-foreground">{m.icon ?? iconForType[m.type] ?? <FileText className="h-4 w-4" />}</span>
+                      <span className="truncate max-w-[10rem]">{m.title}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded-md p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => onAddSection(m.type, m.title)}
+                      aria-label={`Add ${m.title}`}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 

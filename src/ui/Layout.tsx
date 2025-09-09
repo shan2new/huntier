@@ -8,7 +8,7 @@ import { getProfileWithRefresh } from '@/lib/api'
 import { SplashLoader } from '@/components/SplashLoader'
 import { ProfileCompletionDialog } from '@/components/ProfileCompletionDialog'
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarInset, SidebarProvider, SidebarRail } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 import MobileTopBar from '@/components/mobile/MobileTopBar'
 
@@ -80,7 +80,7 @@ export function Layout() {
   }
 
   return (
-    <SidebarProvider className="bg-accent/20">
+    <SidebarProvider defaultOpen={false} className="bg-accent/20">
         {/* Blocking profile completion dialog */}
         <ProfileCompletionDialog
           open={showProfileDialog}
@@ -93,15 +93,18 @@ export function Layout() {
         />
         {/* Shell: sidebar + content */}
         <AppSidebar />
-        <SidebarRail />
         <SidebarInset className="h-full w-full">
           <div className="flex flex-col h-full w-full">
+            {/* Global sidebar toggle */}
+            <div className="fixed left-3 top-3 z-20">
+              <SidebarTrigger />
+            </div>
             {isMobile && !excludeMobileShell ? <MobileTopBar /> : null}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className={`h-full w-full ${isMobile && !excludeMobileShell ? 'pt-4 pb-6 px-3' : 'py-6'}`}
+              className={`h-full w-full ${isMobile && !excludeMobileShell ? 'pt-4 pb-6 px-3' : (excludeMobileShell ? 'py-0' : 'py-6')}`}
             >
               <Outlet />
             </motion.div>

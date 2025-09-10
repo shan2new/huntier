@@ -1,3 +1,8 @@
+import { getResumeTheme } from '@/lib/themes'
+import { getResumeFont } from '@/lib/fonts'
+import { getResumeTemplate } from '@/lib/templates'
+import { SidebarBand } from '@/components/resume/SidebarBand'
+
 type ResumePrintDocumentProps = {
   data: {
     name?: string
@@ -5,11 +10,6 @@ type ResumePrintDocumentProps = {
     sections?: Array<any>
   }
 }
-
-import { getResumeTheme } from '@/lib/themes'
-import { getResumeFont } from '@/lib/fonts'
-import { getResumeTemplate } from '@/lib/templates'
-import { SidebarBand } from '@/components/resume/SidebarBand'
 
 export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
   const pi = data.personal_info || {}
@@ -26,7 +26,7 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
 
   const theme = getResumeTheme((data as any)?.theme?.id || 'minimal')
   const chosen = getResumeFont(((data as any)?.theme?.font) || null)
-  const style = { colorScheme: 'light' as const, fontFamily: (chosen?.stack || theme.fontFamily) }
+  const style = { colorScheme: 'light' as const, fontFamily: (chosen.stack || theme.fontFamily) }
   // Ensure symmetric horizontal padding for print and screen
   const contentClass = `${theme.contentClass || 'px-16 py-16'} space-y-8 resume-content ${theme.bodyClass}`
   const template = getResumeTemplate((data as any)?.template_id || 'single')
@@ -305,30 +305,33 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
           </div>
         </div>
 
-        {/* Sections */}
+        {/* Sections - respect current order */}
         {template.layout.kind === 'singleColumn' ? (
           <div className="space-y-8">
-            <SummaryBlock />
-            <ExperienceBlock />
-            <EducationBlock />
-            <AchievementsBlock />
-            <ProjectsBlock />
-            <CertificationsBlock />
-            <SkillsBlock />
+            {sections.map((s, i) => renderByType(s.type, i))}
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-8">
             <div className={`${spanClass(template.layout.leftColSpan || 1)} space-y-8`}>
               {template.leftBand?.enabled && (
-                <SidebarBand 
+                <SidebarBand
                   photoUrl={(data as any)?.personal_info?.photoUrl || null}
                   nameInitial={(data as any)?.personal_info?.fullName ? String((data as any)?.personal_info?.fullName).trim().charAt(0).toUpperCase() : null}
                 />
               )}
-              {template.layout.left.map((t, i) => renderByType(t, i))}
+              {(() => {
+                const leftTypes = new Set(template.layout.kind === 'twoColumn' ? (template.layout as any).left : [])
+                const left = sections.filter((s) => leftTypes.has(s.type))
+                return left.map((s, i) => renderByType(s.type, i))
+              })()}
             </div>
             <div className={`${spanClass(template.layout.rightColSpan || 2)} space-y-8`}>
-              {template.layout.right.map((t, i) => renderByType(t, i))}
+              {(() => {
+                const leftTypes = new Set(template.layout.kind === 'twoColumn' ? (template.layout as any).left : [])
+                const rightTypes = new Set(template.layout.kind === 'twoColumn' ? (template.layout as any).right : [])
+                const right = sections.filter((s) => rightTypes.has(s.type) || !leftTypes.has(s.type))
+                return right.map((s, i) => renderByType(s.type, i))
+              })()}
             </div>
           </div>
         )}

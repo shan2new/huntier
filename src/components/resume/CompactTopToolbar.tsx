@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 // import { ThemeSelector } from '@/components/resume/ThemeSelector'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { SectionsSidebar } from '@/components/resume/SectionsSidebar'
 
 
 type SectionMeta = { type: string; title: string; icon?: React.ReactNode }
@@ -28,6 +29,9 @@ type CompactTopToolbarProps = {
 
   availableSections?: Array<SectionMeta>
   onAddSection?: (type: string, title: string) => void
+  sections?: Array<{ id: string; type: string; title: string; order: number }>
+  onRemoveSection?: (type: string) => void
+  onReorderSections?: (fromIndex: number, toIndex: number) => void
 
   onOpenJdHub?: () => void
   onClearChat?: () => void
@@ -46,6 +50,11 @@ export function CompactTopToolbar({
   saving,
   hasUnsavedChanges,
   lastSaved,
+  sections,
+  availableSections,
+  onAddSection,
+  onRemoveSection,
+  onReorderSections,
   onOpenJdHub,
   onClearChat,
   onExportPdf,
@@ -77,6 +86,18 @@ export function CompactTopToolbar({
 
         {/* Right: actions */}
         <div className="flex items-center gap-1">
+          {/* Sections manager (page icon dropdown with drag & drop) */}
+          <SectionsSidebar
+            sections={Array.isArray(sections) ? sections : []}
+            availableSections={availableSections || []}
+            onAddSection={(t, ti) => onAddSection?.(t, ti)}
+            onRemoveSection={(t) => onRemoveSection?.(t)}
+            onReorder={(from, to) => onReorderSections?.(from, to)}
+            onScrollTo={(type) => {
+              const el = document.querySelector(`[data-section="${type}"]`)
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }}
+          />
           <Button variant="ghost" size="icon" className="h-9 w-9" onClick={onOpenJdHub} title="Analyze JD">
             <Sparkles className="h-4 w-4" />
           </Button>

@@ -12,6 +12,8 @@ type ResumeEditorContextValue = {
   importing: boolean
   skillsTags: string[]
   availableSections: Array<{ type: string; title: string }>
+  removeSection: (type: string) => void
+  reorderSections: (fromIndex: number, toIndex: number) => void
   // topbar
   setName: (v: string) => void
   setTemplateId: (v: string | null) => void
@@ -102,6 +104,23 @@ export function ResumeEditorProvider({ resumeId, children }: ProviderProps) {
       { type: 'leadership', title: 'Leadership' },
       { type: 'certifications', title: 'Certifications' },
     ],
+    removeSection: (type: string) => {
+      // Remove first matching section of this type
+      const order: string[] = (resume as any).sectionOrder || []
+      const entities: Record<string, any> = (resume as any).sections?.entities || {}
+      const match = order
+        .map((id: string) => entities[id])
+        .find((s: any) => s && s.type === type)
+      if (match?.id) dispatch(resumeEditorActions.removeSection({ id: match.id }))
+    },
+    reorderSections: (fromIndex: number, toIndex: number) => {
+      const current: string[] = (resume as any).sectionOrder || []
+      if (fromIndex < 0 || toIndex < 0 || fromIndex >= current.length || toIndex >= current.length) return
+      const next = current.slice()
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      dispatch(resumeEditorActions.reorderSections({ order: next }))
+    },
     // topbar
     setName: (v: string) => dispatch(resumeEditorActions.setMeta({ name: v })),
     setTemplateId: (v: string | null) => dispatch(resumeEditorActions.setMeta({ templateId: v as any })),

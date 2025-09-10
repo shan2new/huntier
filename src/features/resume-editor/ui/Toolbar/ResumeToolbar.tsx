@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
+import { selectResumeOutline } from '../../state/selectors'
 import { useResumeEditor } from '../../context/ResumeEditorContext'
 import LoadingDialog from '@/components/ui/loading-dialog'
 import { CompactTopToolbar } from '@/components/resume/CompactTopToolbar'
 
 export function ResumeToolbar() {
   const editor = useResumeEditor()
+  const sections = useSelector(selectResumeOutline) as Array<any>
   const [busy, setBusy] = useState<null | { title: string; description?: string }>(null)
   useEffect(() => {
     if (editor.importing) {
@@ -29,8 +32,11 @@ export function ResumeToolbar() {
           onFontChange={editor.setFontId}
           themeId={editor.resumeData.theme.id}
           onThemeChange={editor.setThemeId}
+          sections={sections as any}
           availableSections={editor.availableSections}
           onAddSection={editor.addSection}
+          onRemoveSection={editor.removeSection}
+          onReorderSections={editor.reorderSections}
           onOpenJdHub={() => {}}
           onClearChat={() => {}}
           onExportPdf={() => { setBusy({ title: 'Exporting…', description: 'Preparing your document.' }); editor.exportPdf() }}
@@ -41,6 +47,7 @@ export function ResumeToolbar() {
           canExport={true}
           onSave={() => editor.handleSave(false)}
         />
+        {/* Sections dropdown moved into CompactTopToolbar */}
         <LoadingDialog open={!!busy} title={busy?.title} description={busy?.description} />
     </div>
   )

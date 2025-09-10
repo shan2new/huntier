@@ -72,8 +72,10 @@ function* saveResume(_action: any): any {
 function* loadResume(action: any): any {
   const resumeId: string = action.payload
   if (!resumeId || resumeId === 'new') return
-  const token: string = yield call(getToken)
-  const data: any = yield call(getResumeWithRefresh, resumeId, async () => token)
+  try {
+    yield put(resumeEditorActions.setLoading(true))
+    const token: string = yield call(getToken)
+    const data: any = yield call(getResumeWithRefresh, resumeId, async () => token)
   // Hydrate normalized state
   yield put(resumeEditorActions.resetAll())
   yield put(resumeEditorActions.setMeta({ id: data.id, name: data.name || 'Untitled Resume', templateId: data.template_id || null, themeId: (data.theme?.id || 'minimal'), fontId: (data.theme?.font || 'inter') }))
@@ -94,6 +96,9 @@ function* loadResume(action: any): any {
   yield put(resumeEditorActions.hydrateAchievements({ items: ach }))
   yield put(resumeEditorActions.hydrateProjects({ items: proj }))
   yield put(resumeEditorActions.hydrateCertifications({ items: cert }))
+  } finally {
+    yield put(resumeEditorActions.setLoading(false))
+  }
 }
 
 export default function* resumeSaga() {

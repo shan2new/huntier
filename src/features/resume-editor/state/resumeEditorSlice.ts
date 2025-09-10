@@ -21,7 +21,7 @@ export type NormalizedResumeState = {
   personalInfo: any
   summary: string
   skills: string[]
-  flags: { saving: boolean; hasUnsavedChanges: boolean; exporting: boolean; importing: boolean }
+  flags: { saving: boolean; hasUnsavedChanges: boolean; exporting: boolean; importing: boolean; loading: boolean }
 }
 
 const sectionsAdapter = createEntityAdapter<SectionEntity>({ sortComparer: (a, b) => a.order - b.order })
@@ -53,7 +53,7 @@ const initialState: NormalizedResumeState = {
   personalInfo: {},
   summary: '',
   skills: [],
-  flags: { saving: false, hasUnsavedChanges: false, exporting: false, importing: false },
+  flags: { saving: false, hasUnsavedChanges: false, exporting: false, importing: false, loading: false },
 }
 
 const slice = createSlice({
@@ -110,6 +110,7 @@ const slice = createSlice({
     setSaving(state, action: PayloadAction<boolean>) { state.flags.saving = action.payload },
     setExporting(state, action: PayloadAction<boolean>) { state.flags.exporting = action.payload },
     setImporting(state, action: PayloadAction<boolean>) { state.flags.importing = action.payload },
+    setLoading(state, action: PayloadAction<boolean>) { state.flags.loading = action.payload },
     setHasUnsaved(state, action: PayloadAction<boolean>) { state.flags.hasUnsavedChanges = action.payload },
 
     // Experience (normalized)

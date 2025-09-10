@@ -10,6 +10,7 @@ type ResumeEditorContextValue = {
   hasUnsavedChanges: boolean
   exporting: boolean
   importing: boolean
+  loading: boolean
   skillsTags: string[]
   availableSections: Array<{ type: string; title: string }>
   removeSection: (type: string) => void
@@ -95,6 +96,7 @@ export function ResumeEditorProvider({ resumeId, children }: ProviderProps) {
     hasUnsavedChanges: resume.flags.hasUnsavedChanges,
     exporting: resume.flags.exporting,
     importing: resume.flags.importing,
+    loading: (resume as any).flags.loading,
     skillsTags: Array.isArray(resume.skills) ? resume.skills : [],
     availableSections: [
       { type: 'education', title: 'Education' },

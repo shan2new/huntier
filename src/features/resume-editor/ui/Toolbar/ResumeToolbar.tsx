@@ -14,10 +14,12 @@ export function ResumeToolbar() {
       setBusy({ title: 'Importing PDF…', description: 'Extracting your resume.' })
     } else if (editor.exporting) {
       setBusy({ title: 'Exporting…', description: 'Preparing your document.' })
+    } else if ((editor as any).loading) {
+      setBusy({ title: 'Loading…', description: 'Fetching your resume.' })
     } else {
       setBusy(null)
     }
-  }, [editor.importing, editor.exporting])
+  }, [editor.importing, editor.exporting, (editor as any).loading])
   return (
     <div className="resume-toolbar flex justify-around border-b border-border py-2">
         <CompactTopToolbar

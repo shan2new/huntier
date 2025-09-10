@@ -131,9 +131,9 @@ export function UpdateApplicationModalMobile(props: Props) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {app?.company?.logo_url ? (
-              <img src={app.company.logo_url} alt={app.company.name} className="w-10 h-10 rounded-xl object-cover border border-border" />
+              <img src={app.company.logo_url} alt={app.company.name} className="w-10 h-10 rounded-xl object-cover border border-border/60" />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center border border-border/60">
                 <Building2 className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
@@ -217,7 +217,7 @@ export function UpdateApplicationModalMobile(props: Props) {
         <Card>
           <CardContent className="p-0">
             <div className="space-y-3">
-              <div className="flex gap-2 border-b px-2 pt-0">
+              <div className="flex gap-2 border-b border-border/60 px-2 pt-0">
                 <button onClick={() => setActiveTab('notes')} className={cn('px-3 py-2 text-sm font-medium transition-colors relative', activeTab === 'notes' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>Notes{activeTab === 'notes' && (<div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />)}</button>
                 <button onClick={() => setActiveTab('conversations')} className={cn('px-3 py-2 text-sm font-medium transition-colors relative', activeTab === 'conversations' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>Conversations{activeTab === 'conversations' && (<div className='absolute bottom-0 left-0 right-0 h-0.5 bg-primary' />)}</button>
               </div>

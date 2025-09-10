@@ -1,5 +1,7 @@
+import { useRef, useState } from "react"
+import { useAuth } from "@clerk/clerk-react"
 import { motion } from "motion/react"
-import { Building2, ExternalLink, Plus, Target, Trash2, Users, ImagePlus, X, Loader2, HelpCircle } from "lucide-react"
+import { Building2, ExternalLink, HelpCircle, ImagePlus, Loader2, Plus, Target, Trash2, Users, X } from "lucide-react"
 import type { Company, Platform } from "@/lib/api"
 import { cn, extractHostname } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,8 +20,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { PlatformCombobox } from "@/components/PlatformCombobox"
 import { JobUrlToggleField } from "@/components/application-form/JobUrlToggleField"
 import { extractApplicationDraftFromImagesWithRefresh, getApplicationDraftWithRefresh } from "@/lib/api"
-import { useAuth } from "@clerk/clerk-react"
-import { useRef, useState } from "react"
 
 type Contact = {
   id: string
@@ -144,7 +144,7 @@ export function CreateApplicationModalMobile(props: Props) {
 
         const toLpa = (v: any): number | null => {
           if (v == null) return null
-          let n = Number(v)
+          const n = Number(v)
           if (!isFinite(n)) return null
           if (n >= 1000) return 30
           if (n < 10 || n > 90) return 30
@@ -197,9 +197,9 @@ export function CreateApplicationModalMobile(props: Props) {
             <>
               <div className="flex items-center gap-3 min-w-0">
                 {company.logo_url ? (
-                  <img src={company.logo_url} alt={company.name} className="w-8 h-8 rounded-xl object-cover border border-border" />
+                  <img src={company.logo_url} alt={company.name} className="w-8 h-8 rounded-xl object-cover border border-border/60" />
                 ) : (
-                  <div className="w-8 h-8 rounded-xl bg-muted/30 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-muted/40 flex items-center justify-center border border-border/60">
                     <Building2 className="h-4 w-4" />
                   </div>
                 )}
@@ -231,7 +231,7 @@ export function CreateApplicationModalMobile(props: Props) {
                 onChange={(c) => { setCompany(c); setCompanySearchOpen(false) }}
                 open={companySearchOpen}
                 onOpenChange={setCompanySearchOpen}
-                variant="dialog"
+                className="max-w-full"
                 triggerAsChild={
                   <Button variant="outline" size="sm" className="h-8 px-3">Change</Button>
                 }
@@ -257,9 +257,9 @@ export function CreateApplicationModalMobile(props: Props) {
               <div
                 className="mt-2 p-4 rounded-lg border border-dashed border-border text-center bg-muted/20 hover:bg-muted/30 transition-colors"
                 onDragOver={(e) => { e.preventDefault() }}
-                onDrop={(e) => { e.preventDefault(); onFilesAdded(Array.from(e.dataTransfer.files || [])) }}
+                onDrop={(e) => { e.preventDefault(); onFilesAdded(Array.from(e.dataTransfer.files)) }}
                 onPaste={(e) => {
-                  const files = Array.from(e.clipboardData?.files || [])
+                  const files = Array.from(e.clipboardData.files)
                   if (files.length) onFilesAdded(files)
                 }}
               >
@@ -331,7 +331,7 @@ export function CreateApplicationModalMobile(props: Props) {
 
                         const toLpa = (v: any): number | null => {
                           if (v == null) return null
-                          let n = Number(v)
+                          const n = Number(v)
                           if (!isFinite(n)) return null
                           if (n >= 1000) return 30
                           if (n < 10 || n > 90) return 30
@@ -377,7 +377,7 @@ export function CreateApplicationModalMobile(props: Props) {
               <Card className="mt-2">
                 <CardContent className="p-0">
                   <div className="space-y-3">
-                    <div className="flex gap-2 border-b px-4 pt-4">
+                    <div className="flex gap-2 border-b border-border/60 px-4 pt-4">
                       <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                       <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                     </div>

@@ -124,7 +124,7 @@ export function AsyncSelect<T>({
   )
 
   const content = (
-    <div style={{ width: '100%' }}>
+    <div>
       <div className="p-3 border-b">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -226,7 +226,7 @@ export function AsyncSelect<T>({
   }
 
   return (
-    <div className={className} style={computedWidth ? { width: computedWidth } : undefined}>
+    <div className={className}>
       <Popover open={isOpen} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           {triggerAsChild || defaultTrigger}

@@ -91,7 +91,7 @@ export function CompanySearchCombobox({ value, onChange, placeholder = 'Search c
       onSelect={(c: Company) => onChange(c)}
       label="Company"
       placeholder={placeholder}
-      className={`${variant === 'dialog' ? '' : 'w-[600px]'} ${className || ''}`}
+      className={`${variant === 'dialog' ? '' : 'max-w-[600px] w-full'} ${className || ''}`}
       variant={variant}
       open={openProp}
       onOpenChange={onOpenChange}

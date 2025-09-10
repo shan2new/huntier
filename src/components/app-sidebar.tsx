@@ -123,11 +123,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="text-lg font-bold group-data-[collapsible=icon]:hidden">Huntier</span>
                   <Badge variant="secondary" className="h-4 px-1 py-0 text-[10px] rounded-xs">Beta</Badge>
                 </div>
+                <SidebarTrigger className="ml-auto" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarTrigger className="ml-auto" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

@@ -640,6 +640,19 @@ export async function deleteContactChannelWithRefresh(
   return apiWithTokenRefresh(`/v1/contacts/${id}/channels/${channelId}/delete`, getToken, { method: 'POST' })
 }
 
+// Referrers
+export async function createReferrerWithRefresh(
+  getToken: () => Promise<string>,
+  body: {
+    name: string
+    title?: string | null
+    channels?: Array<{ medium: 'email' | 'linkedin' | 'phone' | 'whatsapp' | 'other'; channel_value: string }>
+    company_ids?: Array<string>
+  }
+) {
+  return apiWithTokenRefresh(`/v1/referrers`, getToken, { method: 'POST', body: JSON.stringify(body) })
+}
+
 // Platforms
 /** @deprecated Use listPlatformsWithRefresh instead */
 export async function listPlatforms<T>(token: string): Promise<T> {

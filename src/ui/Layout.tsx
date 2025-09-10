@@ -8,10 +8,21 @@ import { getProfileWithRefresh } from '@/lib/api'
 import { SplashLoader } from '@/components/SplashLoader'
 import { ProfileCompletionDialog } from '@/components/ProfileCompletionDialog'
 import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 import MobileTopBar from '@/components/mobile/MobileTopBar'
 
+
+function GlobalSidebarToggle() {
+  const { open, openMobile, isMobile } = useSidebar()
+  const isVisible = isMobile ? !openMobile : !open
+  if (!isVisible) return null
+  return (
+    <div className="fixed left-3 top-3 z-20">
+      <SidebarTrigger />
+    </div>
+  )
+}
 
 export function Layout() {
   const { isSignedIn, isLoaded } = useAuth()
@@ -96,9 +107,7 @@ export function Layout() {
         <SidebarInset className="h-full w-full">
           <div className="flex flex-col h-full w-full">
             {/* Global sidebar toggle */}
-            <div className="fixed left-3 top-3 z-20">
-              <SidebarTrigger />
-            </div>
+            <GlobalSidebarToggle />
             {isMobile && !excludeMobileShell ? <MobileTopBar /> : null}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

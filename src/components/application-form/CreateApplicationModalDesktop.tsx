@@ -199,15 +199,15 @@ export function CreateApplicationModalDesktop(props: Props) {
   return (
     <TooltipProvider>
       <div className="flex flex-col">
-        <ResponsiveModalHeader className="px-6 py-4 border-b bg-neutral-950/60 backdrop-blur-sm">
+        <ResponsiveModalHeader className="px-6 py-4 border-b border-border/60 bg-card/90 backdrop-blur-sm">
         <div className="flex items-center justify-between gap-3">
           {company ? (
             <>
               <div className="flex items-center gap-3 min-w-0">
                 {company.logo_url ? (
-                  <img src={company.logo_url} alt={company.name} className="w-10 h-10 rounded-xl object-cover border border-border" />
+                  <img src={company.logo_url} alt={company.name} className="w-10 h-10 rounded-xl object-cover border border-border/60" />
                 ) : (
-                  <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center border border-border/60">
                     <Building2 className="h-5 w-5" />
                   </div>
                 )}
@@ -251,7 +251,7 @@ export function CreateApplicationModalDesktop(props: Props) {
 
         {company ? (
           <div className="p-6 relative grid grid-cols-5 gap-6">
-            <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-white/10 pointer-events-none" aria-hidden="true" />
+            <div className="absolute inset-y-0 left-[60%] -translate-x-1/2 w-px bg-border/60 pointer-events-none" aria-hidden="true" />
 
             {/* Left Column */}
             <div className="col-span-3 pr-6 space-y-4">
@@ -266,10 +266,10 @@ export function CreateApplicationModalDesktop(props: Props) {
               </div>
               <JobUrlToggleField include={includeJobUrl} onIncludeChange={setIncludeJobUrl} url={jobUrl} onUrlChange={setJobUrl} />
 
-              <Card className="mt-2 bg-neutral-900/80">
+              <Card className="mt-2 bg-card/80 border border-border/60">
                 <CardContent className="p-0">
                   <div className="space-y-3">
-                    <div className="flex gap-2 border-b px-6 pt-6">
+                    <div className="flex gap-2 border-b border-border/60 px-6 pt-6">
                       <button onClick={() => setActiveTab('notes')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'notes' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Notes{activeTab === 'notes' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                       <button onClick={() => setActiveTab('conversations')} className={cn("px-3 py-2 text-sm font-medium transition-colors relative", activeTab === 'conversations' ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>Conversations{activeTab === 'conversations' && (<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />)}</button>
                     </div>
@@ -300,7 +300,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               />
 
               {/* Source & Platform */}
-              <Card className="bg-neutral-900/80">
+              <Card className="bg-card/80 border border-border/60">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Target className="h-4 w-4" />Source & Platform</Label>
@@ -323,7 +323,7 @@ export function CreateApplicationModalDesktop(props: Props) {
               </Card>
 
               {/* Contacts */}
-              <Card className="bg-neutral-900/80">
+              <Card className="bg-card/80 border border-border/60">
                 <CardContent className="space-y-3 pt-3">
                   <div className="flex items-center gap-2">
                     <Label className="flex items-center gap-2"><Users className="h-4 w-4" />Contacts</Label>
@@ -338,7 +338,7 @@ export function CreateApplicationModalDesktop(props: Props) {
                   </div>
                   <div className="space-y-2">
                     {contacts.map((contact) => (
-                      <div key={contact.id} className="flex items-center gap-2 p-2 rounded-md border border-border bg-input/70 hover:bg-background/80 transition-colors group">
+                      <div key={contact.id} className="flex items-center gap-2 p-2 rounded-md border border-border/60 bg-input/50 hover:bg-accent/50 transition-colors group">
                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-medium">{contact.name.charAt(0).toUpperCase()}</span>
                         </div>
@@ -396,7 +396,7 @@ export function CreateApplicationModalDesktop(props: Props) {
                       <div key={idx} className="relative group">
                         <img src={src} className="w-full h-20 object-cover rounded-md border border-border" />
                         <button
-                          className="absolute -top-1.5 -right-1.5 bg-background/90 border border-border rounded-full p-0.5 opacity-0 group-hover:opacity-100"
+                          className="absolute -top-1.5 -right-1.5 bg-background/90 border border-border/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100"
                           onClick={() => {
                             URL.revokeObjectURL(jdPreviews[idx])
                             setJdPreviews((prev) => prev.filter((_, i) => i !== idx))
@@ -417,7 +417,7 @@ export function CreateApplicationModalDesktop(props: Props) {
           </div>
         )}
 
-        <ResponsiveModalFooter className="px-6 py-3 bg-neutral-950/70 backdrop-blur-sm border-t">
+        <ResponsiveModalFooter className="px-6 py-3 bg-card/90 backdrop-blur-sm border-t border-border/60">
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center text-destructive text-sm min-h-[1.25rem]">
               {error && (

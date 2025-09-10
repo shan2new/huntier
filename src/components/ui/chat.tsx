@@ -191,7 +191,7 @@ export function Chat({
   )
 
   return (
-    <ChatContainer className={cn("bg-background/70 backdrop-blur p-2 border-l border-border", className)}>
+    <ChatContainer className={cn("bg-accent p-3 border-l border-border", className)}>
       {isEmpty && append && suggestions ? (
         <PromptSuggestions
           label="Try these prompts ✨"

@@ -2,12 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square } from "lucide-react"
+import { ArrowUp, Info, Mic, Paperclip, Square } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useAudioRecording } from "@/hooks/use-audio-recording"
 import { useAutosizeTextArea } from "@/hooks/use-autosize-textarea"
-import { AudioVisualizer } from "@/components/ui/audio-visualizer"
 import { Button } from "@/components/ui/button"
 import { FilePreview } from "@/components/ui/file-preview"
 import { InterruptPrompt } from "@/components/ui/interrupt-prompt"
@@ -29,8 +28,8 @@ interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
 
 interface MessageInputWithAttachmentsProps extends MessageInputBaseProps {
   allowAttachments: true
-  files: File[] | null
-  setFiles: React.Dispatch<React.SetStateAction<File[] | null>>
+  files: Array<File> | null
+  setFiles: React.Dispatch<React.SetStateAction<Array<File> | null>>
   accept?: string
 }
 
@@ -57,8 +56,6 @@ export function MessageInput({
     isListening,
     isSpeechSupported,
     isRecording,
-    isTranscribing,
-    audioStream,
     toggleListening,
     stopRecording,
   } = useAudioRecording({
@@ -74,7 +71,7 @@ export function MessageInput({
     }
   }, [isGenerating])
 
-  const addFiles = (files: File[] | null) => {
+  const addFiles = (files: Array<File> | null) => {
     if (props.allowAttachments) {
       props.setFiles((currentFiles) => {
         if (currentFiles === null) {
@@ -113,8 +110,7 @@ export function MessageInput({
   }
 
   const onPaste = (event: React.ClipboardEvent) => {
-    const items = event.clipboardData?.items
-    if (!items) return
+    const items = event.clipboardData.items
 
     const text = event.clipboardData.getData("text")
     if (text && text.length > 500 && props.allowAttachments) {
@@ -162,13 +158,6 @@ export function MessageInput({
   }
 
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
-  const [textAreaHeight, setTextAreaHeight] = useState<number>(0)
-
-  useEffect(() => {
-    if (textAreaRef.current) {
-      setTextAreaHeight(textAreaRef.current.offsetHeight)
-    }
-  }, [props.value])
 
   const showFileList =
     props.allowAttachments && props.files && props.files.length > 0
@@ -218,11 +207,11 @@ export function MessageInput({
             })()}
           />
 
-          {props.allowAttachments && (
+          {props.allowAttachments && props.files && props.files.length > 0 && (
             <div className="absolute inset-x-3 bottom-0 z-20 overflow-x-scroll py-3">
               <div className="flex space-x-3">
                 <AnimatePresence mode="popLayout">
-                  {props.files?.map((file) => {
+                  {props.files.map((file) => {
                     return (
                       <FilePreview
                         key={file.name + String(file.lastModified)}
@@ -299,15 +288,7 @@ export function MessageInput({
         )}
       </div>
 
-      {props.allowAttachments && <FileUploadOverlay isDragging={isDragging} />}
-
-      <RecordingControls
-        isRecording={isRecording}
-        isTranscribing={isTranscribing}
-        audioStream={audioStream}
-        textAreaHeight={textAreaHeight}
-        onStopRecording={stopRecording}
-      />
+      {props.allowAttachments && props.files && props.files.length > 0 && <FileUploadOverlay isDragging={isDragging} />}
     </div>
   )
 }
@@ -345,7 +326,7 @@ function showFileUploadDialog(accept?: string) {
   input.accept = accept || "*/*"
   input.click()
 
-  return new Promise<File[] | null>((resolve) => {
+  return new Promise<Array<File> | null>((resolve) => {
     input.onchange = (e) => {
       const files = (e.currentTarget as HTMLInputElement).files
 
@@ -359,35 +340,7 @@ function showFileUploadDialog(accept?: string) {
   })
 }
 
-function TranscribingOverlay() {
-  return (
-    <motion.div
-      className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-background/80 backdrop-blur-sm"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-    >
-      <div className="relative">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <motion.div
-          className="absolute inset-0 h-8 w-8 animate-pulse rounded-full bg-primary/20"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1.2, opacity: 1 }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeInOut",
-          }}
-        />
-      </div>
-      <p className="mt-4 text-sm font-medium text-muted-foreground">
-        Transcribing audio...
-      </p>
-    </motion.div>
-  )
-}
+// TranscribingOverlay removed (unused)
 
 interface RecordingPromptProps {
   isVisible: boolean
@@ -422,46 +375,4 @@ function RecordingPrompt({ isVisible, onStopRecording }: RecordingPromptProps) {
   )
 }
 
-interface RecordingControlsProps {
-  isRecording: boolean
-  isTranscribing: boolean
-  audioStream: MediaStream | null
-  textAreaHeight: number
-  onStopRecording: () => void
-}
-
-function RecordingControls({
-  isRecording,
-  isTranscribing,
-  audioStream,
-  textAreaHeight,
-  onStopRecording,
-}: RecordingControlsProps) {
-  if (isRecording) {
-    return (
-      <div
-        className="absolute inset-[1px] z-50 overflow-hidden rounded-xl"
-        style={{ height: textAreaHeight - 2 }}
-      >
-        <AudioVisualizer
-          stream={audioStream}
-          isRecording={isRecording}
-          onClick={onStopRecording}
-        />
-      </div>
-    )
-  }
-
-  if (isTranscribing) {
-    return (
-      <div
-        className="absolute inset-[1px] z-50 overflow-hidden rounded-xl"
-        style={{ height: textAreaHeight - 2 }}
-      >
-        <TranscribingOverlay />
-      </div>
-    )
-  }
-
-  return null
-}
+// RecordingControls removed (unused)

@@ -1,4 +1,6 @@
 /* Tailwind v4 style (works with shadcn/ui) */
+
+@plugin "tailwind-scrollbar-hide";
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -72,6 +74,7 @@ html, body, #app {
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.20rem;
+  --highlight: oklch(0.852 0.199 91.936);
 }
 
 .dark {
@@ -107,6 +110,7 @@ html, body, #app {
   --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
   --sidebar-border: oklch(0.3618 0.0101 106.8928);
   --sidebar-ring: oklch(0.7731 0 0);
+  --highlight: oklch(0.852 0.199 91.936);
 }
 
 /* ---------------------------
@@ -239,6 +243,7 @@ html, body, #app {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-highlight: var(--highlight);
 }
 
 @layer base {

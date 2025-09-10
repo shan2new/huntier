@@ -308,9 +308,8 @@
   }
   @page {
     size: A4;
-    margin-top: 15mm;
-    margin-bottom: 15mm;
-    /* Add comfortable top/bottom margins, slightly narrower sides */
+    margin: 15mm 0mm;
+    /* Uniform margins on all sides for symmetric left/right spacing */
   }
   .document-viewer {
     background-color: white !important;
@@ -318,9 +317,9 @@
     padding: 0 !important;
   }
   .resume-document {
-    /* Use the printable content width inside @page margins */
-    width: 210mm !important; 
-    max-width: 210mm !important;
+    /* Fill the printable area defined by @page margins */
+    width: auto !important;
+    max-width: auto !important;
     min-height: auto !important;
     margin: 0 auto !important;
     box-shadow: none !important;

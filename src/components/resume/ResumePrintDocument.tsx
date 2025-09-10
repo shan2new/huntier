@@ -27,6 +27,7 @@ export function ResumePrintDocument({ data }: ResumePrintDocumentProps) {
   const theme = getResumeTheme((data as any)?.theme?.id || 'minimal')
   const chosen = getResumeFont(((data as any)?.theme?.font) || null)
   const style = { colorScheme: 'light' as const, fontFamily: (chosen?.stack || theme.fontFamily) }
+  // Ensure symmetric horizontal padding for print and screen
   const contentClass = `${theme.contentClass || 'px-16 py-16'} space-y-8 resume-content ${theme.bodyClass}`
   const template = getResumeTemplate((data as any)?.template_id || 'single')
 

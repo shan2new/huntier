@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Activity, BarChart3, Building2, CalendarClock, Flame, Layers, MessageSquare, RefreshCw, Sparkles } from 'lucide-react'
+import { Activity, BarChart3, Building2, CalendarClock, Flame, Layers, Sparkles } from 'lucide-react'
 import { useUser } from '@clerk/clerk-react'
-import type { FunnelAnalytics, Platform, PlatformAnalyticsItem, QARehearsalResponse } from '@/lib/api'
+import type { FunnelAnalytics, Platform, PlatformAnalyticsItem } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useApi } from '@/lib/use-api'
 import { useAuthToken } from '@/lib/auth'
-import { clearQARehearsalCacheWithRefresh, generateProfileQARehearsalWithRefresh, getFunnelAnalyticsWithRefresh, getPlatformAnalyticsWithRefresh, listPlatformsWithRefresh } from '@/lib/api'
+import { getFunnelAnalyticsWithRefresh, getPlatformAnalyticsWithRefresh, listPlatformsWithRefresh } from '@/lib/api'
 
 function StatCard({ title, value, icon: Icon, hint }: { title: string; value: number | string; icon: any; hint?: string }) {
   return (
@@ -28,27 +28,7 @@ function StatCard({ title, value, icon: Icon, hint }: { title: string; value: nu
   )
 }
 
-// Sanitize AI response to a safe, predictable shape
-function sanitizeQARehearsalResponse(input: any): QARehearsalResponse {
-  const safe: QARehearsalResponse = {
-    responses: {},
-    pitch: '',
-  }
-  if (!input || typeof input !== 'object') return safe
-  const r: any = input
-  const res: any = r.responses
-  if (res && typeof res === 'object') {
-    for (const [key, value] of Object.entries(res as Record<string, unknown>)) {
-      if (typeof value === 'string') {
-        const v = value.trim()
-        if (v) (safe.responses as any)[key] = v
-      }
-    }
-  }
-  if (typeof r.pitch === 'string') safe.pitch = r.pitch.trim()
-  if (typeof r.note === 'string') (safe as any).note = r.note.trim()
-  return safe
-}
+//
 
 function FunnelWidget() {
   const [data, setData] = useState<FunnelAnalytics | null>(null)
@@ -202,7 +182,7 @@ function PlatformPerformanceWidget() {
 }
 
 function StaleApplicationsWidget() {
-  const [items, setItems] = useState<Array<{ id: string; stage: string; time_in_stage_days: number }>>([])
+  const [items, setItems] = useState<Array<{ id: string; stage: string; time_in_stage_days: number; company_name: string; company_logo: string | null }>>([])
   const [loading, setLoading] = useState(true)
   const { apiCall } = useApi()
 
@@ -214,7 +194,13 @@ function StaleApplicationsWidget() {
         const apps = await apiCall<Array<any>>('/v1/applications')
         const now = Date.now()
         const mapped = apps
-          .map((a) => ({ id: a.id, stage: (a.stage?.id || a.stage) as string, time_in_stage_days: Math.floor((now - new Date(a.last_activity_at).getTime()) / 86400000) }))
+          .map((a) => ({
+            id: a.id,
+            stage: (a.stage?.id || a.stage) as string,
+            time_in_stage_days: Math.floor((now - new Date(a.last_activity_at).getTime()) / 86400000),
+            company_name: (a.company?.name) || (a.company_id ? String(a.company_id).slice(0, 8) : 'Unknown'),
+            company_logo: a.company?.logo_url || null,
+          }))
           .filter((x) => x.time_in_stage_days > 7)
           .sort((a, b) => b.time_in_stage_days - a.time_in_stage_days)
           .slice(0, 8)
@@ -260,7 +246,14 @@ function StaleApplicationsWidget() {
                 transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
                 className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2"
               >
-                <div className="text-xs truncate">{it.id.slice(0, 8)} • {it.stage}</div>
+                <div className="flex items-center gap-2 min-w-0">
+                  {it.company_logo ? (
+                    <img src={it.company_logo} alt={it.company_name} className="h-4 w-4 rounded-sm border border-border object-cover" />
+                  ) : (
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <div className="text-xs truncate">{it.company_name}</div>
+                </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Flame className="h-3 w-3 text-amber-500" />
                   <span>{it.time_in_stage_days} days</span>
@@ -275,116 +268,7 @@ function StaleApplicationsWidget() {
   )
 }
 
-function QARehearsalWidget() {
-  const { getToken } = useAuthToken()
-  const [rehearsal, setRehearsal] = useState<QARehearsalResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-
-  const fetchRehearsal = async (clearCache = false) => {
-    try {
-      if (clearCache) {
-        await clearQARehearsalCacheWithRefresh(getToken)
-      }
-      const response = await generateProfileQARehearsalWithRefresh(getToken)
-      const safe = sanitizeQARehearsalResponse(response as any)
-      const hasAny = !!(safe.pitch || safe.note || Object.keys(safe.responses).length > 0)
-      setRehearsal(hasAny ? safe : null)
-    } catch {
-      setRehearsal(null)
-    }
-  }
-
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      await fetchRehearsal()
-      setLoading(false)
-    })()
-  }, [getToken])
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    await fetchRehearsal(true) // Clear cache and regenerate
-    setRefreshing(false)
-  }
-
-  return (
-    <Card className="shadow-xs">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-primary/10">
-              <MessageSquare className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <div className="text-sm font-medium">Q&A Rehearsal</div>
-              <div className="text-xs text-muted-foreground">Interview-ready responses</div>
-            </div>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-1.5 rounded-md hover:bg-muted/50 transition-colors disabled:opacity-50"
-            title="Refresh AI responses"
-          >
-            <RefreshCw className={`h-4 w-4 text-muted-foreground ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : !rehearsal ? (
-          <div className="text-xs text-muted-foreground py-6">Add QA responses in Profile settings to get interview-ready answers.</div>
-        ) : (
-          <div className="space-y-3">
-            <AnimatePresence>
-              {rehearsal.pitch && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="rounded-md border border-border bg-muted/30 px-3 py-2"
-                >
-                  <div className="text-xs font-medium text-muted-foreground mb-1">20-second pitch</div>
-                  <div className="text-sm">{rehearsal.pitch}</div>
-                </motion.div>
-              )}
-              {Object.entries(rehearsal.responses).map(([key, response], index) => (
-                <motion.div
-                  key={key}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-                  className="rounded-md border border-border bg-muted/30 px-3 py-2"
-                >
-                  <div className="text-xs font-medium text-muted-foreground mb-1 capitalize">
-                    {key.replace(/_/g, ' ')}
-                  </div>
-                  <div className="text-sm">{response}</div>
-                </motion.div>
-              ))}
-              {rehearsal.note && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="text-xs text-muted-foreground mt-2"
-                >
-                  {rehearsal.note}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
+//
 
 // RoleSuggestionsWidget removed (unused)
 
@@ -423,13 +307,7 @@ export function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Intelligence row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch auto-rows-fr">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: 'easeOut', delay: 0.05 }} className="flex">
-          <QARehearsalWidget />
-        </motion.div>
-        {/* <RoleSuggestionsWidget /> */}
-      </div>
+      {/* Intelligence row intentionally removed: Q&A rehearsal no longer needed */}
     </motion.div>
   )
 }
